@@ -1,11 +1,11 @@
 -- Postmaster Addon for Elder Scrolls Online
 -- Author: Anthony Korchak aka Zierk
--- Updated & modified by Garkin
+-- Updated & modified by Garkin and silvereyes
 
 PostMaster = {}
 
 PostMaster.name = "Postmaster"
-PostMaster.version = "1.7.5"
+PostMaster.version = "2.1.0"
 PostMaster.author = "@Zierk"
 PostMaster.shortname = "PM"
 
