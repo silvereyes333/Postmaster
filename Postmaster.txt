@@ -1,8 +1,18 @@
-## Title: |cFF8800Postmaster|r 2.1.0
+## Title: |cFF8800Postmaster|r 2.1.1
 ## Description: Lightweight mail addon to automaticly loot and delete mail
 ## APIVersion: 100012
 ## Author: Zierk, |cEFEBBEGarkin|r, and |c99CCEFsilvereyes|r
-## Version: 2.1.0
+## Version: 2.1.1
+## SavedVariables: Postmaster_Data
+
+lib\LibStub\LibStub.lua
+lib\LibAddonMenu-2.0\LibAddonMenu-2.0.lua
+lib\LibAddonMenu-2.0\controls\checkbox.lua
+lib\LibAddonMenu-2.0\controls\description.lua
+lib\LibAddonMenu-2.0\controls\header.lua
+lib\LibAddonMenu-2.0\controls\panel.lua
+
+localization\$(language).lua
 
 Postmaster.lua
 bindings.xml

@@ -5,13 +5,14 @@
 PostMaster = {}
 
 PostMaster.name = "Postmaster"
-PostMaster.version = "2.1.0"
+PostMaster.version = "2.1.1"
 PostMaster.author = "@Zierk"
 PostMaster.shortname = "PM"
 
 PostMaster.keybindinfo = {}
 
 local stripDescriptor -- variable to call KEYBIND_STRIP, allows visibility of Postmaster keybinds
+local settingsPanel   -- main settings panel
 
 PostMaster.attachmentsCounter = 0
 PostMaster.moneyCounter = 0
@@ -19,6 +20,11 @@ PostMaster.processed = {}
 PostMaster.fullBag = false
 PostMaster.noMoney = false
 PostMaster.takeAll = false
+
+PostMaster.defaults = {
+	verbose = true,
+	skipOtherPlayerMail = false
+}
 
 --[[  = = = = =  EVENT HANDLERS  = = = = =  ]]--
 
@@ -44,7 +50,7 @@ end
 -- Event handler used to continue the ProcessMessageQueue loop
 local function pEventHandler(event, mailId)
     if PostMaster.takeAll then
-        PostMaster.ProcessMessageQueue()
+        zo_callLater(PostMaster.ProcessMessageQueue, 250)
     end
     PostMaster.UpdateButtonStatus()
 end
@@ -58,6 +64,15 @@ local function pDeleteProcessedMessage(event, mailId)
             DeleteMail(mailId, true)
         end
     end
+end
+
+-- Output formatted message to chat window, if configured
+local function pOutput(input)
+	if not PostMaster.settings.verbose then
+		return
+	end
+	local output = zo_strformat("|cEFEBBE<<1>>|r|cFFFFFF: ", PostMaster.name)..input..".|r"
+	d(output)
 end
 
 --[[  = = = = =  CORE FUNCTIONS  = = = = =  ]]--
@@ -109,8 +124,8 @@ function PostMaster.ProcessMessageQueue()
         PostMaster.mailId = GetNextMailId(PostMaster.mailId)
     end
 
-    while not (type(PostMaster.mailId) == "number" or (PostMaster.mailId == nil and GetNumMailItems() == 0)) do
-        PostMaster.mailId = GetNextMailId(PostMaster.mailId)
+    if PostMaster.FilterMessage(PostMaster.mailId) then
+        PostMaster.mailId = nil
     end 
    
     if PostMaster.mailId ~= nil then
@@ -137,13 +152,14 @@ function PostMaster.ProcessMessageQueue()
         end
 
     else
+    
         if PostMaster.fullBag then
-            d(zo_strformat("|cEFEBBE<<1>>|r|cFFFFFF: Not enough bag space to take all attachments.|r", PostMaster.name))
+            pOutput(GetString(SI_PM_FULLBAG))
         end
         if PostMaster.noMoney then
-            d(zo_strformat("|cEFEBBE<<1>>|r|cFFFFFF: Not enough money to pay for all C.O.D. items.|r", PostMaster.name))
+            pOutput(GetString(SI_PM_NOMONEY))
         end
-        d(zo_strformat("|cEFEBBE<<1>>|r|cFFFFFF: Received|r |cFFFF00<<2>> <<2[items/item/items]>>|r |cFFFFFFand|r |c00FF00<<3>> gold|r |cFFFFFFfrom message.|r", PostMaster.name, PostMaster.attachmentsCounter, PostMaster.moneyCounter))
+        pOutput(zo_strformat(GetString(SI_PM_SUCCESS), PostMaster.attachmentsCounter, PostMaster.moneyCounter))
 
         PostMaster.takeAll = false
         ZO_ClearTable(PostMaster.processed)
@@ -170,11 +186,11 @@ function PostMaster.Take()
     PostMaster.processed[mailIdKey] = true
 
     if result == "Success" then
-        d(zo_strformat("|cEFEBBE<<1>>|r|cFFFFFF: Received|r |cFFFF00<<2>> <<2[items/item/items]>>|r |cFFFFFFand|r |c00FF00<<3>> gold|r |cFFFFFFfrom message.|r", PostMaster.name, numAttachments, attachedMoney - codAmount))
+        pOutput(zo_strformat(GetString(SI_PM_SUCCESS), numAttachments, attachedMoney - codAmount))
     elseif result == "NoMoney" then
-        d(zo_strformat("|cEFEBBE<<1>>|r|cFFFFFF: Not enough money to pay COD.|r", PostMaster.name))
+         pOutput(GetString(SI_PM_NOMONEY))
     elseif result == "FullBag" then
-        d(zo_strformat("|cEFEBBE<<1>>|r|cFFFFFF: Not enough bag space.|r", PostMaster.name))
+        pOutput(GetString(SI_PM_FULLBAG))
     end
 end
 
@@ -188,6 +204,31 @@ function PostMaster.TakeAll()
     ZO_ClearTable(PostMaster.processed)
 
     PostMaster.ProcessMessageQueue()
+end
+
+-- Returns true if the given mail id should be skipped and the next message retrieved
+function PostMaster.FilterMessage(mailId)
+	
+	if mailId == nil then
+		return false
+		
+	elseif type(mailId) == "number" then
+		if not PostMaster.settings.skipOtherPlayerMail then
+			return false
+			
+		else
+			local _, senderDisplayName, fromSystem
+			senderDisplayName, _, _, _, _, fromSystem = GetMailItemInfo(mailId)
+
+			if fromSystem then
+				return false
+			else
+				pOutput(zo_strformat(GetString(SI_PM_SKIPPING), senderDisplayName))
+				return true
+			end
+		end
+		
+	end
 end
 
 -- Function called from context menu
@@ -234,7 +275,7 @@ local function pInitalizeKeybindStrip()
 
         -- Take
         {
-            name = "Take",
+            name = GetString(SI_BINDING_NAME_TAKE_BUTTON),
             keybind = "TAKE_BUTTON",
             callback = function() PostMaster.Take() end,
             visible = function() return PostMaster.keybindinfo.Take ~= nil end,
@@ -242,7 +283,7 @@ local function pInitalizeKeybindStrip()
 
         -- Take All
         {
-            name = "Take All",
+            name = GetString(SI_BINDING_NAME_TAKEALL_BUTTON),
             keybind = "TAKEALL_BUTTON",
             callback = function() PostMaster.TakeAll() end,
             visible = function() return PostMaster.keybindinfo.Take ~= nil end,
@@ -252,56 +293,151 @@ local function pInitalizeKeybindStrip()
 end
 
 local function pCreateButtons()
-    PostMaster.takeButton = WINDOW_MANAGER:CreateControlFromVirtual("PostMasterTake", ZO_MailInbox, "ZO_DefaultButton")
+    PostMaster.takeButton = WINDOW_MANAGER:CreateControlFromVirtual(PostMaster.name .. "Take", ZO_MailInbox, "ZO_DefaultButton")
     PostMaster.takeButton:SetAnchor(TOPLEFT, ZO_MailInboxList, BOTTOMLEFT, 24, 2)
-    PostMaster.takeButton:SetText("Take")
+    PostMaster.takeButton:SetText(GetString(SI_BINDING_NAME_TAKE_BUTTON))
     PostMaster.takeButton:SetHandler("OnMouseDown", PostMaster.Take) 
   
-    PostMaster.takeAllButton = WINDOW_MANAGER:CreateControlFromVirtual("PostMasterTakeAll", ZO_MailInbox, "ZO_DefaultButton")
+    PostMaster.takeAllButton = WINDOW_MANAGER:CreateControlFromVirtual(PostMaster.name .. "TakeAll", ZO_MailInbox, "ZO_DefaultButton")
     PostMaster.takeAllButton:SetAnchor(TOPRIGHT, ZO_MailInboxList, BOTTOMRIGHT, -24, 2)
-    PostMaster.takeAllButton:SetText("Take All")
+    PostMaster.takeAllButton:SetText(GetString(SI_BINDING_NAME_TAKEALL_BUTTON))
     PostMaster.takeAllButton:SetHandler("OnMouseDown", PostMaster.TakeAll) 
 end
 
 -- Handler for /slash commands
 local function commandHandler(text)
-    -- Make all input lowercase
-    local  input = string.lower(text)
 
-    -- General help when using slash commands
-    d("|cFFFFFF---------------------------------------------------------------------------------|r")
-    d(zo_strformat("|cEFEBBE<<1>>|r |cFFFFFFby|r |cEFEBBE<<2>>|r |cFFFFFFversion|r |cEFEBBE<<3>>|r", PostMaster.name, PostMaster.author, PostMaster.version))
-    d(zo_strformat("|cEE7600<<1>>|r|cFFFFFF: Open your mailbox to interact with the Postmaster frame.|r", PostMaster.shortname))
-    d(zo_strformat("|cEE7600<<1>>|r|cFFFFFF: The '|r|cEFEBBETake|r|cFFFFFF' button will Loot and Delete the|r |cEFEBBEcurrently selected|r |cFFFFFFmail.|r", PostMaster.shortname))
-    d(zo_strformat("|cEE7600<<1>>|r|cFFFFFF: The '|r|cEFEBBETake All|cFFFFFF' button will Loot and Delete|r |cEFEBBEall|r |cFFFFFFmails in your inbox.|r", PostMaster.shortname))
-    d(zo_strformat("|cEE7600<<1>>|r|cFFFFFF: You can now set custom keybinds in the|r |cEFEBBEControls->Keybindings|r |cFFFFFFmenu.|r", PostMaster.shortname))
-    d("|cFFFFFF---------------------------------------------------------------------------------|r")
+	local LAM = LibStub('LibAddonMenu-2.0')
+	LAM:OpenToPanel(settingsPanel)
+	
+end
+
+
+local function pInitializeSettingsMenu()
+	
+	local panelData = {
+		type = "panel",
+		name = PostMaster.name,
+		displayName = ZO_HIGHLIGHT_TEXT:Colorize(PostMaster.name),
+		author = PostMaster.author,
+		version = PostMaster.version,
+		registerForRefresh = true,
+		registerForDefaults = true,
+	}
+	
+	local LAM = LibStub('LibAddonMenu-2.0')
+	settingsPanel = LAM:RegisterAddonPanel(PostMaster.name .. "Options", panelData)
+	
+	local optionsTable = {}
+	local index = 0
+
+    -- Help header
+	index = index + 1
+	optionsTable[index] = {
+		type = "header",
+		name = GetString(SI_PM_HELP_TITLE),
+		width = "full"
+	}
+	
+	-- Help section
+	index = index + 1
+	optionsTable[index] = {
+		type = "description",
+		text = GetString(SI_PM_HELP_01),
+		width = "full"
+	}
+	index = index + 1
+	optionsTable[index] = {
+		type = "description",
+		text = GetString(SI_PM_HELP_02),
+		width = "full"
+	}
+	index = index + 1
+	optionsTable[index] = {
+		type = "description",
+		text = GetString(SI_PM_HELP_03),
+		width = "full"
+	}
+	index = index + 1
+	optionsTable[index] = {
+		type = "description",
+		text = GetString(SI_PM_HELP_04),
+		width = "full"
+	}
+	index = index + 1
+	optionsTable[index] = {
+		type = "description",
+		text = GetString(SI_PM_HELP_05),
+		width = "full"
+	}
+	
+	-- Spacer
+	index = index + 1
+	optionsTable[index] = {
+		type = "description",
+		text = "",
+		width = "full"
+	}
+	
+    -- Options header
+	index = index + 1
+	optionsTable[index] = {
+		type = "header",
+		name = GetString(SI_PM_OPTIONS_TITLE),
+		width = "full"
+	}
+	
+	-- Verbose option
+	index = index + 1
+	optionsTable[index] = {
+		type = "checkbox",
+		name = GetString(SI_PM_VERBOSE),
+		tooltip = GetString(SI_PM_VERBOSE_TOOLTIP),
+		getFunc = function() return PostMaster.settings.verbose end,
+		setFunc = function(newValue) PostMaster.settings.verbose = newValue end,
+		width = "full",
+		default = PostMaster.defaults.verbose,
+	}
+	
+	-- Skip other players option
+	index = index + 1
+	optionsTable[index] = {
+		type = "checkbox",
+		name = GetString(SI_PM_SKIPPLAYERMAIL),
+		tooltip = GetString(SI_PM_SKIPPLAYERMAIL_TOOLTIP),
+		getFunc = function() return PostMaster.settings.skipOtherPlayerMail end,
+		setFunc = function(newValue) PostMaster.settings.skipOtherPlayerMail = newValue end,
+		width = "full",
+		default = PostMaster.defaults.skipOtherPlayerMail,
+	}
+	
+	LAM:RegisterOptionControls(PostMaster.name .. "Options", optionsTable)
+
 end
 
 -- Initalizing the addon
 local function pInitialize(eventCode, addOnName)
-    if ( addOnName ~= "Postmaster" ) then return end
+    if ( addOnName ~= PostMaster.name ) then return end
     EVENT_MANAGER:UnregisterForEvent(addOnName, eventCode)
 
     -- Establish EVENT handlers for RegisteredEvents
-    EVENT_MANAGER:RegisterForEvent("Postmaster", EVENT_MAIL_OPEN_MAILBOX, pMailboxOpen)
-    EVENT_MANAGER:RegisterForEvent("Postmaster", EVENT_MAIL_CLOSE_MAILBOX, pMailboxClose)
-    EVENT_MANAGER:RegisterForEvent("Postmaster", EVENT_KEYBINDING_SET, PostMaster.UpdateKeybindInfo)
-    EVENT_MANAGER:RegisterForEvent("Postmaster", EVENT_MAIL_INBOX_UPDATE, pMailboxUpdate)
-    EVENT_MANAGER:RegisterForEvent("Postmaster", EVENT_MAIL_REMOVED, pEventHandler)
-    EVENT_MANAGER:RegisterForEvent("Postmaster", EVENT_MAIL_READABLE, pEventHandler)
-    EVENT_MANAGER:RegisterForEvent("Postmaster", EVENT_MAIL_TAKE_ATTACHED_ITEM_SUCCESS, pDeleteProcessedMessage)
-    EVENT_MANAGER:RegisterForEvent("Postmaster", EVENT_MAIL_TAKE_ATTACHED_MONEY_SUCCESS, pDeleteProcessedMessage)
-
-    -- Establish keybinds
-    ZO_CreateStringId("SI_BINDING_NAME_TAKE_BUTTON", "Take")
-    ZO_CreateStringId("SI_BINDING_NAME_TAKEALL_BUTTON", "Take All")
+    EVENT_MANAGER:RegisterForEvent(PostMaster.name, EVENT_MAIL_OPEN_MAILBOX, pMailboxOpen)
+    EVENT_MANAGER:RegisterForEvent(PostMaster.name, EVENT_MAIL_CLOSE_MAILBOX, pMailboxClose)
+    EVENT_MANAGER:RegisterForEvent(PostMaster.name, EVENT_KEYBINDING_SET, PostMaster.UpdateKeybindInfo)
+    EVENT_MANAGER:RegisterForEvent(PostMaster.name, EVENT_MAIL_INBOX_UPDATE, pMailboxUpdate)
+    EVENT_MANAGER:RegisterForEvent(PostMaster.name, EVENT_MAIL_READABLE, pEventHandler)
+    EVENT_MANAGER:RegisterForEvent(PostMaster.name, EVENT_MAIL_TAKE_ATTACHED_ITEM_SUCCESS, pDeleteProcessedMessage)
+    EVENT_MANAGER:RegisterForEvent(PostMaster.name, EVENT_MAIL_TAKE_ATTACHED_MONEY_SUCCESS, pDeleteProcessedMessage)
 
     -- Establish /slash commands
     SLASH_COMMANDS["/postmaster"] = commandHandler
     SLASH_COMMANDS["/pm"] = commandHandler
+    
+    -- Initialize saved variable
+	PostMaster.settings = ZO_SavedVars:NewAccountWide("Postmaster_Data", 1, nil, PostMaster.defaults)
 
     -- Additional functions to run to setup addon
+    pInitializeSettingsMenu()
     pCreateButtons()
     pInitalizeKeybindStrip()
     PostMaster.UpdateKeybindInfo()
@@ -314,16 +450,25 @@ local function pInitialize(eventCode, addOnName)
             if type(mailId) == "number" then
                 local mailData = MAIL_INBOX:GetMailData(mailId)
                 ClearMenu()
+                
+                -- Reply menu command
                 if not (mailData.fromSystem or mailData.returned) then
-                    AddMenuItem("Reply", PostMaster.Reply)
+                    AddMenuItem(GetString(SI_PM_REPLY), PostMaster.Reply)
                 end
-                AddMenuItem("Take & Delete", PostMaster.Take)
+                
+                -- Take & Delete menu command
+                AddMenuItem(GetString(SI_PM_TAKEDELETE), PostMaster.Take)
+                
+                -- Take & Delete All menu command
                 if GetNumMailItems() > 1 then
-                    AddMenuItem("Take & Delete All", PostMaster.TakeAll)
+                    AddMenuItem(GetString(SI_PM_TAKEDELETEALL), PostMaster.TakeAll)
                 end
+                
+                -- MailR Save menu command
                 if MailR and MailR.SaveMail then
-                    AddMenuItem("Save Message", MailR.SaveMail)
+                    AddMenuItem(GetString(SI_PM_SAVE), MailR.SaveMail)
                 end
+                
                 ShowMenu(self)
             end
             return true
@@ -333,4 +478,4 @@ local function pInitialize(eventCode, addOnName)
 end
 
 -- Register events
-EVENT_MANAGER:RegisterForEvent("Postmaster", EVENT_ADD_ON_LOADED, pInitialize)
+EVENT_MANAGER:RegisterForEvent(PostMaster.name, EVENT_ADD_ON_LOADED, pInitialize)
