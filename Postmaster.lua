@@ -5,7 +5,7 @@
 PostMaster = {}
 
 PostMaster.name = "Postmaster"
-PostMaster.version = "2.1.1"
+PostMaster.version = "2.2.0"
 PostMaster.author = "@Zierk"
 PostMaster.shortname = "PM"
 
