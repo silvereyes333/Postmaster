@@ -5,7 +5,7 @@
 PostMaster = {}
 
 PostMaster.name = "Postmaster"
-PostMaster.version = "2.4.0"
+PostMaster.version = "2.4.1"
 PostMaster.author = "@Zierk"
 PostMaster.shortname = "PM"
 
@@ -231,6 +231,11 @@ function PostMaster.FilterMessage(mailId)
 	end
 end
 
+local function setReply(address, subject)
+    MAIL_SEND:SetReply(address, subject)
+    ZO_MailSendBodyField:TakeFocus()	
+end
+
 -- Function called from context menu
 function PostMaster.Reply()
     local mailId = MAIL_INBOX:GetOpenMailId()
@@ -239,13 +244,10 @@ function PostMaster.Reply()
         if mailData and not (mailData.fromSystem or mailData.returned) then
             local address = mailData.senderDisplayName
             local subject = mailData.subject
-            if subject and subject ~= "" then
-                subject = "Re: " .. subject
-            end   
 
-            MAIN_MENU:ShowScene("mailSend")
+            SCENE_MANAGER:Show("mailSend")
             MAIL_SEND:ClearFields()
-            SCENE_MANAGER:CallWhen("mailSend", SCENE_SHOWN, function() MAIL_SEND:SetReply(address, subject) end)
+            SCENE_MANAGER:CallWhen("mailSend", SCENE_SHOWN, function() setReply(address, subject) end)
         end
     end
 end
