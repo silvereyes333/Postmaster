@@ -1,9 +1,12 @@
-## Title: |cFF8800Postmaster|r 2.4.1
-## Description: Lightweight mail addon to automaticly loot and delete mail
-## APIVersion: 100015
-## Author: Zierk, |cEFEBBEGarkin|r, & |c99CCEFsilvereyes|r
-## Version: 2.4.1
+## Title: Postmaster
+## Author: |c99CCEFsilvereyes|r, |cEFEBBEGarkin|r & Zierk
+## Description: Lightweight mail addon to automatically loot and delete mail
+## Version: 3.0.0
+## APIVersion: 100015 100016
+## OptionalDependsOn: LibStub LibAddonMenu-2.0 MailR
 ## SavedVariables: Postmaster_Data
+
+## This Add-On is not created by, affiliated with or sponsored by ZeniMax Media Inc. or its affiliates. The Elder Scrolls® and related logos are registered trademarks or trademarks of ZeniMax Media Inc. in the United States and/or other countries. All rights reserved.
 
 lib\LibStub\LibStub.lua
 lib\LibAddonMenu-2.0\LibAddonMenu-2.0.lua
@@ -15,13 +18,3 @@ lib\LibAddonMenu-2.0\controls\panel.lua
 localization\$(language).lua
 
 Postmaster.lua
-bindings.xml
-
-
-; This Add-on is not created by, affiliated with or sponsored by ZeniMax
-; Media Inc. or its affiliates. The Elder Scrolls® and related logos are
-; registered trademarks or trademarks of ZeniMax Media Inc. in the United
-; States and/or other countries. All rights reserved.
-;
-; You can read the full terms at:
-; https://account.elderscrollsonline.com/add-on-terms
