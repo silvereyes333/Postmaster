@@ -5,7 +5,7 @@
 Postmaster = {
     name = "Postmaster",
     title = GetString(SI_PM_NAME),
-    version = "3.1.0",
+    version = "3.2.0",
     author = "|c99CCEFsilvereyes|r, |cEFEBBEGarkin|r & Zierk",
     
     -- For development use only. Set to true to see a ridiculously verbose 
@@ -244,12 +244,12 @@ function Postmaster:Reset()
     self.taking = false
     self.takingAll = false
     self.abortRequested = false
-    MAIL_INBOX.list.autoSelect = true  
+    ZO_MailInboxList.autoSelect = true  
     if MAIL_INBOX.mailId then
         local currentMailData = MAIL_INBOX:GetMailData(self.mailId)
         if not currentMailData then
             MAIL_INBOX.mailId = nil
-            ZO_ScrollList_AutoSelectData(MAIL_INBOX.list)
+            ZO_ScrollList_AutoSelectData(ZO_MailInboxList)
         end
     end
 end
@@ -293,10 +293,13 @@ function Postmaster:TakeAllCanTake(mailData)
     -- the take all list
     if self:IsMailMarkedForDeletion(mailData.mailId) then
         return true
+    end
+    
+    local fromSystem = (mailData.fromCS or mailData.fromSystem)
         
     -- Skip non-system mails, if so configured.
-    elseif self.settings.skipOtherPlayerMail 
-       and not (mailData.fromCS or mailData.fromSystem) then 
+    if self.settings.skipOtherPlayerMail 
+       and not fromSystem then 
         return false 
         
     -- Skip C.O.D. mails, if so configured
@@ -307,7 +310,16 @@ function Postmaster:TakeAllCanTake(mailData)
     
     end
     
-    return mailData.attachedMoney > 0 or mailData.numAttachments > 0
+    -- All mail with attachments at this point should be good
+    if mailData.attachedMoney > 0 or mailData.numAttachments > 0 then return true end
+    
+    -- Mail without attachments will depend upon settings whether it can
+    -- be deleted.
+    if fromSystem then 
+        return not self.settings.skipEmptySystemMail
+    else 
+        return not self.settings.skipEmptyPlayerMail 
+    end
 end
 
 --[[ True if the currently-selected mail can be taken by Take All operations 
@@ -343,6 +355,22 @@ function Postmaster:TakeAllSelectNext()
     end
 end
 
+--[[ Takes attachments from the selected (readable) mail if they exist, or 
+     deletes the mail if it has no attachments. ]]
+function Postmaster:TakeOrDeleteSelected()
+    if self:TryTakeAllCodMail() then return end
+    local mailData = ZO_MailInboxList.selectedData
+    local hasAttachments = mailData.attachedMoney > 0 or mailData.numAttachments > 0
+    if hasAttachments then
+        self.originalDescriptors.take.callback()
+    else
+        -- If all attachments are gone, remove the message
+        self.Debug("Deleting "..tostring(mailId))
+        DeleteMail(mailData.mailId, true)
+        PlaySound(SOUNDS.MAIL_ITEM_DELETED)
+    end
+end
+
 --[[ Called when the inbox opens to automatically delete any mail that finished
      a Take or Take All operation after the inbox was closed. ]]
 function Postmaster:TryDeleteMarkedMail(mailId)
@@ -361,10 +389,10 @@ end
      Take All operation. ]]
 function Postmaster:TryTakeAllCodMail()
     if self.settings.skipCod then return end
-    local _, _, codAmount = GetMailAttachmentInfo(MAIL_INBOX.mailId)
-    if codAmount > 0 then
+    local mailData = ZO_MailInboxList.selectedData
+    if mailData.codAmount > 0 then
         MAIL_INBOX.pendingAcceptCOD = true
-        ZO_MailInboxShared_TakeAll(MAIL_INBOX.mailId)
+        ZO_MailInboxShared_TakeAll(mailData.mailId)
         PlaySound(SOUNDS.MAIL_ACCEPT_COD)
         MAIL_INBOX.pendingAcceptCOD = false
         return true
@@ -383,7 +411,9 @@ function Postmaster:SettingsSetup()
 
     self.defaults = {
         verbose = true,
+        skipEmptySystemMail = true,
         skipOtherPlayerMail = false,
+        skipEmptyPlayerMail = true,
         skipCod = true
     }
     
@@ -454,6 +484,16 @@ function Postmaster:SettingsSetup()
             width = "full",
             default = self.defaults.verbose,
         },
+        -- Skip system mail with no attachments
+        {
+            type = "checkbox",
+            name = GetString(SI_PM_SKIPEMPTYSYSMAIL),
+            tooltip = GetString(SI_PM_SKIPEMPTYSYSMAIL_TOOLTIP),
+            getFunc = function() return self.settings.skipEmptySystemMail end,
+            setFunc = function(newValue) self.settings.skipEmptySystemMail = newValue end,
+            width = "full",
+            default = self.defaults.skipEmptySystemMail,
+        },
         -- Skip other players option
         {
             type = "checkbox",
@@ -462,7 +502,10 @@ function Postmaster:SettingsSetup()
             getFunc = function() return self.settings.skipOtherPlayerMail end,
             setFunc = function(newValue) 
                     self.settings.skipOtherPlayerMail = newValue 
-                    if newValue then self.settings.skipCod = true end
+                    if newValue then 
+                        self.settings.skipCod = true 
+                        self.settings.skipEmptyPlayerMail = true 
+                    end
                 end,
             width = "full",
             default = self.defaults.skipOtherPlayerMail,
@@ -477,7 +520,18 @@ function Postmaster:SettingsSetup()
             disabled = function() return self.settings.skipOtherPlayerMail end,
             width = "full",
             default = self.defaults.skipCod,
-        }
+        },
+        -- Skip other player mail with no attachments
+        {
+            type = "checkbox",
+            name = GetString(SI_PM_SKIPEMPTYPLAYERMAIL),
+            tooltip = GetString(SI_PM_SKIPEMPTYPLAYERMAIL_TOOLTIP),
+            getFunc = function() return self.settings.skipEmptyPlayerMail end,
+            setFunc = function(newValue) self.settings.skipEmptyPlayerMail = newValue end,
+            disabled = function() return self.settings.skipOtherPlayerMail end,
+            width = "full",
+            default = self.defaults.skipEmptyPlayerMail,
+        },
     }
         
     LAM2:RegisterOptionControls(Postmaster.name .. "Options", optionsTable)
@@ -720,15 +774,16 @@ function Postmaster.Keybind_TakeAll_Callback()
     self.abortRequested = false  
     if self:TakeAllCanTakeSelectedMail() then
         self.Debug("Selected mail has attachments. Taking.")
+        self.taking    = true
         self.takingAll = true
-        MAIL_INBOX.list.autoSelect = false
-        if self:TryTakeAllCodMail() then return end
-        self.originalDescriptors.take.callback()
+        ZO_MailInboxList.autoSelect = false
+        self:TakeOrDeleteSelected()
     elseif self:TakeAllSelectNext() then
         self.Debug("Getting next mail with attachments")
+        self.taking    = true
         self.takingAll = true
-        MAIL_INBOX.list.autoSelect = false
-        -- will call the take callback when the message is read
+        ZO_MailInboxList.autoSelect = false
+        -- will call the take or delete callback when the message is read
     end
 end
 function Postmaster.Keybind_TakeAll_Visible()
@@ -819,8 +874,7 @@ function Postmaster.Event_MailReadable(eventCode, mailId)
     -- If taking all, then go ahead and start the next Take loop, since the
     -- mail and attachments are readable now.
     elseif self.takingAll then 
-        if self:TryTakeAllCodMail() then return end
-        self.originalDescriptors.take.callback()
+        self:TakeOrDeleteSelected()
         
     -- If a mail is selected that was previously marked for deletion but never
     -- finished, automatically delete it.
@@ -837,6 +891,17 @@ function Postmaster.Event_MailRemoved(eventCode, mailId)
     local self = Postmaster
     self.Debug("deleted mail id "..tostring(mailId))
     local isInboxOpen = SCENE_MANAGER:IsShowing("mailInbox")
+    
+    -- Clear out scroll list selection if autoselect is off
+    if not ZO_MailInboxList.autoSelect then
+        ZO_MailInboxList.selectedData = nil
+        ZO_MailInboxList.selectedDataIndex = nil
+        ZO_MailInboxList.lastSelectedDataIndex = nil
+        if isInboxOpen then
+            MAIL_INBOX:EndRead()
+        end
+    end
+    
     -- For non-canceled take all requests, select the next mail for taking.
     -- It will be taken automatically by Event_MailReadable() once the 
     -- EVENT_MAIL_READABLE event comes back from the server.
