@@ -5,7 +5,7 @@
 Postmaster = {
     name = "Postmaster",
     title = GetString(SI_PM_NAME),
-    version = "3.0.0",
+    version = "3.1.0",
     author = "|c99CCEFsilvereyes|r, |cEFEBBEGarkin|r & Zierk",
     
     -- For development use only. Set to true to see a ridiculously verbose 
@@ -759,6 +759,11 @@ function Postmaster:EventSetup()
     EVENT_MANAGER:RegisterForEvent(self.name, EVENT_MAIL_TAKE_ATTACHED_MONEY_SUCCESS,  
         self.Event_MailTakeAttachedMoneySuccess)
     EVENT_MANAGER:RegisterForEvent(self.name, EVENT_MONEY_UPDATE,       self.Event_MoneyUpdate)
+    
+    -- Fix for Wykkyd Mailbox keybind conflicts
+    if type(WYK_MailBox) == "table" then
+        WYK_MailBox:UnregisterEvent(EVENT_MAIL_READABLE)
+    end
 end
 
 --[[ Raised when an attempted item transfer to the backpack fails due to not 
@@ -946,7 +951,7 @@ function Postmaster:PrehookSetup()
     ZO_PreHook(KEYBIND_STRIP, "SetUpButton", self.Prehook_KeybindStrip_ButtonSetup)
     ZO_PreHook("ZO_MailInboxShared_TakeAll", self.Prehook_MailInboxShared_TakeAll)
     ZO_PreHook("RequestReadMail", self.Prehook_RequestReadMail)
-    ZO_PreHook("ZO_ScrollList_SelectData", self.Prehook_ScrollList_SelectData)   
+    ZO_PreHook("ZO_ScrollList_SelectData", self.Prehook_ScrollList_SelectData)
 end
 
 --[[ Keybind callback and visible functions do not always reliably pass on data
