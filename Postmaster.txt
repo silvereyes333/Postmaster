@@ -3,18 +3,33 @@
 ## Description: Lightweight mail addon to automatically loot and delete mail
 ## Version: 3.2.1
 ## APIVersion: 100015 100016
-## OptionalDependsOn: LibStub LibAddonMenu-2.0 MailR wykkydsMailBox
+## OptionalDependsOn: LibStub LibAddonMenu-2.0 MailR wykkydsMailBox MasterMerchant
 ## SavedVariables: Postmaster_Data
 
 ## This Add-On is not created by, affiliated with or sponsored by ZeniMax Media Inc. or its affiliates. The Elder Scrolls® and related logos are registered trademarks or trademarks of ZeniMax Media Inc. in the United States and/or other countries. All rights reserved.
 
+; Libraries
 lib\LibStub\LibStub.lua
 lib\LibAddonMenu-2.0\LibAddonMenu-2.0.lua
 lib\LibAddonMenu-2.0\controls\checkbox.lua
 lib\LibAddonMenu-2.0\controls\description.lua
+lib\LibAddonMenu-2.0\controls\editbox.lua
 lib\LibAddonMenu-2.0\controls\header.lua
 lib\LibAddonMenu-2.0\controls\panel.lua
+lib\LibAddonMenu-2.0\controls\slider.lua
+lib\LibAddonMenu-2.0\controls\submenu.lua
 
+; Language files
+localization\en.lua
 localization\$(language).lua
+localization\CreateStrings.lua
 
+; Custom LAM-2.0 controls
+lib\LibAddonMenu-2.0\controls\divider.lua
+lib\LibAddonMenu-2.0\controls\masterMerchantDealSlider.lua
+
+; Addon
 Postmaster.lua
+
+; Settings
+Settings.lua

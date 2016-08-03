@@ -1,16 +1,59 @@
-ZO_CreateStringId("SI_PM_NAME", "|c99CCEFPostmaster|r")
-ZO_CreateStringId("SI_PM_AND", " und ") 
-ZO_CreateStringId("SI_PM_VERBOSE", "Beuteverlauf im Chatfenster")
-ZO_CreateStringId("SI_PM_VERBOSE_TOOLTIP", "Alle entnommen Gegenstände werden im Chatfenster angezeigt.")
-ZO_CreateStringId("SI_PM_SKIPEMPTYSYSMAIL", "Leere Systemnachrichten überspringen")
-ZO_CreateStringId("SI_PM_SKIPEMPTYSYSMAIL_TOOLTIP", "Wenn diese Einstellung aktiviert ist, wird beim Klicken von |cFF00FF"..GetString(SI_LOOT_TAKE_ALL).."|r alle Nachrichten übersprungen die keine Anhänge enthalten, wie z.B. Meldungen über neue Objekte in deiner Sammlung. Deaktiviere diese Einstellung, damit diese Nachrichten gelöscht werden.")
-ZO_CreateStringId("SI_PM_SKIPPLAYERMAIL", "Nur Systemnachrichten aktivieren")
-ZO_CreateStringId("SI_PM_SKIPPLAYERMAIL_TOOLTIP", "Wenn diese Einstellung aktiviert ist, wird beim Klicken von |cFF00FF"..GetString(SI_LOOT_TAKE_ALL).."|r nur Anhänge entnommen, wenn es sich um eine Handwerk- oder Gildenladennachricht handelt. Nachrichten von anderen Spielern bleiben im Posteingang.")
-ZO_CreateStringId("SI_PM_SKIPCOD", "Nachnahme ignorieren")
-ZO_CreateStringId("SI_PM_SKIPCOD_TOOLTIP", "Wenn diese Einstellung aktiviert ist, werden bei |cFF00FF"..GetString(SI_LOOT_TAKE_ALL).."|r "..GetString(SI_MAIL_SEND_COD).." Nachrichten ignoriert")
-ZO_CreateStringId("SI_PM_SKIPEMPTYPLAYERMAIL", "Leere Spielernachrichten überspringen")
-ZO_CreateStringId("SI_PM_SKIPEMPTYPLAYERMAIL_TOOLTIP", "Wenn diese Einstellung aktiviert ist, wird beim Klicken von |cFF00FF"..GetString(SI_LOOT_TAKE_ALL).."|r alle Nachrichten von anderen Spielern übersprungen die keine Anhänge enthalten. Deaktiviere diese Einstellung, damit diese Nachrichten gelöscht werden.")
-ZO_CreateStringId("SI_PM_HELP_01", "Um "..GetString(SI_PM_NAME).." zu nutzen, öffnest du deinen Posteingang.")
-ZO_CreateStringId("SI_PM_HELP_02", "Mit der Taste |cFF00FF"..GetString(SI_LOOT_TAKE).."|r wird bei der ausgewählten Nachricht alle Anhänge entnommen und die Nachricht anschliessend gelöscht.")
-ZO_CreateStringId("SI_PM_HELP_03", "Mit der Taste |cFF00FF"..GetString(SI_LOOT_TAKE_ALL).."|r werden die Anhänge aller Nachrichten entnommen und die Nachrichten anschliessend gelöscht.")
-ZO_CreateStringId("SI_PM_HELP_04", "Verwende im Chatfenster den Slash-Befehl |cFF00FF/pm|r oder |cFF00FF/postmaster|r um in diese Einstellungen zu gelangen.")
+-- German strings
+local strings = {
+    ["SI_PM_AND"]                                = " und ", 
+    ["SI_PM_SEPARATOR_HINT"]                     = "Mehrere Begriffe mit einem Komma trennen!",
+    ["SI_PM_CHAMPION_160_REWARD"]                = "Champion 160 Belohnung",
+    ["SI_PM_VERBOSE"]                            = "Beuteverlauf im Chatfenster",
+    ["SI_PM_VERBOSE_TOOLTIP"]                    = "Alle entnommen Gegenstände werden im Chatfenster angezeigt.",
+    ["SI_PM_VERBOSE_COMBINE"]                    = "Beuteverlauf kombinieren",
+    ["SI_PM_VERBOSE_COMBINE_TOOLTIP"]            = "<<1>> summiert den Beuteverlauf und gibt sie in einer Nachricht im Chat aus.",
+    ["SI_PM_DELETE_DIALOG_SUPPRESS"]             = "Löschbestätigung unterdrücken",
+    ["SI_PM_DELETE_DIALOG_SUPPRESS_TOOLTIP"]     = "Die Nachricht wird ohne Bestätigung sofort gelöscht.",
+    ["SI_PM_BOUNCE"]                             = "Automatische Nachrichten Rücksendung",
+    ["SI_PM_BOUNCE_TOOLTIP"]                     = "Sendet automatisch Nachrichten am Absender zurück, wenn der Betreff eines der folgenden Begriffe beinhaltet: RETURN, BOUNCE, RTS",
+    ["SI_PM_WYKKYD_MAILBOX_RETURN_WARNING"]      = "Wykkyd Mailbox Rücksendung ist aktiviert",
+    ["SI_PM_WYKKYD_MAILBOX_DETECTED_WARNING"]    = "Wykkyd Mailbox wurde gefunden. Bitte beachte, dass 'Automatische Nachrichten Rücksendung' |cFF0000deaktiviert|r ist, solange die Wykkyd Mailbox Rücksendung aktiv ist.",
+    ["SI_PM_RESERVED_SLOTS"]                     = "Freie Inventarplätze",
+    ["SI_PM_RESERVED_SLOTS_TOOLTIP"]             = "Beim Ausführen von <<1>> wird dieser Wert als freier Inventarplatz freigehalten.",
+    ["SI_PM_SYSTEM"]                             = "Systemnachrichten",
+    ["SI_PM_SYSTEM_TAKE_ATTACHED"]               = "Systemnachrichten mit Anhang",
+    ["SI_PM_SYSTEM_TAKE_ATTACHED_TOOLTIP"]       = "<<1>> entnimmt alle Anhänge von Systemnachrichten und löscht anschliessend die Nachricht, inklusive PvP- und Handwerksnachrichten.",
+    ["SI_PM_SYSTEM_TAKE_PVP"]                    = "Allianzkrieg Belohnungen / PvP",
+    ["SI_PM_SYSTEM_TAKE_CRAFTING"]               = "Handwerksnachrichten",
+    ["SI_PM_SYSTEM_TAKE_UNDAUNTED"]              = "Unerschrockene",
+    ["SI_PM_SYSTEM_TAKE_OTHER"]                  = "Alle andere Systemnachrichten mit Anhang",
+    ["SI_PM_SYSTEM_DELETE_EMPTY"]                = "Leere Systemnachrichten",
+    ["SI_PM_SYSTEM_DELETE_EMPTY_TOOLTIP"]        = "<<1>> lösche alle Systemnachrichten ohne Anhang, z.B. Gegenstand zur Sammlung hinzugefügt.",
+    ["SI_PM_SYSTEM_DELETE_EMPTY_FILTER"]         = "Leere Systemnachrichten Inhalt",
+    ["SI_PM_SYSTEM_DELETE_EMPTY_FILTER_TOOLTIP"] = { "<<1>> wird nur die entsprechenden leeren Systemnachrichten löschen, mit den eingetragenen Werten. <<2>>", SI_PM_TAKE_ALL, "SI_PM_SEPARATOR_HINT" },
+    ["SI_PM_PLAYER"]                             = "Spielernachrichten",
+    ["SI_PM_PLAYER_TAKE_ATTACHED"]               = "Spielernachrichten mit Anhang",
+    ["SI_PM_PLAYER_TAKE_ATTACHED_TOOLTIP"]       = "<<1>> entnimmt alle Anhänge von Spielernachrichten und löscht anschliessend die Nachricht, ohne Nachnahme Nachrichten.",
+    ["SI_PM_PLAYER_DELETE_BULK"]                 = "Nachrichten von MailR und GodSend",
+    ["SI_PM_PLAYER_DELETE_EMPTY"]                = "Leere Spielernachrichten",
+    ["SI_PM_PLAYER_DELETE_EMPTY_TOOLTIP"]        = "<<1>> löscht alle leeren Spielernachrichten.",
+    ["SI_PM_PLAYER_DELETE_EMPTY_FILTER"]         = "Leere Spielernachrichten Inhalt",
+    ["SI_PM_PLAYER_DELETE_EMPTY_FILTER_TOOLTIP"] = { "<<1>> wird nur die entsprechenden leeren Spielernachrichten löschen, mit den eingetragenen Werten. <<2>>", SI_PM_TAKE_ALL, "SI_PM_SEPARATOR_HINT" },
+    ["SI_PM_COD"]                                = { "<<1>> Nachricht", SI_MAIL_SEND_COD },
+    ["SI_PM_COD_TOOLTIP"]                        = { "<<1>> entnimmt <<2>> mit den folgenden Kriterien.", SI_MAIL_SEND_COD },
+    ["SI_PM_COD_LIMIT_TOOLTIP"]                  = { "Nur Nachrichten mit <<1>> mit einem geringenen Wert als ausgewählt werden automatisch bezahlt. (ohne Limit = 0)", SI_MAIL_SEND_COD },
+    ["SI_PM_MASTER_MERCHANT_WARNING"]            = "Master Merchant ist nicht aktiviert",
+    ["SI_PM_COD_MM_DEAL_0"]                      = "überteuert",
+    ["SI_PM_COD_MM_DEAL_1"]                      = "ok",
+    ["SI_PM_COD_MM_DEAL_2"]                      = "angemessen",
+    ["SI_PM_COD_MM_DEAL_3"]                      = "gut",
+    ["SI_PM_COD_MM_DEAL_4"]                      = "sehr gut",
+    ["SI_PM_COD_MM_DEAL_5"]                      = "kauf es!",
+    ["SI_PM_COD_MM_MIN_DEAL_TOOLTIP"]            = { "Analysiert die Anhänge einer <<1>> mit dem Wert von Master Merchant und bezahlt diese nur, wenn alle Anhänge einen mindest genau so guten Deal haben wie diese Einstellung. (ohne Limit = 'überteuert')", SI_MAIL_SEND_COD },
+    ["SI_PM_COD_MM_NO_DATA"]                     = { "<<1>> ohne Master Merchant", SI_MAIL_SEND_COD },
+    ["SI_PM_COD_MM_NO_DATA_TOOLTIP"]             = { "<<1>> entnimmt <<2>> Anhänge auch ohne Master Merchant Preise", SI_PM_TAKE_ALL, SI_MAIL_SEND_COD }, 
+    ["SI_PM_HELP_01"]                            = { "Um <<1>> zu nutzen, öffnest du deinen Posteingang.", SI_PM_NAME },
+    ["SI_PM_HELP_02"]                            = { "Mit der Taste <<1>> wird bei der ausgewählten Nachricht alle Anhänge entnommen und die Nachricht anschliessend gelöscht.", SI_PM_TAKE },
+    ["SI_PM_HELP_03"]                            = "Mit der Taste <<1>> werden die Anhänge aller Nachrichten entnommen und die Nachrichten anschliessend gelöscht.",
+    ["SI_PM_HELP_04"]                            = "Verwende im Chatfenster den Slash-Befehl |cFF00FF/pm|r oder |cFF00FF/postmaster|r um in diese Einstellungen zu gelangen.",
+}
+
+-- Overwrite English strings
+for stringId, value in pairs(strings) do
+    PM_STRINGS[stringId] = value
+end

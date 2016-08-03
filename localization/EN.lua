@@ -1,16 +1,59 @@
-ZO_CreateStringId("SI_PM_NAME", "|c99CCEFPostmaster|r")
-ZO_CreateStringId("SI_PM_AND", " and ") 
-ZO_CreateStringId("SI_PM_VERBOSE", "Loot Messages in Chat")
-ZO_CreateStringId("SI_PM_VERBOSE_TOOLTIP", "Sends verbose messages to chat when mail attachments are retrieved")
-ZO_CreateStringId("SI_PM_SKIPEMPTYSYSMAIL", "|cFF00FF"..GetString(SI_LOOT_TAKE_ALL).."|r Skips Empty System Mail")
-ZO_CreateStringId("SI_PM_SKIPEMPTYSYSMAIL_TOOLTIP", "When this option is enabled, the |cFF00FF"..GetString(SI_LOOT_TAKE_ALL).."|r command will skip over any system mail that does not have an attachment, such as notifications for items added to collections. Disable to remove such mail instead.")
-ZO_CreateStringId("SI_PM_SKIPPLAYERMAIL", "|cFF00FF"..GetString(SI_LOOT_TAKE_ALL).."|r Skips Other Player Mail")
-ZO_CreateStringId("SI_PM_SKIPPLAYERMAIL_TOOLTIP", "When enabled, the |cFF00FF"..GetString(SI_LOOT_TAKE_ALL).."|r command will only collect system mails such as hireling and guild store transactions, leaving direct mail from other players in your mailbox")
-ZO_CreateStringId("SI_PM_SKIPCOD", "|cFF00FF"..GetString(SI_LOOT_TAKE_ALL).."|r Skips "..GetString(SI_MAIL_SEND_COD).." Mail")
-ZO_CreateStringId("SI_PM_SKIPCOD_TOOLTIP", "When this option is enabled, the |cFF00FF"..GetString(SI_LOOT_TAKE_ALL).."|r command will not collect "..GetString(SI_MAIL_SEND_COD).." mail")
-ZO_CreateStringId("SI_PM_SKIPEMPTYPLAYERMAIL", "|cFF00FF"..GetString(SI_LOOT_TAKE_ALL).."|r Skips Empty Player Mail")
-ZO_CreateStringId("SI_PM_SKIPEMPTYPLAYERMAIL_TOOLTIP", "When this option is enabled, the |cFF00FF"..GetString(SI_LOOT_TAKE_ALL).."|r command will skip over any mail from other players that does not have an attachment. Disable to remove such mail instead.")
-ZO_CreateStringId("SI_PM_HELP_01", "To interact with "..GetString(SI_PM_NAME)..", open your mail inbox")
-ZO_CreateStringId("SI_PM_HELP_02", "The |cFF00FF"..GetString(SI_LOOT_TAKE).."|r button will Loot and Delete the |cEFEBBEcurrently selected|r mail")
-ZO_CreateStringId("SI_PM_HELP_03", "The |cFF00FF"..GetString(SI_LOOT_TAKE_ALL).."|r button will Loot and Delete |cEFEBBEall|r mails in your inbox according to the options below")
-ZO_CreateStringId("SI_PM_HELP_04", "Use the |cFF00FF/pm|r or |cFF00FF/postmaster|r commands in the chat window as a shortcut to this options screen")
+ZO_CreateStringId("SI_PM_NAME",     "|c99CCEFPostmaster|r")
+ZO_CreateStringId("SI_PM_TAKE",     zo_strformat("|cFF00FF<<1>>|r", GetString(SI_LOOT_TAKE)))
+ZO_CreateStringId("SI_PM_TAKE_ALL", zo_strformat("|cFF00FF<<1>>|r", GetString(SI_LOOT_TAKE_ALL)))
+PM_STRINGS = {
+    ["SI_PM_AND"]                                = " and ", 
+    ["SI_PM_LIST_SEPARATOR"]                     = ",", 
+    ["SI_PM_SEPARATOR_HINT"]                     = "Separate terms with a comma (,)",
+    ["SI_PM_CHAMPION_160_REWARD"]                = "Champion Reward 160",
+    ["SI_PM_VERBOSE"]                            = "Loot Messages in Chat",
+    ["SI_PM_VERBOSE_TOOLTIP"]                    = "Sends verbose messages to chat when mail attachments are retrieved",
+    ["SI_PM_VERBOSE_COMBINE"]                    = "Combine Loot Messages",
+    ["SI_PM_VERBOSE_COMBINE_TOOLTIP"]            = "Summarizes all attachments taken by <<1>> after the entire operation is complete, instead of after each mail is looted",
+    ["SI_PM_DELETE_DIALOG_SUPPRESS"]             = "Suppress Delete Confirmation",
+    ["SI_PM_DELETE_DIALOG_SUPPRESS_TOOLTIP"]     = "When this option is enabled, deleting messages that have no attachments will no longer require confirmation. The messages will be deleted immediately.",
+    ["SI_PM_BOUNCE"]                             = "Automatic Mail Return",
+    ["SI_PM_BOUNCE_TOOLTIP"]                     = "Monitors the inbox for new mail and automatically returns it to the sender if the subject begins with or equals any of the following words: RETURN, BOUNCE, RTS",
+    ["SI_PM_WYKKYD_MAILBOX_RETURN_WARNING"]      = "Wykkyd Mailbox return bot is enabled",
+    ["SI_PM_WYKKYD_MAILBOX_DETECTED_WARNING"]    = "Wykkyd Mailbox detected. Please note that \"Automatic Mail Return\" |cFF0000deactivates|r if you enable the Wykkyd Mailbox return bot.",
+    ["SI_PM_RESERVED_SLOTS"]                     = "Reserved Slots",
+    ["SI_PM_RESERVED_SLOTS_TOOLTIP"]             = "<<1>> will leave the given number of backpack slots open",
+    ["SI_PM_SYSTEM"]                             = "System Mail",
+    ["SI_PM_SYSTEM_TAKE_ATTACHED"]               = "System Mail With Attachments",
+    ["SI_PM_SYSTEM_TAKE_ATTACHED_TOOLTIP"]       = "When this option is enabled, the <<1>> command takes the attachments from and deletes any system mails that meet the following requirements",
+    ["SI_PM_SYSTEM_TAKE_PVP"]                    = "Alliance War / PvP Rewards",
+    ["SI_PM_SYSTEM_TAKE_CRAFTING"]               = "Hireling",
+    ["SI_PM_SYSTEM_TAKE_UNDAUNTED"]              = "Undaunted",
+    ["SI_PM_SYSTEM_TAKE_OTHER"]                  = "All Other System Attachments",
+    ["SI_PM_SYSTEM_DELETE_EMPTY"]                = "Empty System Mail",
+    ["SI_PM_SYSTEM_DELETE_EMPTY_TOOLTIP"]        = "When this option is enabled, the <<1>> command deletes any system mail that does not have an attachment, such as notifications for items added to collections",
+    ["SI_PM_SYSTEM_DELETE_EMPTY_FILTER"]         = "Empty System Mail Must Contain",
+    ["SI_PM_SYSTEM_DELETE_EMPTY_FILTER_TOOLTIP"] = { "When this filter is not empty, the <<1>> command will only delete player mail without attachments that contains one of the given words or phrases in the sender, subject or body fields. <<2>>", SI_PM_TAKE_ALL, "SI_PM_SEPARATOR_HINT" },
+    ["SI_PM_PLAYER"]                             = "Player Mail",
+    ["SI_PM_PLAYER_TAKE_ATTACHED"]               = "Player Mail With Attachments",
+    ["SI_PM_PLAYER_TAKE_ATTACHED_TOOLTIP"]       = "When this option is enabled, the <<1>> command takes the attachments from and deletes any non-C.O.D. mail from other players that have attachments",
+    ["SI_PM_PLAYER_DELETE_BULK"]                 = "MailR and GodSend Mail",
+    ["SI_PM_PLAYER_DELETE_EMPTY"]                = "Empty Player Mail",
+    ["SI_PM_PLAYER_DELETE_EMPTY_TOOLTIP"]        = "When this option is enabled, the <<1>> command deletes any mail from other players that does not have an attachment",
+    ["SI_PM_PLAYER_DELETE_EMPTY_FILTER"]         = "Empty Player Mail Must Contain",
+    ["SI_PM_PLAYER_DELETE_EMPTY_FILTER_TOOLTIP"] = { "When this filter is not empty, the <<1>> command will only delete system mail without attachments that contains one of the given words or phrases in the sender, subject or body fields. <<2>>", SI_PM_TAKE_ALL, "SI_PM_SEPARATOR_HINT" },
+    ["SI_PM_COD"]                                = { "<<1>> Mail", SI_MAIL_SEND_COD },
+    ["SI_PM_COD_TOOLTIP"]                        = { "When this option is enabled, the <<1>> command takes <<2>> mail matching the following criteria", SI_PM_TAKE_ALL, SI_MAIL_SEND_COD },
+    ["SI_PM_COD_LIMIT"]                          = { "<<1>> Limit", SI_MAIL_SEND_COD },
+    ["SI_PM_COD_LIMIT_TOOLTIP"]                  = { "Only mail with a <<1>> amount less than this value will be paid.  Set to zero (0) for no limit.", SI_MAIL_SEND_COD },
+    ["SI_PM_MASTER_MERCHANT_WARNING"]            = "Master Merchant is not enabled",
+    ["SI_PM_COD_MM_DEAL_0"]                      = "Overpriced",
+    ["SI_PM_COD_MM_DEAL_1"]                      = "Ok",
+    ["SI_PM_COD_MM_DEAL_2"]                      = "Reasonable",
+    ["SI_PM_COD_MM_DEAL_3"]                      = "Good",
+    ["SI_PM_COD_MM_DEAL_4"]                      = "Great",
+    ["SI_PM_COD_MM_DEAL_5"]                      = "Buy it!",
+    ["SI_PM_COD_MM_MIN_DEAL"]                    = { "<<1>> Minimum Deal", SI_MAIL_SEND_COD },
+    ["SI_PM_COD_MM_MIN_DEAL_TOOLTIP"]            = { "Analyzes <<1>> mail attachments for relative Master Merchant market value and only pays those where all attachments are at least as good of deal as this option.  Set to \"Overpriced\" for no limit.", SI_MAIL_SEND_COD },
+    ["SI_PM_COD_MM_NO_DATA"]                     = { "<<1>> With No Master Merchant Data", SI_MAIL_SEND_COD },
+    ["SI_PM_COD_MM_NO_DATA_TOOLTIP"]             = { "When this option is enabled, the <<1>> command takes <<2>> mail attachments that have no Master Merchant pricing data", SI_PM_TAKE_ALL, SI_MAIL_SEND_COD },
+    ["SI_PM_HELP_01"]                            = { "To interact with <<1>>, open your mail inbox", SI_PM_NAME },
+    ["SI_PM_HELP_02"]                            = { "<<1>> takes attachments and deletes the |cEFEBBEcurrently selected|r mail", SI_PM_TAKE },
+    ["SI_PM_HELP_03"]                            = "<<1>> takes attachments and deletes |cEFEBBEall|r of the following mail:",
+    ["SI_PM_HELP_04"]                            = "Use |cFF00FF/pm|r or |cFF00FF/postmaster|r in the chat window as shortcuts to this panel",
+}

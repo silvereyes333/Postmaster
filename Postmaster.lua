@@ -5,7 +5,7 @@
 Postmaster = {
     name = "Postmaster",
     title = GetString(SI_PM_NAME),
-    version = "3.2.1",
+    version = "Development Preview",
     author = "|c99CCEFsilvereyes|r, |cEFEBBEGarkin|r & Zierk",
     
     -- For development use only. Set to true to see a ridiculously verbose 
@@ -298,12 +298,12 @@ function Postmaster:TakeAllCanTake(mailData)
     local fromSystem = (mailData.fromCS or mailData.fromSystem)
         
     -- Skip non-system mails, if so configured.
-    if self.settings.skipOtherPlayerMail 
+    if not self.settings.playerTakeAttached 
        and not fromSystem then 
         return false 
         
     -- Skip C.O.D. mails, if so configured
-    elseif self.settings.skipCod and mailData.codAmount > 0 then return false
+    elseif not self.settings.codTake and mailData.codAmount > 0 then return false
     
     -- Skip C.O.D. mails that we don't have enough money to pay for
     elseif mailData.codAmount > GetCurrentMoney() then return false 
@@ -316,9 +316,9 @@ function Postmaster:TakeAllCanTake(mailData)
     -- Mail without attachments will depend upon settings whether it can
     -- be deleted.
     if fromSystem then 
-        return not self.settings.skipEmptySystemMail
+        return self.settings.systemDeleteEmpty
     else 
-        return not self.settings.skipEmptyPlayerMail 
+        return self.settings.playerDeleteEmpty 
     end
 end
 
@@ -388,7 +388,7 @@ end
 --[[ Bypasses the original "Take attachments" logic for C.O.D. mail during a
      Take All operation. ]]
 function Postmaster:TryTakeAllCodMail()
-    if self.settings.skipCod then return end
+    if not self.settings.codTake then return end
     local mailData = ZO_MailInboxList.selectedData
     if mailData.codAmount > 0 then
         MAIL_INBOX.pendingAcceptCOD = true
@@ -397,147 +397,6 @@ function Postmaster:TryTakeAllCodMail()
         MAIL_INBOX.pendingAcceptCOD = false
         return true
     end
-end
-
-
-
-
---[[ 
-    ===================================
-                SETTINGS
-    ===================================
-  ]]
-function Postmaster:SettingsSetup()
-
-    self.defaults = {
-        verbose = true,
-        skipEmptySystemMail = true,
-        skipOtherPlayerMail = false,
-        skipEmptyPlayerMail = true,
-        skipCod = true
-    }
-    
-    -- Initialize saved variable
-    self.settings = ZO_SavedVars:NewAccountWide("Postmaster_Data", 1, nil, self.defaults)
-    
-    local LAM2 = LibStub("LibAddonMenu-2.0")
-    if not LAM2 then return end
-    
-    local panelData = {
-        type = "panel",
-        name = Postmaster.title,
-        displayName = ZO_HIGHLIGHT_TEXT:Colorize(Postmaster.title),
-        author = Postmaster.author,
-        version = Postmaster.version,
-        registerForRefresh = true,
-        registerForDefaults = true,
-    }
-    self.settingsPanel = LAM2:RegisterAddonPanel(Postmaster.name .. "Options", panelData)
-    
-    local optionsTable = {
-        -- Help header
-        {
-            type = "header",
-            name = GetString(SI_HELP_TITLE),
-            width = "full"
-        },
-        -- Help section
-        {
-            type = "description",
-            text = GetString(SI_PM_HELP_01),
-            width = "full"
-        },
-        {
-            type = "description",
-            text = GetString(SI_PM_HELP_02),
-            width = "full"
-        },
-        {
-            type = "description",
-            text = GetString(SI_PM_HELP_03),
-            width = "full"
-        },
-        {
-            type = "description",
-            text = GetString(SI_PM_HELP_04),
-            width = "full"
-        },
-        -- Spacer
-        {
-            type = "description",
-            text = "",
-            width = "full"
-        },
-        -- Options header
-        {
-            type = "header",
-            name = GetString(SI_GAMEPAD_OPTIONS_MENU),
-            width = "full"
-        },
-        -- Verbose option
-        {
-            type = "checkbox",
-            name = GetString(SI_PM_VERBOSE),
-            tooltip = GetString(SI_PM_VERBOSE_TOOLTIP),
-            getFunc = function() return self.settings.verbose end,
-            setFunc = function(newValue) self.settings.verbose = newValue end,
-            width = "full",
-            default = self.defaults.verbose,
-        },
-        -- Skip system mail with no attachments
-        {
-            type = "checkbox",
-            name = GetString(SI_PM_SKIPEMPTYSYSMAIL),
-            tooltip = GetString(SI_PM_SKIPEMPTYSYSMAIL_TOOLTIP),
-            getFunc = function() return self.settings.skipEmptySystemMail end,
-            setFunc = function(newValue) self.settings.skipEmptySystemMail = newValue end,
-            width = "full",
-            default = self.defaults.skipEmptySystemMail,
-        },
-        -- Skip other players option
-        {
-            type = "checkbox",
-            name = GetString(SI_PM_SKIPPLAYERMAIL),
-            tooltip = GetString(SI_PM_SKIPPLAYERMAIL_TOOLTIP),
-            getFunc = function() return self.settings.skipOtherPlayerMail end,
-            setFunc = function(newValue) 
-                    self.settings.skipOtherPlayerMail = newValue 
-                    if newValue then 
-                        self.settings.skipCod = true 
-                        self.settings.skipEmptyPlayerMail = true 
-                    end
-                end,
-            width = "full",
-            default = self.defaults.skipOtherPlayerMail,
-        },
-        -- Skip C.O.D. mail option
-        {
-            type = "checkbox",
-            name = GetString(SI_PM_SKIPCOD),
-            tooltip = GetString(SI_PM_SKIPCOD_TOOLTIP),
-            getFunc = function() return self.settings.skipCod end,
-            setFunc = function(newValue) self.settings.skipCod = newValue end,
-            disabled = function() return self.settings.skipOtherPlayerMail end,
-            width = "full",
-            default = self.defaults.skipCod,
-        },
-        -- Skip other player mail with no attachments
-        {
-            type = "checkbox",
-            name = GetString(SI_PM_SKIPEMPTYPLAYERMAIL),
-            tooltip = GetString(SI_PM_SKIPEMPTYPLAYERMAIL_TOOLTIP),
-            getFunc = function() return self.settings.skipEmptyPlayerMail end,
-            setFunc = function(newValue) self.settings.skipEmptyPlayerMail = newValue end,
-            disabled = function() return self.settings.skipOtherPlayerMail end,
-            width = "full",
-            default = self.defaults.skipEmptyPlayerMail,
-        },
-    }
-        
-    LAM2:RegisterOptionControls(Postmaster.name .. "Options", optionsTable)
-    
-    SLASH_COMMANDS["/postmaster"] = self.OpenSettingsPanel
-    SLASH_COMMANDS["/pm"] = self.OpenSettingsPanel
 end
 
 
@@ -1049,7 +908,7 @@ function Postmaster.Prehook_MailInboxShared_TakeAll(mailId)
     local numAttachments, attachedMoney, codAmount = GetMailAttachmentInfo(mailId)
     if codAmount > 0 then
         if self.takingAll then
-            if self.settings.skipCod then return end
+            if not self.settings.codTake then return end
         elseif not MAIL_INBOX.pendingAcceptCOD then return end
     end
     self.taking = true

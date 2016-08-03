@@ -4,7 +4,7 @@
 
 
 --Register LAM with LibStub
-local MAJOR, MINOR = "LibAddonMenu-2.0", 21
+local MAJOR, MINOR = "LibAddonMenu-2.0", 21.1
 local lam, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lam then return end --the same or newer version of this lib is already loaded into memory
 
@@ -120,11 +120,19 @@ local function RequestRefreshIfNeeded(control)
     end
 end
 
+local function GetTopPanel(panel)
+    while panel.panel and panel.panel ~= panel do
+        panel = panel.panel
+    end
+    return panel
+end
+
 local function RegisterForRefreshIfNeeded(control)
     -- if our parent window wants to refresh controls, then add this to the list
-    local panelData = control.panel.data
+    local panel = GetTopPanel(control.panel)
+    local panelData = panel.data
     if panelData.registerForRefresh or panelData.registerForDefaults then
-        tinsert(control.panel.controlsToRefresh, control)
+        tinsert(panel.controlsToRefresh, control)
     end
 end
 
@@ -160,6 +168,16 @@ local function ShowConfirmationDialog(title, body, callback)
     ZO_Dialogs_ShowDialog(LAM_CONFIRM_DIALOG)
 end
 
+local function UpdateWarning(control)
+    local warning = util.GetStringFromValue(control.data.warning)
+    if not warning then
+        control.warning:SetHidden(true)
+    else
+        control.warning.data = {tooltipText = warning}
+        control.warning:SetHidden(false)
+    end
+end
+
 util.GetTooltipText = GetStringFromValue -- deprecated, use util.GetStringFromValue instead
 util.GetStringFromValue = GetStringFromValue
 util.GetDefaultValue = GetDefaultValue
@@ -168,6 +186,7 @@ util.CreateLabelAndContainerControl = CreateLabelAndContainerControl
 util.RequestRefreshIfNeeded = RequestRefreshIfNeeded
 util.RegisterForRefreshIfNeeded = RegisterForRefreshIfNeeded
 util.ShowConfirmationDialog = ShowConfirmationDialog
+util.UpdateWarning = UpdateWarning
 
 local ADDON_DATA_TYPE = 1
 local RESELECTING_DURING_REBUILD = true

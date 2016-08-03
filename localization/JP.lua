@@ -1,16 +1,61 @@
-ZO_CreateStringId("SI_PM_NAME", "|c99CCEFPostmaster|r")
-ZO_CreateStringId("SI_PM_AND", " と ") 
-ZO_CreateStringId("SI_PM_VERBOSE", "チャットに取得メッセージ")
-ZO_CreateStringId("SI_PM_VERBOSE_TOOLTIP", "メールに添付されたアイテムを取得時、詳細なメッセージをチャットに送ります。")
-ZO_CreateStringId("SI_PM_SKIPEMPTYSYSMAIL", "|cFF00FF"..GetString(SI_LOOT_TAKE_ALL).."|r添付ファイルのないシステムメールをスキップ")
-ZO_CreateStringId("SI_PM_SKIPEMPTYSYSMAIL_TOOLTIP", "このオプションが有効化されている場合、|cFF00FF"..GetString(SI_LOOT_TAKE_ALL).."|rコマンドはアイテムがコレクションに追加されたなどの通知のような、添付ファイルのないシステムメールをスキップします。逆に無効化することでそれらのメールを削除します。")
-ZO_CreateStringId("SI_PM_SKIPPLAYERMAIL", "|cFF00FF"..GetString(SI_LOOT_TAKE_ALL).."|r 他プレイヤーのメールをスキップ")
-ZO_CreateStringId("SI_PM_SKIPPLAYERMAIL_TOOLTIP", "有効化時、|cFF00FF"..GetString(SI_LOOT_TAKE_ALL).."|rコマンドはメールボックスにある雇ったサポートからのメールや、ギルドストアの取引などのシステムメールのみ取得し、他のプレイヤーからのダイレクトメールは取得しません。")
-ZO_CreateStringId("SI_PM_SKIPCOD", "|cFF00FF"..GetString(SI_LOOT_TAKE_ALL).."|r"..GetString(SI_MAIL_SEND_COD).."メールをスキップ")
-ZO_CreateStringId("SI_PM_SKIPCOD_TOOLTIP", "このオプションが有効化されている場合、|cFF00FF"..GetString(SI_LOOT_TAKE_ALL).."|r コマンドは"..GetString(SI_MAIL_SEND_COD).."メールを取得しません。")
-ZO_CreateStringId("SI_PM_SKIPEMPTYPLAYERMAIL", "|cFF00FF"..GetString(SI_LOOT_TAKE_ALL).."|r添付ファイルのない他プレイヤーのメールをスキップ")
-ZO_CreateStringId("SI_PM_SKIPEMPTYPLAYERMAIL_TOOLTIP", "このオプションが有効化されている場合、|cFF00FF"..GetString(SI_LOOT_TAKE_ALL).."|rコマンドは添付ファイルのない他プレイヤーからのメールをスキップします。逆に無効化することでメールを削除します。")
-ZO_CreateStringId("SI_PM_HELP_01", GetString(SI_PM_NAME).."とインタラクトするには、メールインボックスを開いてください。")
-ZO_CreateStringId("SI_PM_HELP_02", "|cFF00FF"..GetString(SI_LOOT_TAKE).."|rボタンは、|cEFEBBE現在選択されている|rメールを取得し、削除します。")
-ZO_CreateStringId("SI_PM_HELP_03", "|cFF00FF"..GetString(SI_LOOT_TAKE_ALL).."|rボタンは下記オプションと合致したインボックスにある|cEFEBBE全ての|rメールを取得し、削除します。")
-ZO_CreateStringId("SI_PM_HELP_04", "|cFF00FF/pm|rか|cFF00FF/postmaster|rコマンドはチャットウィンドウで使用することにより、このオプション画面へのショートカットとして使用できます。")
+-- Japanese strings
+local strings = {
+    ["SI_PM_AND"]                                = "と", 
+    ["SI_PM_SEPARATOR_HINT"]                     = "用語をカンマで区切ります。 (,)"",
+    ["SI_PM_CHAMPION_160_REWARD"]                = "チャンピオンリワード160",
+    ["SI_PM_VERBOSE"]                            = "チャットに取得メッセージ",
+    ["SI_PM_VERBOSE_TOOLTIP"]                    = "メールに添付されたアイテムを取得時、詳細なメッセージをチャットに送ります。",
+    ["SI_PM_VERBOSE_COMBINE"]                    = "取得メッセージを結合",
+    ["SI_PM_VERBOSE_COMBINE_TOOLTIP"]            = "メールを一つづつ取得した後ではなく、全ての操作が完了した後、<<1>>によって取得された全ての添付ファイルを要約します。 ",
+    ["SI_PM_DELETE_DIALOG_SUPPRESS"]             = "削除確認を抑制",
+    ["SI_PM_DELETE_DIALOG_SUPPRESS_TOOLTIP"]     = "このオプションが有効化されている場合、添付ファイルのないメッセージを削除するときに、確認が出ることがなくなります。メッセージは即座に削除されます。",
+    ["SI_PM_BOUNCE"]                             = "自動メール返却",
+    ["SI_PM_BOUNCE_TOOLTIP"]                     = "インボックスの新規メールをモニターし、もしサブジェクトがRETURN、BOUNCE、RTSのどれかから始まるか、一致した場合送信者に自動的に返却します。",
+    ["SI_PM_WYKKYD_MAILBOX_RETURN_WARNING"]      = "Wykkyd Mailbox返却ボットが有効になっています。",
+    ["SI_PM_WYKKYD_MAILBOX_DETECTED_WARNING"]    = "Wykkyd Mailboxが検知されました。自動メール返却はWykkyd Mailbox返却ボットが有効化されている場合、無効化されるので注意してください。",
+    ["SI_PM_RESERVED_SLOTS"]                     = "予約済みスロット",
+    ["SI_PM_RESERVED_SLOTS_TOOLTIP"]             = "<<1>> が設定したスロットの数バックパックを空けておいてくれます。",
+    ["SI_PM_SYSTEM"]                             = "システムメール",
+    ["SI_PM_SYSTEM_TAKE_ATTACHED"]               = "添付アイテムありのシステムメール",
+    ["SI_PM_SYSTEM_TAKE_ATTACHED_TOOLTIP"]       = "このオプションが有効化されている場合、<<1>>コマンドは添付ファイルがある雇用メールやAvAリワードメールと言ったシステムメールから添付されたファイルを取得し、削除します。",
+    ["SI_PM_SYSTEM_TAKE_PVP"]                    = "PvP・同盟戦争の報酬",
+    ["SI_PM_SYSTEM_TAKE_CRAFTING"]               = "雇用メール",
+    ["SI_PM_SYSTEM_TAKE_UNDAUNTED"]              = "ダンジョンとトライアル・アンドーンテッド",
+    ["SI_PM_SYSTEM_TAKE_OTHER"]                  = "他のすべて添付アイテム",
+    ["SI_PM_SYSTEM_DELETE_EMPTY"]                = "添付ファイルのないシステムメールを削除",
+    ["SI_PM_SYSTEM_DELETE_EMPTY_TOOLTIP"]        = "このオプションが有効化されている場合、<<1>>コマンドはアイテムがコレクションに追加されたなどの通知のような、添付ファイルのないシステムメールを削除します。",
+    ["SI_PM_SYSTEM_DELETE_EMPTY_FILTER"]         = "添付ファイルのないシステムメールフィルタ",
+    ["SI_PM_SYSTEM_DELETE_EMPTY_FILTER_TOOLTIP"] = { "このフィルタが空白ではない場合、<<1>>コマンドは設定されたワードやフレーズが送信者、サブジェクト、メール本文フィールドに含まれる、添付されたアイテムのないシステムメールを削除します。<<2>>", SI_PM_TAKE_ALL, "SI_PM_SEPARATOR_HINT" },
+    ["SI_PM_PLAYER"]                             = "プレイヤーメール",
+    ["SI_PM_PLAYER_TAKE_ATTACHED"]               = "添付ファイルありのプレイヤーメール",
+    ["SI_PM_PLAYER_TAKE_ATTACHED_TOOLTIP"]       = "このオプションが有効化されている場合、<<1>>コマンドは着払いでない他プレイヤーからの添付ファイルありのメールから添付されたファイルを取得し、削除します。",
+    ["SI_PM_PLAYER_DELETE_BULK"]                 = "MailRと天の恵みのバルク電子メールを削除します",
+    ["SI_PM_PLAYER_DELETE_EMPTY"]                = "添付ファイルのないプレイヤーメールを削除",
+    ["SI_PM_PLAYER_DELETE_EMPTY_TOOLTIP"]        = "このオプションが有効化されている場合、<<1>>コマンドは、他プレイヤーからの添付ファイルのないメールを削除します。",
+    ["SI_PM_PLAYER_DELETE_EMPTY_FILTER"]         = "添付ファイルのないプレイヤーメールフィルタ",
+    ["SI_PM_PLAYER_DELETE_EMPTY_FILTER_TOOLTIP"] = { "このフィルタが空白ではない場合、<<1>>コマンドは設定されたワードやフレーズが送信者、サブジェクト、メール本文フィールドに含まれる、添付されたアイテムのない他プレイヤーからのメールを削除します。<<2>>", SI_PM_TAKE_ALL, "SI_PM_SEPARATOR_HINT" },
+    ["SI_PM_COD"]                                = { "<<1>> メール", SI_MAIL_SEND_COD },
+    ["SI_PM_COD_TOOLTIP"]                        = { "このオプションが有効化されている場合、<<1>>コマンドは、<<2>>メールを以下の基準にそって取得します。", SI_PM_TAKE_ALL, SI_MAIL_SEND_COD },
+    ["SI_PM_COD_LIMIT"]                          = { "<<1>> リミット", SI_MAIL_SEND_COD },
+    ["SI_PM_COD_LIMIT_TOOLTIP"]                  = { "この値より少ない量の<<1>>メールのみ支払われます。(0)に設定すると無制限になります。", SI_MAIL_SEND_COD },
+    ["SI_PM_MASTER_MERCHANT_WARNING"]            = "Master Merchantが有効化されていません。",
+    ["SI_PM_COD_MM_DEAL_0"]                      = "高価すぎる",
+    ["SI_PM_COD_MM_DEAL_1"]                      = "Ok",
+    ["SI_PM_COD_MM_DEAL_2"]                      = "値頃",
+    ["SI_PM_COD_MM_DEAL_3"]                      = "良い",
+    ["SI_PM_COD_MM_DEAL_4"]                      = "素晴らしい",
+    ["SI_PM_COD_MM_DEAL_5"]                      = "買うべき！",
+    ["SI_PM_COD_MM_MIN_DEAL"]                    = { "<<1>> 最小取引", SI_MAIL_SEND_COD },
+    ["SI_PM_COD_MM_MIN_DEAL_TOOLTIP"]            = { "<<1>>メールの添付アイテムを分析し、関連したMaster Merchantマーケットの値段で最小でも良い取引でないと支払いません。'高価すぎる'をセットすることで無制限になります。", SI_MAIL_SEND_COD },
+    ["SI_PM_COD_MM_NO_DATA"]                     = { "Master Merchantデータのない<<1>>", SI_MAIL_SEND_COD },
+    ["SI_PM_COD_MM_NO_DATA_TOOLTIP"]             = { "このオプションが有効化されている場合、<<1>>コマンドはMaster Merchant値段データのない<<2>>メールの添付ファイルを取得します。", SI_PM_TAKE_ALL, SI_MAIL_SEND_COD },
+    ["SI_PM_HELP_01"]                            = { "<<1>>とインタラクトするには、メールインボックスを開いてください。", SI_PM_NAME },
+    ["SI_PM_HELP_02"]                            = { "<<1>>ボタンは、|cEFEBBE現在選択されている|rメールを取得し、削除します。", SI_PM_TAKE },
+    ["SI_PM_HELP_03"]                            = "<<1>>ボタンは下記オプションと合致したインボックスにある|cEFEBBE全ての|rメールを取得し、削除します。",
+    ["SI_PM_HELP_04"]                            = "|cFF00FF/pm|rか|cFF00FF/postmaster|rコマンドはチャットウィンドウで使用することにより、このオプション画面へのショートカットとして使用できます。",
+}
+
+-- Overwrite English strings
+for stringId, value in pairs(strings) do
+    PM_STRINGS[stringId] = value
+end
