@@ -22,19 +22,14 @@ end
 function Postmaster:SettingsSetup()
 
     self.defaults = {
-        bounce = false,
         codTake = false,
         codGoldLimit = 10000,
-        codMasterMerchantMinDeal = ITEM_QUALITY_NORMAL,
-        codTakeWithNoMasterMerchantData = false,
         deleteDialogSuppress = false,
         playerDeleteBulk = false,
         playerDeleteEmpty = false,
-        playerDeleteEmptyFilter = "",
         playerTakeAttached = true,
         reservedSlots = 0,
         systemDeleteEmpty = false,
-        systemDeleteEmptyFilter = GetString(SI_PM_CHAMPION_160_REWARD),
         systemTakeAttached = true,
         systemTakeGuildStore = true,
         systemTakeHireling = true,
@@ -42,7 +37,6 @@ function Postmaster:SettingsSetup()
         systemTakePvp = true,
         systemTakeUndaunted = true,
         verbose = true,
-        verboseCombine = false,
     }
     
     -- Initialize saved variable
@@ -103,15 +97,6 @@ function Postmaster:SettingsSetup()
             clampInput = true,
             width = "full",
             default = self.defaults.reservedSlots,
-        },
-        -- Delete MailR and GodSend bulk mail
-        {
-            type = "checkbox",
-            name = GetString(SI_PM_PLAYER_DELETE_BULK),
-            getFunc = function() return self.settings.playerDeleteBulk end,
-            setFunc = function(value) self.settings.playerDeleteBulk = value end,
-            width = "full",
-            default = self.defaults.playerDeleteBulk,
         },
         -- divider
         --{ type = "divider", width = "full" },
@@ -195,17 +180,6 @@ function Postmaster:SettingsSetup()
             width = "full",
             default = self.defaults.systemDeleteEmpty,
         },
-        -- Empty system mail filter
-        {
-            type = "editbox",
-            name = GetString(SI_PM_SYSTEM_DELETE_EMPTY_FILTER),
-            tooltip = GetString(SI_PM_SYSTEM_DELETE_EMPTY_FILTER_TOOLTIP),
-            getFunc = function() return self.settings.systemDeleteEmptyFilter end,
-            setFunc = function(value) self.settings.systemDeleteEmptyFilter = value end,
-            width = "full",
-            disabled = function() return not self.settings.systemDeleteEmpty end,
-            default = self.defaults.systemDeleteEmptyFilter,
-        },
         }},
         
         -- divider
@@ -235,17 +209,6 @@ function Postmaster:SettingsSetup()
             setFunc = function(value) self.settings.playerDeleteEmpty = value end,
             width = "full",
             default = self.defaults.playerDeleteEmpty,
-        },
-        -- Empty player mail filter
-        {
-            type = "editbox",
-            name = GetString(SI_PM_PLAYER_DELETE_EMPTY_FILTER),
-            tooltip = GetString(SI_PM_PLAYER_DELETE_EMPTY_FILTER_TOOLTIP),
-            getFunc = function() return self.settings.playerDeleteEmptyFilter end,
-            setFunc = function(value) self.settings.playerDeleteEmptyFilter = value end,
-            width = "full",
-            disabled = function() return not self.settings.playerDeleteEmpty end,
-            default = self.defaults.playerDeleteEmptyFilter,
         },
         }},
         
@@ -278,29 +241,6 @@ function Postmaster:SettingsSetup()
             disabled = function() return not self.settings.codTake end,
             default = self.defaults.codGoldLimit,
         },
-        -- Master Merchant deal limit
-        {
-            type = "masterMerchantDealSlider",
-            name = GetString(SI_PM_COD_MM_MIN_DEAL),
-            tooltip = GetString(SI_PM_COD_MM_MIN_DEAL_TOOLTIP),
-            getFunc = function() return self.settings.codMasterMerchantMinDeal end,
-            setFunc = function(value) self.settings.codMasterMerchantMinDeal = value end,
-            width = "full", 
-            disabled = function() return not self.settings.codTake end,
-            default = self.defaults.codMasterMerchantMinDeal,
-        },
-        -- Take attachments with no Master Merchant data
-        {
-            type = "checkbox",
-            name = GetString(SI_PM_COD_MM_NO_DATA),
-            tooltip = GetString(SI_PM_COD_MM_NO_DATA_TOOLTIP),
-            getFunc = function() return MasterMerchant ~= nil and self.settings.codTakeWithNoMasterMerchantData end,
-            setFunc = function(value) self.settings.codTakeWithNoMasterMerchantData = value end,
-            width = "full",
-            disabled = function() return not self.settings.codTake or not MasterMerchant end,
-            warning = not MasterMerchant and GetString(SI_PM_MASTER_MERCHANT_WARNING),
-            default = self.defaults.codTakeWithNoMasterMerchantData,
-        },
         }},
         
         --[ OPTIONS ]--
@@ -323,17 +263,6 @@ function Postmaster:SettingsSetup()
             width = "full",
             default = self.defaults.verbose,
         },
-        -- Verbose combine option
-        {
-            type = "checkbox",
-            name = GetString(SI_PM_VERBOSE_COMBINE),
-            tooltip = GetString(SI_PM_VERBOSE_COMBINE_TOOLTIP),
-            getFunc = function() return self.settings.verboseCombine end,
-            setFunc = function(value) self.settings.verboseCombine = value end,
-            width = "full",
-            default = self.defaults.verboseCombine,
-            disable = not self.settings.verbose,
-        },
         -- Delete confirmation dialog suppression
         {
             type = "checkbox",
@@ -344,25 +273,6 @@ function Postmaster:SettingsSetup()
             width = "full",
             default = self.defaults.deleteDialogSuppress,
         },
-        -- Bounce mail option
-        {
-            type = "checkbox",
-            name = GetString(SI_PM_BOUNCE),
-            tooltip = GetString(SI_PM_BOUNCE_TOOLTIP),
-            getFunc = function() return self.settings.bounce and not (WYK_MailBox and WYK_MailBox.Settings.Enabled) end,
-            setFunc = function(value) self.settings.bounce = value end,
-            width = "full",
-            default = self.defaults.bounce,
-            disabled = function() return WYK_MailBox and WYK_MailBox.Settings.Enabled end,
-            warning = not WYK_MailBox or 
-                function() 
-                    if WYK_MailBox.Settings.Enabled then
-                        return GetString(SI_PM_WYKKYD_MAILBOX_RETURN_WARNING)
-                    else
-                        return GetString(SI_PM_WYKKYD_MAILBOX_DETECTED_WARNING)
-                    end
-                end
-        }
     }
         
     LAM2:RegisterOptionControls(Postmaster.name .. "Options", optionsTable)
