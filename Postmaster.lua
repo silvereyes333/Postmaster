@@ -294,31 +294,40 @@ function Postmaster:TakeAllCanTake(mailData)
     if self:IsMailMarkedForDeletion(mailData.mailId) then
         return true
     end
-    
-    local fromSystem = (mailData.fromCS or mailData.fromSystem)
-        
-    -- Skip non-system mails, if so configured.
-    if not self.settings.playerTakeAttached 
-       and not fromSystem then 
-        return false 
         
     -- Skip C.O.D. mails, if so configured
-    elseif not self.settings.codTake and mailData.codAmount > 0 then return false
+    if not self.settings.codTake and mailData.codAmount > 0 then return false
     
     -- Skip C.O.D. mails that we don't have enough money to pay for
     elseif mailData.codAmount > GetCurrentMoney() then return false 
     
     end
     
-    -- All mail with attachments at this point should be good
-    if mailData.attachedMoney > 0 or mailData.numAttachments > 0 then return true end
+    local fromSystem = (mailData.fromCS or mailData.fromSystem)
+    local hasAttachments = mailData.attachedMoney > 0 or mailData.numAttachments > 0
+    if hasAttachments then
     
-    -- Mail without attachments will depend upon settings whether it can
-    -- be deleted.
-    if fromSystem then 
-        return self.settings.systemDeleteEmpty
-    else 
-        return self.settings.playerDeleteEmpty 
+        -- Check to make sure there are enough slots available in the backpack
+        -- to contain all attachments.  This logic is overly simplistic, since 
+        -- theoretically, stacking and craft bags could free up slots. But 
+        -- reproducing that business logic here sounds hard, so I gave up.
+        if mailData.numAttachments > 0 
+           and (GetNumBagFreeSlots(BAG_BACKPACK) - mailData.numAttachments) < self.settings.reservedSlots 
+        then 
+            return false 
+        end
+        
+        if fromSystem then 
+            return self.settings.systemTakeAttached
+        else 
+            return self.settings.playerTakeAttached 
+        end
+    else
+        if fromSystem then 
+            return self.settings.systemDeleteEmpty
+        else 
+            return self.settings.playerDeleteEmpty 
+        end
     end
 end
 
