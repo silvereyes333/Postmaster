@@ -293,14 +293,20 @@ function Postmaster:TakeAllCanTake(mailData)
     -- the take all list
     if self:IsMailMarkedForDeletion(mailData.mailId) then
         return true
-    end
+    
+    -- Handle C.O.D. mail
+    elseif mailData.codAmount > 0 then
+    
+        -- Skip C.O.D. mails, if so configured
+        if not self.settings.codTake then return false
         
-    -- Skip C.O.D. mails, if so configured
-    if not self.settings.codTake and mailData.codAmount > 0 then return false
-    
-    -- Skip C.O.D. mails that we don't have enough money to pay for
-    elseif mailData.codAmount > GetCurrentMoney() then return false 
-    
+        -- Enforce C.O.D. absolute gold limit
+        elseif self.settings.codGoldLimit > 0 and mailData.codAmount > self.settings.codGoldLimit then return false
+        
+        -- Skip C.O.D. mails that we don't have enough money to pay for
+        elseif mailData.codAmount > GetCurrentMoney() then return false 
+        
+        else return true end
     end
     
     local fromSystem = (mailData.fromCS or mailData.fromSystem)
