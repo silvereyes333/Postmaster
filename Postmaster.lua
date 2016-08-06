@@ -132,6 +132,35 @@ function Postmaster:IsMailMarkedForDeletion(mailId)
     end
 end
 
+--[[ Checks the given field of a mail message for a given list of
+     substrings and returns true if a match is found.
+     Note, returns true for "body" requests when the read info isn't yet ready. ]]
+function Postmaster:MailFieldMatch(mailData, field, substrings)
+    
+    -- We need to read mail contents
+    if field == "body" then
+    
+        -- the mail isn't ready. Return true for now to trigger the read request,
+        -- and we'll have to match again after it's ready.
+        if not mailData.isReadInfoReady then
+            return true
+        end
+        
+        -- Match on body text
+        local body = zo_strlower(ReadMail(mailData.mailId))
+        if Postmaster.StringMatchFirst(body, substrings) then
+            return true
+        end
+    
+    -- All other fields are available without a read request first
+    else
+        local value = zo_strlower(mailData[field])
+        if Postmaster.StringMatchFirst(value, substrings) then
+            return true
+        end
+    end
+end
+
 --[[ Opens the addon settings panel ]]
 function Postmaster.OpenSettingsPanel()
     local LAM2 = LibStub("LibAddonMenu-2.0")
@@ -283,12 +312,62 @@ function Postmaster.SplitLines(text, maxStringLength, wordBoundaries)
         index = index + splitAt 
     end
     return lines
+end--
+
+--[[ Checks the given string for a given list of
+     substrings and returns the start and end indexes if a match is found. ]]
+function Postmaster.StringMatchFirst(s, substrings)
+    assert(type(s) == "string", "s parameter must be a string")
+    if s == "" then return end
+    for i=1,#substrings do
+        local sub = substrings[i]
+        if sub ~= "" then
+            local matchStart, matchEnd = s:find(sub, 1, true)
+            if matchStart then
+                return matchStart, matchEnd
+            end
+        end
+    end
 end
+
+local systemEmailSubjects = {
+    ["craft"] = {
+        GetString(SI_PM_CRAFT_BLACKSMITH),
+        GetString(SI_PM_CRAFT_CLOTHIER),
+        GetString(SI_PM_CRAFT_ENCHANTER),
+        GetString(SI_PM_CRAFT_PROVISIONER),
+        GetString(SI_PM_CRAFT_WOODWORKER),
+    },
+    ["guildStore"] = {
+        GetString(SI_PM_GUILD_STORE_CANCELED),
+        GetString(SI_PM_GUILD_STORE_EXPIRED),
+        GetString(SI_PM_GUILD_STORE_PURCHASED),
+        GetString(SI_PM_GUILD_STORE_SOLD),
+    },
+    ["pvp"] = {
+        GetString(SI_PM_PVP_FOR_THE_WORTHY),
+        GetString(SI_PM_PVP_FOR_THE_ALLIANCE_1),
+        GetString(SI_PM_PVP_FOR_THE_ALLIANCE_2),
+        GetString(SI_PM_PVP_FOR_THE_ALLIANCE_3),
+        GetString(SI_PM_PVP_THE_ALLIANCE_THANKS_1),
+        GetString(SI_PM_PVP_THE_ALLIANCE_THANKS_2),
+        GetString(SI_PM_PVP_THE_ALLIANCE_THANKS_3),
+        GetString(SI_PM_PVP_LOYALTY),
+    }
+}
+
+local undauntedEmailSenders = {
+    GetString(SI_PM_UNDAUNTED_NPC_NORMAL),
+    GetString(SI_PM_UNDAUNTED_NPC_VET),
+    GetString(SI_PM_UNDAUNTED_NPC_TRIAL_1),
+    GetString(SI_PM_UNDAUNTED_NPC_TRIAL_2),
+    GetString(SI_PM_UNDAUNTED_NPC_TRIAL_3),
+}
 
 --[[ True if the given mail can be taken by Take All operations according
      to current options panel criteria. ]]
 function Postmaster:TakeAllCanTake(mailData)
-	if not mailData or not mailData.mailId or type(mailData.mailId) ~= "number" then return false end
+    if not mailData or not mailData.mailId or type(mailData.mailId) ~= "number" then return false end
     -- Item was meant to be deleted, but the inbox closed, so include it in 
     -- the take all list
     if self:IsMailMarkedForDeletion(mailData.mailId) then
@@ -324,7 +403,29 @@ function Postmaster:TakeAllCanTake(mailData)
         end
         
         if fromSystem then 
-            return self.settings.systemTakeAttached
+            if self.settings.systemTakeAttached then
+                
+                local subjectField = "formattedSubject"
+                
+                if self:MailFieldMatch(mailData, subjectField, systemEmailSubjects["craft"]) then
+                    return self.settings.systemTakeHireling
+                
+                elseif self:MailFieldMatch(mailData, subjectField, systemEmailSubjects["guildStore"]) then
+                    return self.settings.systemTakeGuildStore
+                    
+                elseif self:MailFieldMatch(mailData, subjectField, systemEmailSubjects["pvp"]) then
+                    return self.settings.systemTakePvp
+                
+                elseif self:MailFieldMatch(mailData, "senderDisplayName", undauntedEmailSenders) then
+                    return self.settings.systemTakeUndaunted
+                    
+                else 
+                    return self.settings.systemTakeOther
+                end
+                    
+            else
+                return false
+            end
         else 
             return self.settings.playerTakeAttached 
         end
