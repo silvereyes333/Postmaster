@@ -992,6 +992,26 @@ function Postmaster:PrehookSetup()
     ZO_PreHook("ZO_MailInboxShared_TakeAll", self.Prehook_MailInboxShared_TakeAll)
     ZO_PreHook("RequestReadMail", self.Prehook_RequestReadMail)
     ZO_PreHook("ZO_ScrollList_SelectData", self.Prehook_ScrollList_SelectData)
+    ZO_PreHook("ZO_Dialogs_ShowDialog", self.Prehook_Dialogs_ShowDialog)
+    ZO_PreHook("ZO_Dialogs_ShowGamepadDialog", self.Prehook_Dialogs_ShowGamepadDialog)
+end
+
+--[[ Suppress mail delete dialog in keyboard mode, if configured ]]
+function Postmaster.Prehook_Dialogs_ShowDialog(name, data, textParams, isGamepad)
+    if not Postmaster.settings.deleteDialogSuppress or name ~= "DELETE_MAIL" then 
+        return
+    end
+    MAIL_INBOX:ConfirmDelete(MAIL_INBOX.mailId)
+    return true
+end
+
+--[[ Suppress mail delete dialog in gamepad mode, if configured ]]
+function Postmaster.Prehook_Dialogs_ShowGamepadDialog(name, data, textParams)
+    if not Postmaster.settings.deleteDialogSuppress or name ~= "DELETE_MAIL" then 
+        return
+    end
+    MAIL_MANAGER_GAMEPAD.inbox:Delete()
+    return true
 end
 
 --[[ Keybind callback and visible functions do not always reliably pass on data

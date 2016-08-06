@@ -25,7 +25,6 @@ function Postmaster:SettingsSetup()
         codTake = false,
         codGoldLimit = 10000,
         deleteDialogSuppress = false,
-        playerDeleteBulk = false,
         playerDeleteEmpty = false,
         playerTakeAttached = true,
         reservedSlots = 0,
