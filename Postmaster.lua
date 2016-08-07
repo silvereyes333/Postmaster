@@ -5,7 +5,7 @@
 Postmaster = {
     name = "Postmaster",
     title = GetString(SI_PM_NAME),
-    version = "3.3.0 (alpha)",
+    version = "3.3.0",
     author = "|c99CCEFsilvereyes|r, |cEFEBBEGarkin|r & Zierk",
     
     -- For development use only. Set to true to see a ridiculously verbose 
@@ -332,42 +332,45 @@ end
 
 local systemEmailSubjects = {
     ["craft"] = {
-        GetString(SI_PM_CRAFT_BLACKSMITH),
-        GetString(SI_PM_CRAFT_CLOTHIER),
-        GetString(SI_PM_CRAFT_ENCHANTER),
-        GetString(SI_PM_CRAFT_PROVISIONER),
-        GetString(SI_PM_CRAFT_WOODWORKER),
+        zo_strlower(GetString(SI_PM_CRAFT_BLACKSMITH)),
+        zo_strlower(GetString(SI_PM_CRAFT_CLOTHIER)),
+        zo_strlower(GetString(SI_PM_CRAFT_ENCHANTER)),
+        zo_strlower(GetString(SI_PM_CRAFT_PROVISIONER)),
+        zo_strlower(GetString(SI_PM_CRAFT_WOODWORKER)),
     },
     ["guildStore"] = {
-        GetString(SI_PM_GUILD_STORE_CANCELED),
-        GetString(SI_PM_GUILD_STORE_EXPIRED),
-        GetString(SI_PM_GUILD_STORE_PURCHASED),
-        GetString(SI_PM_GUILD_STORE_SOLD),
+        zo_strlower(GetString(SI_PM_GUILD_STORE_CANCELED)),
+        zo_strlower(GetString(SI_PM_GUILD_STORE_EXPIRED)),
+        zo_strlower(GetString(SI_PM_GUILD_STORE_PURCHASED)),
+        zo_strlower(GetString(SI_PM_GUILD_STORE_SOLD)),
     },
     ["pvp"] = {
-        GetString(SI_PM_PVP_FOR_THE_WORTHY),
-        GetString(SI_PM_PVP_FOR_THE_ALLIANCE_1),
-        GetString(SI_PM_PVP_FOR_THE_ALLIANCE_2),
-        GetString(SI_PM_PVP_FOR_THE_ALLIANCE_3),
-        GetString(SI_PM_PVP_THE_ALLIANCE_THANKS_1),
-        GetString(SI_PM_PVP_THE_ALLIANCE_THANKS_2),
-        GetString(SI_PM_PVP_THE_ALLIANCE_THANKS_3),
-        GetString(SI_PM_PVP_LOYALTY),
+        zo_strlower(GetString(SI_PM_PVP_FOR_THE_WORTHY)),
+        zo_strlower(GetString(SI_PM_PVP_FOR_THE_ALLIANCE_1)),
+        zo_strlower(GetString(SI_PM_PVP_FOR_THE_ALLIANCE_2)),
+        zo_strlower(GetString(SI_PM_PVP_FOR_THE_ALLIANCE_3)),
+        zo_strlower(GetString(SI_PM_PVP_THE_ALLIANCE_THANKS_1)),
+        zo_strlower(GetString(SI_PM_PVP_THE_ALLIANCE_THANKS_2)),
+        zo_strlower(GetString(SI_PM_PVP_THE_ALLIANCE_THANKS_3)),
+        zo_strlower(GetString(SI_PM_PVP_LOYALTY)),
     }
 }
 
 local undauntedEmailSenders = {
-    GetString(SI_PM_UNDAUNTED_NPC_NORMAL),
-    GetString(SI_PM_UNDAUNTED_NPC_VET),
-    GetString(SI_PM_UNDAUNTED_NPC_TRIAL_1),
-    GetString(SI_PM_UNDAUNTED_NPC_TRIAL_2),
-    GetString(SI_PM_UNDAUNTED_NPC_TRIAL_3),
+    zo_strlower(GetString(SI_PM_UNDAUNTED_NPC_NORMAL)),
+    zo_strlower(GetString(SI_PM_UNDAUNTED_NPC_VET)),
+    zo_strlower(GetString(SI_PM_UNDAUNTED_NPC_TRIAL_1)),
+    zo_strlower(GetString(SI_PM_UNDAUNTED_NPC_TRIAL_2)),
+    zo_strlower(GetString(SI_PM_UNDAUNTED_NPC_TRIAL_3)),
 }
 
 --[[ True if the given mail can be taken by Take All operations according
      to current options panel criteria. ]]
 function Postmaster:TakeAllCanTake(mailData)
-    if not mailData or not mailData.mailId or type(mailData.mailId) ~= "number" then return false end
+    if not mailData or not mailData.mailId or type(mailData.mailId) ~= "number" then 
+        return false 
+    end
+    
     -- Item was meant to be deleted, but the inbox closed, so include it in 
     -- the take all list
     if self:IsMailMarkedForDeletion(mailData.mailId) then
@@ -405,7 +408,7 @@ function Postmaster:TakeAllCanTake(mailData)
         if fromSystem then 
             if self.settings.systemTakeAttached then
                 
-                local subjectField = "formattedSubject"
+                local subjectField = "subject"
                 
                 if self:MailFieldMatch(mailData, subjectField, systemEmailSubjects["craft"]) then
                     return self.settings.systemTakeHireling

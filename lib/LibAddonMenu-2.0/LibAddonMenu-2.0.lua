@@ -4,7 +4,7 @@
 
 
 --Register LAM with LibStub
-local MAJOR, MINOR = "LibAddonMenu-2.0", 21.1
+local MAJOR, MINOR = "LibAddonMenu-2.0", 22
 local lam, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lam then return end --the same or newer version of this lib is already loaded into memory
 
@@ -178,6 +178,38 @@ local function UpdateWarning(control)
     end
 end
 
+local localization = {
+    en = {
+        PANEL_NAME = "Addons",
+        AUTHOR = string.format("%s: <<X:1>>", GetString(SI_ADDON_MANAGER_AUTHOR)), -- "Author: <<X:1>>"
+        VERSION = "Version: <<X:1>>",
+        WEBSITE = "Visit Website",
+        PANEL_INFO_FONT = "$(CHAT_FONT)|14|soft-shadow-thin",
+    },
+    fr = { -- provided by Ayantir
+        PANEL_NAME = "Extensions",
+        WEBSITE = "Visiter le site Web",
+    },
+    de = { -- provided by sirinsidiator
+        PANEL_NAME = "Erweiterungen",
+        WEBSITE = "Webseite besuchen",
+    },
+    ru = { -- provided by TERAB1T
+        PANEL_NAME = "Дополнения",
+        VERSION = "Версия: <<X:1>>",
+        WEBSITE = "Посетить сайт",
+        PANEL_INFO_FONT = "RuESO/fonts/Univers57.otf|14|soft-shadow-thin",
+    },
+    es = { -- provided by silvereyes333
+        WEBSITE = "Vaya al sitio web",
+    },
+    jp = { -- provided by k0ta0uchi
+        PANEL_NAME = "アドオン設定",
+        WEBSITE = "ウェブサイトを見る",
+    },
+}
+
+util.L = ZO_ShallowTableCopy(localization[GetCVar("Language.2")], localization["en"])
 util.GetTooltipText = GetStringFromValue -- deprecated, use util.GetStringFromValue instead
 util.GetStringFromValue = GetStringFromValue
 util.GetDefaultValue = GetDefaultValue
@@ -185,6 +217,7 @@ util.CreateBaseControl = CreateBaseControl
 util.CreateLabelAndContainerControl = CreateLabelAndContainerControl
 util.RequestRefreshIfNeeded = RequestRefreshIfNeeded
 util.RegisterForRefreshIfNeeded = RegisterForRefreshIfNeeded
+util.GetTopPanel = GetTopPanel
 util.ShowConfirmationDialog = ShowConfirmationDialog
 util.UpdateWarning = UpdateWarning
 
@@ -597,26 +630,12 @@ function lam:RegisterOptionControls(addonID, optionsTable) --optionsTable = {sli
     addonToOptionsMap[addonID] = optionsTable
 end
 
-
 --INTERNAL FUNCTION
 --creates LAM's Addon Settings entry in ZO_GameMenu
 local function CreateAddonSettingsMenuEntry()
-    --Russian for TERAB1T's RuESO addon, which creates an "ru" locale
-    --game font does not support Cyrillic, so they are using custom fonts + extended latin charset
-    --Spanish provided by Luisen75 for their translation project
-    --Japanese provided by k0ta0uchi
-    local controlPanelNames = {
-        en = "Addon Settings",
-        fr = "Extensions",
-        de = "Erweiterungen",
-        ru = "Îacòpoéêè äoïoìîeîèé",
-        es = "Configura Addons",
-        jp = "アドオン設定",
-    }
-
     local panelData = {
         id = KEYBOARD_OPTIONS.currentPanelId,
-        name = controlPanelNames[GetCVar("Language.2")] or controlPanelNames["en"],
+        name = util.L["PANEL_NAME"],
     }
 
     KEYBOARD_OPTIONS.currentPanelId = panelData.id + 1
