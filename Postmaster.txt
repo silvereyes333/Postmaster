@@ -1,7 +1,7 @@
 ## Title: Postmaster
 ## Author: |c99CCEFsilvereyes|r, |cEFEBBEGarkin|r & Zierk
 ## Description: Lightweight mail addon to automatically loot and delete mail
-## Version: 3.2.1
+## Version: 3.3.0 (alpha)
 ## APIVersion: 100015 100016
 ## OptionalDependsOn: LibStub LibAddonMenu-2.0 MailR
 ## SavedVariables: Postmaster_Data
