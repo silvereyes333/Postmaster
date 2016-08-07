@@ -5,7 +5,7 @@
 Postmaster = {
     name = "Postmaster",
     title = GetString(SI_PM_NAME),
-    version = "3.3.0",
+    version = "3.3.1",
     author = "|c99CCEFsilvereyes|r, |cEFEBBEGarkin|r & Zierk",
     
     -- For development use only. Set to true to see a ridiculously verbose 
@@ -59,6 +59,9 @@ local function OnAddonLoaded(eventCode, addOnName)
     
     -- Initialize settings menu, saved vars, and slash commands to open settings
     self:SettingsSetup()
+    
+    -- Wire up scene callbacks
+    self:CallbackSetup()
     
     -- Wire up server event handlers
     self:EventSetup()
@@ -776,14 +779,53 @@ end
 
 --[[ 
     ===================================
+                CALLBACKS
+    ===================================
+  ]]
+  
+--[[ Wire up all callback handlers ]]
+function Postmaster:CallbackSetup()
+    MAIL_INBOX_SCENE:RegisterCallback("StateChange", self.Callback_MailInbox_StateChange)
+end
+
+--[[ Raised whenever the inbox is shown or hidden. ]]
+function Postmaster.Callback_MailInbox_StateChange(oldState, newState)
+    if IsInGamepadPreferredMode() then return end
+    local self = Postmaster
+    
+    -- Inbox shown
+    if newState == SCENE_SHOWN then
+        -- Request mail from the server that was originally requested while
+        -- the inbox was closed
+        if(MAIL_INBOX.requestMailId) then
+            MAIL_INBOX:RequestReadMessage(MAIL_INBOX.requestMailId)
+            MAIL_INBOX.requestMailId = nil
+        end
+        -- If a mail is selected that was previously marked for deletion but never
+        -- finished, automatically delete it.
+        self:TryDeleteMarkedMail(MAIL_INBOX.mailId)
+    
+    -- Inbox hidden
+    -- Reset state back to default when inbox hidden, since most server events
+    -- will no longer fire with the inbox closed.
+    elseif newState == SCENE_HIDDEN then
+    
+        self:Reset()
+    end
+end
+
+
+
+
+
+--[[ 
+    ===================================
                SERVER EVENTS 
     ===================================
   ]]
 
 function Postmaster:EventSetup()
     EVENT_MANAGER:RegisterForEvent(self.name, EVENT_INVENTORY_IS_FULL,  self.Event_InventoryIsFull)
-    EVENT_MANAGER:RegisterForEvent(self.name, EVENT_MAIL_CLOSE_MAILBOX, self.Event_MailCloseMailbox)
-    EVENT_MANAGER:RegisterForEvent(self.name, EVENT_MAIL_OPEN_MAILBOX,  self.Event_MailOpenMailbox)
     EVENT_MANAGER:RegisterForEvent(self.name, EVENT_MAIL_READABLE,      self.Event_MailReadable)
     EVENT_MANAGER:RegisterForEvent(self.name, EVENT_MAIL_REMOVED,       self.Event_MailRemoved)
     EVENT_MANAGER:RegisterForEvent(self.name, EVENT_MAIL_SEND_SUCCESS,  self.Event_MailSendSuccess)
@@ -807,30 +849,6 @@ function Postmaster.Event_InventoryIsFull(eventCode, numSlotsRequested, numSlots
     local self = Postmaster
     self:Reset()
     KEYBIND_STRIP:UpdateKeybindButtonGroup(MAIL_INBOX.selectionKeybindStripDescriptor)
-end
-
---[[ Raised whenever the inbox is closed. ]]
-function Postmaster.Event_MailCloseMailbox(eventCode, mailId)
-    if IsInGamepadPreferredMode() then return end
-    local self = Postmaster
-    -- Reset state back to default, since most server events that would do so 
-    -- will no longer fire with the inbox closed.
-    self:Reset()
-end
-
---[[ Raised whenever the inbox is opened. ]]
-function Postmaster.Event_MailOpenMailbox(eventCode, mailId)
-    if IsInGamepadPreferredMode() then return end
-    local self = Postmaster
-    -- Request mail from the server that was originally requested while
-    -- the inbox was closed
-    if(MAIL_INBOX.requestMailId) then
-        MAIL_INBOX:RequestReadMessage(MAIL_INBOX.requestMailId)
-        MAIL_INBOX.requestMailId = nil
-    end
-    -- If a mail is selected that was previously marked for deletion but never
-    -- finished, automatically delete it.
-    self:TryDeleteMarkedMail(MAIL_INBOX.mailId)
 end
 
 --[[ Raised in response to a successful RequestReadMail() call. Indicates that
