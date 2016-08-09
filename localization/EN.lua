@@ -1,8 +1,10 @@
+POSTMASTER_STRING_NO_FORMAT = -1
 ZO_CreateStringId("SI_PM_NAME",     "|c99CCEFPostmaster|r")
 ZO_CreateStringId("SI_PM_TAKE",     zo_strformat("|cFF00FF<<1>>|r", GetString(SI_LOOT_TAKE)))
 ZO_CreateStringId("SI_PM_TAKE_ALL", zo_strformat("|cFF00FF<<1>>|r", GetString(SI_LOOT_TAKE_ALL)))
-PM_STRINGS = {
+POSTMASTER_STRINGS = {
     ["SI_PM_AND"]                                = " and ", 
+    ["SI_PM_WORD_SEPARATOR"]                     = " ",
     ["SI_PM_LIST_SEPARATOR"]                     = ",", 
     ["SI_PM_SEPARATOR_HINT"]                     = "Separate terms with a comma (,)",
     ["SI_PM_CHAMPION_160_REWARD"]                = "Champion Reward 160",
@@ -12,8 +14,10 @@ PM_STRINGS = {
     ["SI_PM_VERBOSE_COMBINE_TOOLTIP"]            = "Summarizes all attachments taken by <<1>> after the entire operation is complete, instead of after each mail is looted",
     ["SI_PM_DELETE_DIALOG_SUPPRESS"]             = "Suppress Delete Confirmation",
     ["SI_PM_DELETE_DIALOG_SUPPRESS_TOOLTIP"]     = "When this option is enabled, deleting messages that have no attachments will no longer require confirmation. The messages will be deleted immediately.",
+    ["SI_PM_RETURN_DIALOG_SUPPRESS"]             = "Suppress Return Confirmation",
     ["SI_PM_BOUNCE"]                             = "Automatic Mail Return",
     ["SI_PM_BOUNCE_TOOLTIP"]                     = "Monitors the inbox for new mail and automatically returns it to the sender if the subject begins with or equals any of the following words: RETURN, BOUNCE, RTS",
+    ["SI_PM_BOUNCE_MESSAGE"]                     = { "Returned mail to <<1>>", POSTMASTER_STRING_NO_FORMAT },
     ["SI_PM_WYKKYD_MAILBOX_RETURN_WARNING"]      = "Wykkyd Mailbox return bot is enabled",
     ["SI_PM_WYKKYD_MAILBOX_DETECTED_WARNING"]    = "Wykkyd Mailbox detected. Please note that \"Automatic Mail Return\" |cFF0000deactivates|r if you enable the Wykkyd Mailbox return bot.",
     ["SI_PM_RESERVED_SLOTS"]                     = "Reserved Slots",
@@ -32,7 +36,7 @@ PM_STRINGS = {
     ["SI_PM_PLAYER"]                             = "Player Mail",
     ["SI_PM_PLAYER_TAKE_ATTACHED"]               = "Player Mail With Attachments",
     ["SI_PM_PLAYER_TAKE_ATTACHED_TOOLTIP"]       = "When this option is enabled, the <<1>> command takes the attachments from and deletes any non-C.O.D. mail from other players that have attachments",
-    ["SI_PM_PLAYER_DELETE_BULK"]                 = "MailR and GodSend Mail",
+    ["SI_PM_PLAYER_TAKE_RETURNED"]               = "Returned Mail",
     ["SI_PM_PLAYER_DELETE_EMPTY"]                = "Empty Player Mail",
     ["SI_PM_PLAYER_DELETE_EMPTY_TOOLTIP"]        = "When this option is enabled, the <<1>> command deletes any mail from other players that does not have an attachment",
     ["SI_PM_PLAYER_DELETE_EMPTY_FILTER"]         = "Empty Player Mail Must Contain",

@@ -22,12 +22,15 @@ end
 function Postmaster:SettingsSetup()
 
     self.defaults = {
+        bounce = false,
         codTake = false,
         codGoldLimit = 10000,
         deleteDialogSuppress = false,
         playerDeleteEmpty = false,
         playerTakeAttached = true,
+        playerTakeReturned = false,
         reservedSlots = 0,
+        returnDialogSuppress = false,
         systemDeleteEmpty = false,
         systemTakeAttached = true,
         systemTakeGuildStore = true,
@@ -197,6 +200,14 @@ function Postmaster:SettingsSetup()
             width = "full",
             default = self.defaults.playerTakeAttached,
         },
+        {
+            type = "checkbox",
+            name = GetString(SI_PM_PLAYER_TAKE_RETURNED),
+            getFunc = function() return self.settings.playerTakeReturned end,
+            setFunc = function(value) self.settings.playerTakeReturned = value end,
+            width = "full",
+            default = self.defaults.playerTakeReturned,
+        },
         -- divider
         { type = "divider", width = "full" },
         -- Player mail without attachments
@@ -272,6 +283,34 @@ function Postmaster:SettingsSetup()
             width = "full",
             default = self.defaults.deleteDialogSuppress,
         },
+        -- Delete confirmation dialog suppression
+        {
+            type = "checkbox",
+            name = GetString(SI_PM_RETURN_DIALOG_SUPPRESS),
+            getFunc = function() return self.settings.returnDialogSuppress end,
+            setFunc = function(value) self.settings.returnDialogSuppress = value end,
+            width = "full",
+            default = self.defaults.returnDialogSuppress,
+        },
+        -- Bounce mail option
+        {
+            type = "checkbox",
+            name = GetString(SI_PM_BOUNCE),
+            tooltip = GetString(SI_PM_BOUNCE_TOOLTIP),
+            getFunc = function() return self.settings.bounce and not (WYK_MailBox and WYK_MailBox.Settings.Enabled) end,
+            setFunc = function(value) self.settings.bounce = value end,
+            width = "full",
+            default = self.defaults.bounce,
+            disabled = function() return WYK_MailBox and WYK_MailBox.Settings.Enabled end,
+            warning = function() 
+                    if not WYK_MailBox then return end
+                    if WYK_MailBox.Settings.Enabled then
+                        return GetString(SI_PM_WYKKYD_MAILBOX_RETURN_WARNING)
+                    else
+                        return GetString(SI_PM_WYKKYD_MAILBOX_DETECTED_WARNING)
+                    end
+                end
+        }
     }
         
     LAM2:RegisterOptionControls(Postmaster.name .. "Options", optionsTable)

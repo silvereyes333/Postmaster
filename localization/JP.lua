@@ -1,6 +1,7 @@
 -- Japanese strings
 local strings = {
     ["SI_PM_AND"]                                = "と", 
+    ["SI_PM_WORD_SEPARATOR"]                     = "", 
     ["SI_PM_SEPARATOR_HINT"]                     = "用語をカンマで区切ります。 (,)"",
     ["SI_PM_CHAMPION_160_REWARD"]                = "チャンピオン160 報酬",
     ["SI_PM_VERBOSE"]                            = "チャットに取得メッセージ",
@@ -9,8 +10,10 @@ local strings = {
     ["SI_PM_VERBOSE_COMBINE_TOOLTIP"]            = "メールを一つづつ取得した後ではなく、全ての操作が完了した後、<<1>>によって取得された全ての添付ファイルを要約します。 ",
     ["SI_PM_DELETE_DIALOG_SUPPRESS"]             = "削除確認を抑制",
     ["SI_PM_DELETE_DIALOG_SUPPRESS_TOOLTIP"]     = "このオプションが有効化されている場合、添付ファイルのないメッセージを削除するときに、確認が出ることがなくなります。メッセージは即座に削除されます。",
+    ["SI_PM_RETURN_DIALOG_SUPPRESS"]             = "返却確認を抑制",
     ["SI_PM_BOUNCE"]                             = "自動メール返却",
     ["SI_PM_BOUNCE_TOOLTIP"]                     = "インボックスの新規メールをモニターし、もしサブジェクトがRETURN、BOUNCE、RTSのどれかから始まるか、一致した場合送信者に自動的に返却します。",
+    ["SI_PM_BOUNCE_MESSAGE"]                     = { "<<1>>へのメール返却", POSTMASTER_STRING_NO_FORMAT },
     ["SI_PM_WYKKYD_MAILBOX_RETURN_WARNING"]      = "Wykkyd Mailbox返却ボットが有効になっています。",
     ["SI_PM_WYKKYD_MAILBOX_DETECTED_WARNING"]    = "Wykkyd Mailboxが検知されました。自動メール返却はWykkyd Mailbox返却ボットが有効化されている場合、無効化されるので注意してください。",
     ["SI_PM_RESERVED_SLOTS"]                     = "予約済みスロット",
@@ -29,7 +32,7 @@ local strings = {
     ["SI_PM_PLAYER"]                             = "プレイヤーメール",
     ["SI_PM_PLAYER_TAKE_ATTACHED"]               = "添付ファイルありのプレイヤーメール",
     ["SI_PM_PLAYER_TAKE_ATTACHED_TOOLTIP"]       = "このオプションが有効化されている場合、<<1>>コマンドは着払いでない他プレイヤーからの添付ファイルありのメールから添付されたファイルを取得し、削除します。",
-    ["SI_PM_PLAYER_DELETE_BULK"]                 = "MailRと天の恵みのバルク電子メールを削除します",
+    ["SI_PM_PLAYER_TAKE_RETURNED"]               = "返メール",
     ["SI_PM_PLAYER_DELETE_EMPTY"]                = "添付ファイルのないプレイヤーメールを削除",
     ["SI_PM_PLAYER_DELETE_EMPTY_TOOLTIP"]        = "このオプションが有効化されている場合、<<1>>コマンドは、他プレイヤーからの添付ファイルのないメールを削除します。",
     ["SI_PM_PLAYER_DELETE_EMPTY_FILTER"]         = "添付ファイルのないプレイヤーメールフィルタ",
@@ -79,5 +82,5 @@ local strings = {
 
 -- Overwrite English strings
 for stringId, value in pairs(strings) do
-    PM_STRINGS[stringId] = value
+    POSTMASTER_STRINGS[stringId] = value
 end

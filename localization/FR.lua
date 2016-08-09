@@ -10,8 +10,10 @@ local strings = {
     ["SI_PM_VERBOSE_COMBINE_TOOLTIP"]            = "Résume toutes les pièces jointes prises par <<1>> après l' ensemble de l'opération est terminée , au lieu de après chaque courrier est pris",
     ["SI_PM_DELETE_DIALOG_SUPPRESS"]             = "Suppression de la confirmation d'effacement",
     ["SI_PM_DELETE_DIALOG_SUPPRESS_TOOLTIP"]     = "Cette option activée, l'effacement des courriers sans pièce jointe ne nécessitera plus de confirmation. Les courriers seront effacés immédiatement.",
+    ["SI_PM_RETURN_DIALOG_SUPPRESS"]             = "Suppression de la confirmation d'retour",
     ["SI_PM_BOUNCE"]                             = "Retour automatique du courrier",
     ["SI_PM_BOUNCE_TOOLTIP"]                     = "Sonde la boite de réception pour examiner les nouveaux courriers et les renvoi à l'expéditeur si le sujet commence par ou contient: RETURN, BOUNCE, RTS",
+    ["SI_PM_BOUNCE_MESSAGE"]                     = { "Courrier retourné à <<1>>", POSTMASTER_STRING_NO_FORMAT }
     ["SI_PM_WYKKYD_MAILBOX_RETURN_WARNING"]      = "Wykkyd Mailbox return bot est activé",
     ["SI_PM_WYKKYD_MAILBOX_DETECTED_WARNING"]    = "Wykkyd Mailbox détecté. Notez SVP que le retour automatique des courriers est désactivé si vous activez Wykkyd Mailbox return bot.",
     ["SI_PM_RESERVED_SLOTS"]                     = "Emplacements réservés",
@@ -30,7 +32,7 @@ local strings = {
     ["SI_PM_PLAYER"]                             = "Courrier des joueurs",
     ["SI_PM_PLAYER_TAKE_ATTACHED"]               = "Courrier de joueurs avec pièce jointe",
     ["SI_PM_PLAYER_TAKE_ATTACHED_TOOLTIP"]       = { "Lorsque cette option est activée , la commande <<1>> récupérera les pièces jointes et effacera tous les courriers des joueurs possédant des pièces jointes , à l'exclusion <<2>>", SI_PM_TAKE_ALL, SI_MAIL_SEND_COD },
-    ["SI_PM_PLAYER_DELETE_BULK"]                 = "Courriers de MailR et GodSend",
+    ["SI_PM_PLAYER_TAKE_RETURNED"]               = "Courriers retournés",
     ["SI_PM_PLAYER_DELETE_EMPTY"]                = "Courriers vides des joueurs",
     ["SI_PM_PLAYER_DELETE_EMPTY_TOOLTIP"]        = "Lorsque cette option est activée , la commande <<1>> effacera tous les courriers vides des joueurs.",
     ["SI_PM_PLAYER_DELETE_EMPTY_FILTER"]         = "Le courrier vide des joueurs contient",
@@ -80,5 +82,5 @@ local strings = {
 
 -- Overwrite English strings
 for stringId, value in pairs(strings) do
-    PM_STRINGS[stringId] = value
+    POSTMASTER_STRINGS[stringId] = value
 end
