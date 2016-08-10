@@ -203,6 +203,7 @@ function Postmaster:SettingsSetup()
         {
             type = "checkbox",
             name = GetString(SI_PM_PLAYER_TAKE_RETURNED),
+            tooltip = GetString(SI_PM_PLAYER_TAKE_RETURNED_TOOLTIP),
             getFunc = function() return self.settings.playerTakeReturned end,
             setFunc = function(value) self.settings.playerTakeReturned = value end,
             width = "full",
