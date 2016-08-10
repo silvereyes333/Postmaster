@@ -283,7 +283,7 @@ function Postmaster:SettingsSetup()
             width = "full",
             default = self.defaults.deleteDialogSuppress,
         },
-        -- Delete confirmation dialog suppression
+        -- Return confirmation dialog suppression
         {
             type = "checkbox",
             name = GetString(SI_PM_RETURN_DIALOG_SUPPRESS),

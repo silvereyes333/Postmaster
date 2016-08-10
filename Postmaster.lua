@@ -5,7 +5,7 @@
 Postmaster = {
     name = "Postmaster",
     title = GetString(SI_PM_NAME),
-    version = "3.4.0 (alpha)",
+    version = "3.4.0 (beta)",
     author = "|c99CCEFsilvereyes|r, |cEFEBBEGarkin|r & Zierk",
     
     -- For development use only. Set to true to see a ridiculously verbose 
