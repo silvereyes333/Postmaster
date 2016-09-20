@@ -55,6 +55,7 @@ function Postmaster:SettingsSetup()
         displayName = ZO_HIGHLIGHT_TEXT:Colorize(Postmaster.title),
         author = Postmaster.author,
         version = Postmaster.version,
+        website = "http://www.esoui.com/downloads/info850-PostmasterMail.html",
         registerForRefresh = true,
         registerForDefaults = true,
     }
