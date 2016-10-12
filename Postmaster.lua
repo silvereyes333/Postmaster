@@ -5,7 +5,7 @@
 Postmaster = {
     name = "Postmaster",
     title = GetString(SI_PM_NAME),
-    version = "3.4.2",
+    version = "3.4.3",
     author = "|c99CCEFsilvereyes|r, |cEFEBBEGarkin|r & Zierk",
     
     -- For development use only. Set to true to see a ridiculously verbose 
@@ -305,7 +305,7 @@ function Postmaster:RequestMailDelete(mailId)
     if(SCENE_MANAGER:IsShowing("mailInbox")) then
         -- If all attachments are gone, remove the message
         self.Debug("Deleting "..tostring(mailId))
-        DeleteMail(mailId, true)
+        DeleteMail(mailId, false)
         PlaySound(SOUNDS.MAIL_ITEM_DELETED)
         
     -- Inbox is no longer open, so delete events won't be raised
@@ -325,6 +325,7 @@ end
 
 --[[ Sets state variables back to defaults and ensures a consistent inbox state ]]
 function Postmaster:Reset()
+    self.Debug("Reset")
     self.taking = false
     self.takingAll = false
     self.abortRequested = false
@@ -332,6 +333,7 @@ function Postmaster:Reset()
     if MAIL_INBOX.mailId then
         local currentMailData = MAIL_INBOX:GetMailData(self.mailId)
         if not currentMailData then
+            self.Debug("Current mail data is nil. Setting MAIL_INBOX.mailId=nil")
             MAIL_INBOX.mailId = nil
             ZO_ScrollList_AutoSelectData(ZO_MailInboxList)
         end
@@ -576,7 +578,7 @@ function Postmaster:TakeOrDeleteSelected()
     else
         -- If all attachments are gone, remove the message
         self.Debug("Deleting "..tostring(mailId))
-        DeleteMail(mailData.mailId, true)
+        DeleteMail(mailData.mailId, false)
         PlaySound(SOUNDS.MAIL_ITEM_DELETED)
     end
 end
@@ -617,7 +619,7 @@ function Postmaster:TryDeleteMarkedMail(mailId)
     -- Resume the Take operation. will be cleared when the mail removed event handler fires.
     self.taking = true 
     self.Debug("deleting mail id "..tostring(mailId))
-    DeleteMail(mailId, true)
+    DeleteMail(mailId, false)
     PlaySound(SOUNDS.MAIL_ITEM_DELETED)
     KEYBIND_STRIP:UpdateKeybindButtonGroup(MAIL_INBOX.selectionKeybindStripDescriptor)
     return deleteIndex
