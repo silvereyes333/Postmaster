@@ -5,7 +5,7 @@
 Postmaster = {
     name = "Postmaster",
     title = GetString(SI_PM_NAME),
-    version = "3.4.4",
+    version = "3.4.5",
     author = "|c99CCEFsilvereyes|r, |cEFEBBEGarkin|r & Zierk",
     
     -- For development use only. Set to true to see a ridiculously verbose 
@@ -37,6 +37,11 @@ Postmaster = {
     -- Remembers mail removal requests that come in while the inbox is closed,
     -- so that the removals can be processed once the inbox opens again.
     mailIdsMarkedForDeletion = {},
+    
+    -- Remembers mail ids that fail to delete during a Take All operation
+    -- for whatever reason, and therefore should not be taken again during the same
+    -- operation.
+    mailIdsFailedDeletion = {},
     
     -- Contains details about C.O.D. mail being taken, since events related to
     -- taking C.O.D.s do not contain mail ids as parameters.
@@ -295,14 +300,22 @@ function Postmaster:RequestMailDelete(mailId)
     -- Do this here, immediately after all attachments are collected and C.O.D. are paid, 
     -- Don't wait until the mail removed event, because it may or may not go 
     -- through if the user closes the inbox.
-    Postmaster.PrintAttachmentSummary(self.attachmentData[mailIdString])
+    self.PrintAttachmentSummary(self.attachmentData[mailIdString])
     
     -- Clean up tracking arrays
     self.awaitingAttachments[mailIdString] = nil
     self.attachmentData[mailIdString] = nil
     
+    local mailData = MAIL_INBOX:GetMailData(mailId)
+    if mailData.attachedMoney > 0 or mailData.numAttachments > 0 then
+        self.Debug("Cannot delete mail id "..mailIdString.." because it is not empty")
+        self.mailIdsFailedDeletion[mailIdString] = true
+        self.Event_MailRemoved(nil, mailId)
+        return
+    end
+    
     -- If inbox is open...
-    if(SCENE_MANAGER:IsShowing("mailInbox")) then
+    if SCENE_MANAGER:IsShowing("mailInbox") then
         -- If all attachments are gone, remove the message
         self.Debug("Deleting "..tostring(mailId))
         DeleteMail(mailId, false)
@@ -329,6 +342,7 @@ function Postmaster:Reset()
     self.taking = false
     self.takingAll = false
     self.abortRequested = false
+    self.mailIdsFailedDeletion = {}
     ZO_MailInboxList.autoSelect = true  
     if MAIL_INBOX.mailId then
         local currentMailData = MAIL_INBOX:GetMailData(self.mailId)
@@ -460,6 +474,11 @@ local undauntedEmailSenders = {
 function Postmaster:TakeAllCanTake(mailData)
     if not mailData or not mailData.mailId or type(mailData.mailId) ~= "number" then 
         return false 
+    end
+    
+    local mailIdString = self.GetMailIdString(mailData.mailId)
+    if self.mailIdsFailedDeletion[mailIdString] == true then
+        return false
     end
     
     -- Item was meant to be deleted, but the inbox closed, so include it in 
@@ -1021,7 +1040,9 @@ function Postmaster.Event_MailRemoved(eventCode, mailId)
     if IsInGamepadPreferredMode() then return end
     local self = Postmaster
     
-    self.Debug("deleted mail id "..tostring(mailId))
+    if eventCode then
+        self.Debug("deleted mail id "..tostring(mailId))
+    end
     
     -- In the middle of auto-return
     if self.returning then return end
