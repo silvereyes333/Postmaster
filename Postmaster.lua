@@ -5,7 +5,7 @@
 Postmaster = {
     name = "Postmaster",
     title = GetString(SI_PM_NAME),
-    version = "3.4.5",
+    version = "3.5.0",
     author = "|c99CCEFsilvereyes|r, |cEFEBBEGarkin|r & Zierk",
     
     -- For development use only. Set to true to see a ridiculously verbose 
@@ -504,13 +504,21 @@ function Postmaster:TakeAllCanTake(mailData)
     local fromSystem = (mailData.fromCS or mailData.fromSystem)
     local hasAttachments = mailData.attachedMoney > 0 or mailData.numAttachments > 0
     if hasAttachments then
-    
+        
+        -- Special handling for hireling mail, since we know even without opening it that
+        -- all the attachments can potentially go straight to the craft bag
+        local subjectField = "subject"
+        local isHirelingMail = fromSystem and self:MailFieldMatch(mailData, subjectField, systemEmailSubjects["craft"])
+        local freeSlots = GetNumBagFreeSlots(BAG_BACKPACK)
+        local attachmentsToCraftBag = isHirelingMail and HasCraftBagAccess() and GetSetting(SETTING_TYPE_LOOT, LOOT_SETTING_AUTO_ADD_TO_CRAFT_BAG) == "1" and freeSlots > 0
+        
         -- Check to make sure there are enough slots available in the backpack
         -- to contain all attachments.  This logic is overly simplistic, since 
         -- theoretically, stacking and craft bags could free up slots. But 
         -- reproducing that business logic here sounds hard, so I gave up.
         if mailData.numAttachments > 0 
-           and (GetNumBagFreeSlots(BAG_BACKPACK) - mailData.numAttachments) < self.settings.reservedSlots 
+           and (freeSlots - mailData.numAttachments) < self.settings.reservedSlots
+           and not attachmentsToCraftBag
         then 
             return false 
         end
@@ -518,9 +526,7 @@ function Postmaster:TakeAllCanTake(mailData)
         if fromSystem then 
             if self.settings.systemTakeAttached then
                 
-                local subjectField = "subject"
-                
-                if self:MailFieldMatch(mailData, subjectField, systemEmailSubjects["craft"]) then
+                if isHirelingMail then
                     return self.settings.systemTakeHireling
                 
                 elseif self:MailFieldMatch(mailData, subjectField, systemEmailSubjects["guildStore"]) then
