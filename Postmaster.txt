@@ -1,7 +1,7 @@
 ## Title: Postmaster
 ## Author: |c99CCEFsilvereyes|r, |cEFEBBEGarkin|r & Zierk
 ## Description: Mail addon to simplify inbox management
-## Version: 3.5.0
+## Version: 3.5.1
 ## APIVersion: 100017
 ## OptionalDependsOn: LibStub LibAddonMenu-2.0 MailR wykkydsMailBox
 ## SavedVariables: Postmaster_Data

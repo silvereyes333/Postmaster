@@ -5,7 +5,7 @@
 Postmaster = {
     name = "Postmaster",
     title = GetString(SI_PM_NAME),
-    version = "3.5.0",
+    version = "3.5.1",
     author = "|c99CCEFsilvereyes|r, |cEFEBBEGarkin|r & Zierk",
     
     -- For development use only. Set to true to see a ridiculously verbose 
@@ -98,6 +98,29 @@ EVENT_MANAGER:RegisterForEvent(Postmaster.name, EVENT_ADD_ON_LOADED, OnAddonLoad
 function Postmaster.Debug(input, scopeDebug)
     if not Postmaster.debugMode and not scopeDebug then return end
     Postmaster.Print(input)
+end
+
+--[[ Registers a potential backpack slot as unique ]]--
+function Postmaster:DiscoverUniqueBackpackItem(slotIndex)
+    local itemLink = GetItemLink(BAG_BACKPACK, slotIndex)
+    if not itemLink or itemLink == "" then
+        self.backpackUniqueItems[slotIndex] = nil
+    end
+    local isUnique = IsItemLinkUnique(itemLink)
+    if isUnique then
+        local itemId = select(4, ZO_LinkHandler_ParseLink(itemLink))
+        self.backpackUniqueItems[slotIndex] = tonumber(itemId)
+    end
+end
+
+--[[ Scans the backpack and generates a list of unique items ]]--
+function Postmaster:DiscoverUniqueItemsInBackpack()
+    self.backpackUniqueItems = {}
+    local slotIndex, _
+    for slotIndex, _ in pairs(PLAYER_INVENTORY.inventories[INVENTORY_BACKPACK].slots) do
+        self:DiscoverUniqueBackpackItem(slotIndex)
+    end
+    return self.backpackUniqueItems
 end
 
 --[[ Places the cursor in the send mail body field. Used by the Reply action. ]]
@@ -928,7 +951,14 @@ end
   
 --[[ Wire up all callback handlers ]]
 function Postmaster:CallbackSetup()
-    MAIL_INBOX_SCENE:RegisterCallback("StateChange", self.Callback_MailInbox_StateChange)
+    CALLBACK_MANAGER:RegisterCallback("BackpackFullUpdate", self.Callback_BackpackFullUpdate)
+    MAIL_INBOX_SCENE:RegisterCallback("StateChange",        self.Callback_MailInbox_StateChange)
+end
+
+--[[ Raised whenever the backpack inventory is populated. ]]
+function Postmaster.Callback_BackpackFullUpdate()
+    local self = Postmaster
+    self:DiscoverUniqueItemsInBackpack()
 end
 
 --[[ Raised whenever the inbox is shown or hidden. ]]
@@ -971,16 +1001,17 @@ end
   ]]
 
 function Postmaster:EventSetup()
-    EVENT_MANAGER:RegisterForEvent(self.name, EVENT_INVENTORY_IS_FULL,  self.Event_InventoryIsFull)
-    EVENT_MANAGER:RegisterForEvent(self.name, EVENT_MAIL_INBOX_UPDATE,  self.Event_MailInboxUpdate)
-    EVENT_MANAGER:RegisterForEvent(self.name, EVENT_MAIL_READABLE,      self.Event_MailReadable)
-    EVENT_MANAGER:RegisterForEvent(self.name, EVENT_MAIL_REMOVED,       self.Event_MailRemoved)
-    EVENT_MANAGER:RegisterForEvent(self.name, EVENT_MAIL_SEND_SUCCESS,  self.Event_MailSendSuccess)
+    EVENT_MANAGER:RegisterForEvent(self.name, EVENT_INVENTORY_IS_FULL, self.Event_InventoryIsFull)
+    EVENT_MANAGER:RegisterForEvent(self.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, self.Event_InventorySingleSlotUpdate)
+    EVENT_MANAGER:RegisterForEvent(self.name, EVENT_MAIL_INBOX_UPDATE, self.Event_MailInboxUpdate)
+    EVENT_MANAGER:RegisterForEvent(self.name, EVENT_MAIL_READABLE,     self.Event_MailReadable)
+    EVENT_MANAGER:RegisterForEvent(self.name, EVENT_MAIL_REMOVED,      self.Event_MailRemoved)
+    EVENT_MANAGER:RegisterForEvent(self.name, EVENT_MAIL_SEND_SUCCESS, self.Event_MailSendSuccess)
     EVENT_MANAGER:RegisterForEvent(self.name, EVENT_MAIL_TAKE_ATTACHED_ITEM_SUCCESS, 
         self.Event_MailTakeAttachedItemSuccess)
     EVENT_MANAGER:RegisterForEvent(self.name, EVENT_MAIL_TAKE_ATTACHED_MONEY_SUCCESS,  
         self.Event_MailTakeAttachedMoneySuccess)
-    EVENT_MANAGER:RegisterForEvent(self.name, EVENT_MONEY_UPDATE,       self.Event_MoneyUpdate)
+    EVENT_MANAGER:RegisterForEvent(self.name, EVENT_MONEY_UPDATE,      self.Event_MoneyUpdate)
     
     -- Fix for Wykkyd Mailbox keybind conflicts
     if type(WYK_MailBox) == "table" then
@@ -996,6 +1027,15 @@ function Postmaster.Event_InventoryIsFull(eventCode, numSlotsRequested, numSlots
     local self = Postmaster
     self:Reset()
     KEYBIND_STRIP:UpdateKeybindButtonGroup(MAIL_INBOX.selectionKeybindStripDescriptor)
+end
+
+--[[ Raised when a player inventory slot is updated. ]]
+function Postmaster.Event_InventorySingleSlotUpdate(eventCode, bagId, slotIndex, isNewItem, itemSoundCategory, inventoryUpdateReason, stackCountChange)
+    if bagId ~= BAG_BACKPACK then
+        return
+    end
+    local self = Postmaster
+    self:DiscoverUniqueBackpackItem(slotIndex)
 end
 
 --[[ Raised whenever new mail arrives.  When this happens, mark that we need to 
@@ -1169,8 +1209,6 @@ function Postmaster.Event_MoneyUpdate(eventCode, newMoney, oldMoney, reason)
     end
 end
 
-
-
 --[[ 
     ===================================
                  PREHOOKS
@@ -1247,16 +1285,32 @@ function Postmaster.Prehook_MailInboxShared_TakeAll(mailId)
     self.abortRequested = false  
     self.Debug("ZO_MailInboxShared_TakeAll("..tostring(mailId)..")")
     self.awaitingAttachments[self.GetMailIdString(mailId)] = {}
-    if numAttachments > 0 and (attachedMoney > 0 or codAmount > 0) then
-        table.insert(self.awaitingAttachments[self.GetMailIdString(mailId)], true)
-    end
     local attachmentData = { items = {}, money = attachedMoney, cod = codAmount }
+    local uniqueAttachmentCount = 0
     for attachIndex=1,numAttachments do
         local _, stack = GetAttachedItemInfo(mailId, attachIndex)
         local attachmentItem = { link = GetAttachedItemLink(mailId, attachIndex), count = stack or 1 }
+        if IsItemLinkUnique(attachmentItem.link) then
+            uniqueAttachmentCount = uniqueAttachmentCount + 1
+        end
         table.insert(attachmentData.items, attachmentItem)
     end
     local mailIdString = self.GetMailIdString(mailId)
+    
+    if numAttachments > 0 then
+        --[[if uniqueAttachmentCount == numAttachments then
+        
+            
+            self.Debug("Take attachments for "..mailIdString
+                       .." because it contains only unique items that are already in the backpack")
+            self.mailIdsFailedDeletion[mailIdString] = true
+            self.Event_MailRemoved(nil, mailId)
+            return true
+        end]]
+        if attachedMoney > 0 or codAmount > 0 then
+            table.insert(self.awaitingAttachments[self.GetMailIdString(mailId)], true)
+        end
+    end
     self.attachmentData[mailIdString] = attachmentData
     if codAmount > 0 then
         self.codMails[mailIdString] = { mailId = mailId, amount = codAmount, complete = false }
