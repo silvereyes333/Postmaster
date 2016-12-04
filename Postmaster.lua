@@ -556,10 +556,10 @@ function Postmaster:TakeAllCanTake(mailData)
     elseif mailData.codAmount > 0 then
     
         -- Skip C.O.D. mails, if so configured
-        if not self.settings.codTake then return false
+        if not self.settings.takeAllCodTake then return false
         
         -- Enforce C.O.D. absolute gold limit
-        elseif self.settings.codGoldLimit > 0 and mailData.codAmount > self.settings.codGoldLimit then return false
+        elseif self.settings.takeAllCodGoldLimit > 0 and mailData.codAmount > self.settings.takeAllCodGoldLimit then return false
         
         -- Skip C.O.D. mails that we don't have enough money to pay for
         elseif mailData.codAmount > GetCurrentMoney() then return false 
@@ -590,37 +590,37 @@ function Postmaster:TakeAllCanTake(mailData)
         end
         
         if fromSystem then 
-            if self.settings.systemTakeAttached then
+            if self.settings.takeAllSystemAttached then
                 
                 if isHirelingMail then
-                    return self.settings.systemTakeHireling
+                    return self.settings.takeAllSystemHireling
                 
                 elseif self:MailFieldMatch(mailData, subjectField, systemEmailSubjects["guildStore"]) then
-                    return self.settings.systemTakeGuildStore
+                    return self.settings.takeAllSystemGuildStore
                     
                 elseif self:MailFieldMatch(mailData, subjectField, systemEmailSubjects["pvp"]) then
-                    return self.settings.systemTakePvp
+                    return self.settings.takeAllSystemPvp
                 
                 elseif self:MailFieldMatch(mailData, "senderDisplayName", undauntedEmailSenders) then
-                    return self.settings.systemTakeUndaunted
+                    return self.settings.takeAllSystemUndaunted
                     
                 else 
-                    return self.settings.systemTakeOther
+                    return self.settings.takeAllSystemOther
                 end
                     
             else
                 return false
             end
         elseif mailData.returned then
-            return self.settings.playerTakeReturned 
+            return self.settings.takeAllPlayerReturned 
         else
-            return self.settings.playerTakeAttached 
+            return self.settings.takeAllPlayerAttached 
         end
     else
         if fromSystem then 
-            return self.settings.systemDeleteEmpty
+            return self.settings.takeAllSystemDeleteEmpty
         else 
-            return self.settings.playerDeleteEmpty 
+            return self.settings.takeAllPlayerDeleteEmpty 
         end
     end
 end
@@ -723,7 +723,7 @@ end
 --[[ Bypasses the original "Take attachments" logic for C.O.D. mail during a
      Take All operation. ]]
 function Postmaster:TryTakeAllCodMail()
-    if not self.settings.codTake then return end
+    if not self.settings.takeAllCodTake then return end
     local mailData = ZO_MailInboxList.selectedData
     if mailData.codAmount > 0 then
         MAIL_INBOX.pendingAcceptCOD = true
@@ -1328,7 +1328,7 @@ function Postmaster.Prehook_MailInboxShared_TakeAll(mailId)
     local numAttachments, attachedMoney, codAmount = GetMailAttachmentInfo(mailId)
     if codAmount > 0 then
         if self.takingAll then
-            if not self.settings.codTake then return end
+            if not self.settings.takeAllCodTake then return end
         elseif not MAIL_INBOX.pendingAcceptCOD then return end
     end
     self.taking = true

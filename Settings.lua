@@ -10,35 +10,68 @@ local function InvertBooleanSetting(settings, oldSetting, newSetting)
     settings[newSetting] = not settings[oldSetting]
     settings[oldSetting] = nil
 end
+local function RenameSetting(settings, oldSetting, newSetting)
+    if settings[oldSetting] == nil then 
+        return
+    end
+    settings[newSetting] = settings[oldSetting]
+    settings[oldSetting] = nil
+end
 local function UpgradeSettings(settings)
     if not settings.dataVersion then
-        settings.dataVersion = 2
-        InvertBooleanSetting(settings, "skipEmptySystemMail", "systemDeleteEmpty")
-        InvertBooleanSetting(settings, "skipEmptyPlayerMail", "playerDeleteEmpty")
-        InvertBooleanSetting(settings, "skipOtherPlayerMail", "playerTakeAttached")
-        InvertBooleanSetting(settings, "skipCod", "codTake")
+        settings.dataVersion = 3
+        InvertBooleanSetting(settings, "skipCod", "takeAllCodTake")
+        InvertBooleanSetting(settings, "skipEmptyPlayerMail", "takeAllPlayerDeleteEmpty")
+        InvertBooleanSetting(settings, "skipOtherPlayerMail", "takeAllPlayerAttached")
+        InvertBooleanSetting(settings, "skipEmptySystemMail", "takeAllSystemDeleteEmpty")
+    elseif settings.dataVersion < 3 then
+        settings.dataVersion = 3
+        RenameSetting(settings, "codTake", "takeAllCodTake")
+        RenameSetting(settings, "codGoldLimit", "takeAllCodGoldLimit")
+        RenameSetting(settings, "playerDeleteEmpty", "takeAllPlayerDeleteEmpty")
+        RenameSetting(settings, "playerTakeAttached", "takeAllPlayerAttached")
+        RenameSetting(settings, "playerTakeReturned", "takeAllPlayerReturned")
+        RenameSetting(settings, "systemDeleteEmpty", "takeAllSystemDeleteEmpty")
+        RenameSetting(settings, "systemTakeAttached", "takeAllSystemAttached")
+        RenameSetting(settings, "systemTakeGuildStore", "takeAllSystemGuildStore")
+        RenameSetting(settings, "systemTakeHireling", "takeAllSystemHireling")
+        RenameSetting(settings, "systemTakeOther", "takeAllSystemOther")
+        RenameSetting(settings, "systemTakePvp", "takeAllSystemPvp")
+        RenameSetting(settings, "systemTakeUndaunted", "takeAllSystemUndaunted")
     end
 end
 function Postmaster:SettingsSetup()
 
     self.defaults = {
         bounce = false,
-        codTake = false,
-        codGoldLimit = 10000,
-        deleteDialogSuppress = false,
-        playerDeleteEmpty = false,
-        playerTakeAttached = true,
-        playerTakeReturned = false,
         reservedSlots = 0,
+        deleteDialogSuppress = false,
         returnDialogSuppress = false,
-        systemDeleteEmpty = false,
-        systemTakeAttached = true,
-        systemTakeGuildStore = true,
-        systemTakeHireling = true,
-        systemTakeOther = true,
-        systemTakePvp = true,
-        systemTakeUndaunted = true,
         verbose = true,
+        takeAllCodTake = false,
+        takeAllCodGoldLimit = 10000,
+        takeAllPlayerDeleteEmpty = false,
+        takeAllPlayerAttached = true,
+        takeAllPlayerReturned = false,
+        takeAllSystemDeleteEmpty = false,
+        takeAllSystemAttached = true,
+        takeAllSystemGuildStore = true,
+        takeAllSystemHireling = true,
+        takeAllSystemOther = true,
+        takeAllSystemPvp = true,
+        takeAllSystemUndaunted = true,
+        quickTakeCodTake = true,
+        quickTakeCodGoldLimit = 0,
+        quickTakePlayerDeleteEmpty = true,
+        quickTakePlayerAttached = true,
+        quickTakePlayerReturned = true,
+        quickTakeSystemDeleteEmpty = true,
+        quickTakeSystemAttached = true,
+        quickTakeSystemGuildStore = true,
+        quickTakeSystemHireling = true,
+        quickTakeSystemOther = true,
+        quickTakeSystemPvp = true,
+        quickTakeSystemUndaunted = true,
     }
     
     -- Initialize saved variable
@@ -69,22 +102,21 @@ function Postmaster:SettingsSetup()
         },
         {
             type = "description",
-            text = GetString(SI_PM_HELP_04),
+            text = GetString(SI_PM_HELP_02),
             width = "full"
         },
+		
+		
+		--[[ TAKE ALL ]]--
+		
         {
-            type = "description",
-            text = GetString(SI_PM_HELP_02),
+            type = "header",
+            name = GetString(SI_LOOT_TAKE_ALL),
             width = "full"
         },
         {
             type = "description",
             text = GetString(SI_PM_HELP_03),
-            width = "full"
-        },
-        {
-            type = "header",
-            name = GetString(SI_LOOT_TAKE_ALL),
             width = "full"
         },
         -- Reserved slots
@@ -113,63 +145,63 @@ function Postmaster:SettingsSetup()
             type = "checkbox",
             name = GetString(SI_PM_SYSTEM_TAKE_ATTACHED),
             tooltip = GetString(SI_PM_SYSTEM_TAKE_ATTACHED_TOOLTIP),
-            getFunc = function() return self.settings.systemTakeAttached end,
-            setFunc = function(value) self.settings.systemTakeAttached = value end,
+            getFunc = function() return self.settings.takeAllSystemAttached end,
+            setFunc = function(value) self.settings.takeAllSystemAttached = value end,
             width = "full",
-            default = self.defaults.systemTakeAttached,
+            default = self.defaults.takeAllSystemAttached,
         },
         -- PvP mail
         {
             type = "checkbox",
             name = GetString(SI_PM_SYSTEM_TAKE_PVP),
-            getFunc = function() return self.settings.systemTakePvp end,
-            setFunc = function(value) self.settings.systemTakePvp = value end,
+            getFunc = function() return self.settings.takeAllSystemPvp end,
+            setFunc = function(value) self.settings.takeAllSystemPvp = value end,
             width = "full",
-            disabled = function() return not self.settings.systemTakeAttached end,
-            default = self.defaults.systemTakePvp,
+            disabled = function() return not self.settings.takeAllSystemAttached end,
+            default = self.defaults.takeAllSystemPvp,
         },
         
         -- Hireling mail
         {
             type = "checkbox",
             name = GetString(SI_PM_SYSTEM_TAKE_CRAFTING),
-            getFunc = function() return self.settings.systemTakeHireling end,
-            setFunc = function(value) self.settings.systemTakeHireling = value end,
+            getFunc = function() return self.settings.takeAllSystemHireling end,
+            setFunc = function(value) self.settings.takeAllSystemHireling = value end,
             width = "full",
-            disabled = function() return not self.settings.systemTakeAttached end,
-            default = self.defaults.systemTakeHireling,
+            disabled = function() return not self.settings.takeAllSystemAttached end,
+            default = self.defaults.takeAllSystemHireling,
         },
         
         -- Guild store mail
         {
             type = "checkbox",
             name = GetString(SI_WINDOW_TITLE_TRADING_HOUSE),
-            getFunc = function() return self.settings.systemTakeGuildStore end,
-            setFunc = function(value) self.settings.systemTakeGuildStore = value end,
+            getFunc = function() return self.settings.takeAllSystemGuildStore end,
+            setFunc = function(value) self.settings.takeAllSystemGuildStore = value end,
             width = "full",
-            disabled = function() return not self.settings.systemTakeAttached end,
-            default = self.defaults.systemTakeGuildStore,
+            disabled = function() return not self.settings.takeAllSystemAttached end,
+            default = self.defaults.takeAllSystemGuildStore,
         },
         
         -- Undaunted mail
         {
             type = "checkbox",
             name = GetString(SI_PM_SYSTEM_TAKE_UNDAUNTED), 
-            getFunc = function() return self.settings.systemTakeUndaunted end,
-            setFunc = function(value) self.settings.systemTakeUndaunted = value end,
+            getFunc = function() return self.settings.takeAllSystemUndaunted end,
+            setFunc = function(value) self.settings.takeAllSystemUndaunted = value end,
             width = "full",
-            disabled = function() return not self.settings.systemTakeAttached end,
-            default = self.defaults.systemTakeUndaunted,
+            disabled = function() return not self.settings.takeAllSystemAttached end,
+            default = self.defaults.takeAllSystemUndaunted,
         },
         -- Other system attachments
         {
             type = "checkbox",
             name = GetString(SI_PM_SYSTEM_TAKE_OTHER),
-            getFunc = function() return self.settings.systemTakeOther end,
-            setFunc = function(value) self.settings.systemTakeOther = value end,
+            getFunc = function() return self.settings.takeAllSystemOther end,
+            setFunc = function(value) self.settings.takeAllSystemOther = value end,
             width = "full",
-            disabled = function() return not self.settings.systemTakeAttached end,
-            default = self.defaults.systemTakeOther,
+            disabled = function() return not self.settings.takeAllSystemAttached end,
+            default = self.defaults.takeAllSystemOther,
         },
         -- divider
         { type = "divider", width = "full" },
@@ -178,10 +210,10 @@ function Postmaster:SettingsSetup()
             type = "checkbox",
             name = GetString(SI_PM_SYSTEM_DELETE_EMPTY),
             tooltip = GetString(SI_PM_SYSTEM_DELETE_EMPTY_TOOLTIP),
-            getFunc = function() return self.settings.systemDeleteEmpty end,
-            setFunc = function(value) self.settings.systemDeleteEmpty = value end,
+            getFunc = function() return self.settings.takeAllSystemDeleteEmpty end,
+            setFunc = function(value) self.settings.takeAllSystemDeleteEmpty = value end,
             width = "full",
-            default = self.defaults.systemDeleteEmpty,
+            default = self.defaults.takeAllSystemDeleteEmpty,
         },
         }},
         
@@ -196,19 +228,19 @@ function Postmaster:SettingsSetup()
             type = "checkbox",
             name = GetString(SI_PM_PLAYER_TAKE_ATTACHED),
             tooltip = GetString(SI_PM_PLAYER_TAKE_ATTACHED_TOOLTIP),
-            getFunc = function() return self.settings.playerTakeAttached end,
-            setFunc = function(value) self.settings.playerTakeAttached = value end,
+            getFunc = function() return self.settings.takeAllPlayerAttached end,
+            setFunc = function(value) self.settings.takeAllPlayerAttached = value end,
             width = "full",
-            default = self.defaults.playerTakeAttached,
+            default = self.defaults.takeAllPlayerAttached,
         },
         {
             type = "checkbox",
             name = GetString(SI_PM_PLAYER_TAKE_RETURNED),
             tooltip = GetString(SI_PM_PLAYER_TAKE_RETURNED_TOOLTIP),
-            getFunc = function() return self.settings.playerTakeReturned end,
-            setFunc = function(value) self.settings.playerTakeReturned = value end,
+            getFunc = function() return self.settings.takeAllPlayerReturned end,
+            setFunc = function(value) self.settings.takeAllPlayerReturned = value end,
             width = "full",
-            default = self.defaults.playerTakeReturned,
+            default = self.defaults.takeAllPlayerReturned,
         },
         -- divider
         { type = "divider", width = "full" },
@@ -217,10 +249,10 @@ function Postmaster:SettingsSetup()
             type = "checkbox",
             name = GetString(SI_PM_PLAYER_DELETE_EMPTY),
             tooltip = GetString(SI_PM_PLAYER_DELETE_EMPTY_TOOLTIP),
-            getFunc = function() return self.settings.playerDeleteEmpty end,
-            setFunc = function(value) self.settings.playerDeleteEmpty = value end,
+            getFunc = function() return self.settings.takeAllPlayerDeleteEmpty end,
+            setFunc = function(value) self.settings.takeAllPlayerDeleteEmpty = value end,
             width = "full",
-            default = self.defaults.playerDeleteEmpty,
+            default = self.defaults.takeAllPlayerDeleteEmpty,
         },
         }},
         
@@ -234,24 +266,192 @@ function Postmaster:SettingsSetup()
             type = "checkbox",
             name = GetString(SI_PM_COD),
             tooltip = GetString(SI_PM_COD_TOOLTIP),
-            getFunc = function() return self.settings.codTake end,
-            setFunc = function(value) self.settings.codTake = value end,
+            getFunc = function() return self.settings.takeAllCodTake end,
+            setFunc = function(value) self.settings.takeAllCodTake = value end,
             width = "full",
-            default = self.defaults.codTake,
+            default = self.defaults.takeAllCodTake,
         },
         -- Absolute COD gold limit
         {
             type = "slider",
             name = GetString(SI_PM_COD_LIMIT),
             tooltip = GetString(SI_PM_COD_LIMIT_TOOLTIP),
-            getFunc = function() return self.settings.codGoldLimit end,
-            setFunc = function(value) self.settings.codGoldLimit = value end,
+            getFunc = function() return self.settings.takeAllCodGoldLimit end,
+            setFunc = function(value) self.settings.takeAllCodGoldLimit = value end,
             min = 0,
             max = 200000,
             width = "full", 
             clampInput = false,
-            disabled = function() return not self.settings.codTake end,
-            default = self.defaults.codGoldLimit,
+            disabled = function() return not self.settings.takeAllCodTake end,
+            default = self.defaults.takeAllCodGoldLimit,
+        },
+        }},
+        
+		
+		
+		
+		--[[ TAKE (QUICK) ]]--
+        
+        {
+            type = "header",
+            name = GetString(SI_LOOT_TAKE),
+            width = "full"
+        },
+        
+        {
+            type = "description",
+            text = GetString(SI_PM_HELP_04),
+            width = "full"
+        },
+        
+        
+        --[ SYSTEM ]--
+        { type = "submenu", name = GetString(SI_PM_SYSTEM), controls = {
+        
+        -- System mail with attachments
+        {
+            type = "checkbox",
+            name = GetString(SI_PM_SYSTEM_TAKE_ATTACHED),
+            tooltip = GetString(SI_PM_SYSTEM_TAKE_ATTACHED_TOOLTIP_QUICK),
+            getFunc = function() return self.settings.quickTakeSystemAttached end,
+            setFunc = function(value) self.settings.quickTakeSystemAttached = value end,
+            width = "full",
+            default = self.defaults.quickTakeSystemAttached,
+        },
+        -- PvP mail
+        {
+            type = "checkbox",
+            name = GetString(SI_PM_SYSTEM_TAKE_PVP),
+            getFunc = function() return self.settings.quickTakeSystemPvp end,
+            setFunc = function(value) self.settings.quickTakeSystemPvp = value end,
+            width = "full",
+            disabled = function() return not self.settings.quickTakeSystemAttached end,
+            default = self.defaults.quickTakeSystemPvp,
+        },
+        
+        -- Hireling mail
+        {
+            type = "checkbox",
+            name = GetString(SI_PM_SYSTEM_TAKE_CRAFTING),
+            getFunc = function() return self.settings.quickTakeSystemHireling end,
+            setFunc = function(value) self.settings.quickTakeSystemHireling = value end,
+            width = "full",
+            disabled = function() return not self.settings.quickTakeSystemAttached end,
+            default = self.defaults.quickTakeSystemHireling,
+        },
+        
+        -- Guild store mail
+        {
+            type = "checkbox",
+            name = GetString(SI_WINDOW_TITLE_TRADING_HOUSE),
+            getFunc = function() return self.settings.quickTakeSystemGuildStore end,
+            setFunc = function(value) self.settings.quickTakeSystemGuildStore = value end,
+            width = "full",
+            disabled = function() return not self.settings.quickTakeSystemAttached end,
+            default = self.defaults.quickTakeSystemGuildStore,
+        },
+        
+        -- Undaunted mail
+        {
+            type = "checkbox",
+            name = GetString(SI_PM_SYSTEM_TAKE_UNDAUNTED), 
+            getFunc = function() return self.settings.quickTakeSystemUndaunted end,
+            setFunc = function(value) self.settings.quickTakeSystemUndaunted = value end,
+            width = "full",
+            disabled = function() return not self.settings.quickTakeSystemAttached end,
+            default = self.defaults.quickTakeSystemUndaunted,
+        },
+        -- Other system attachments
+        {
+            type = "checkbox",
+            name = GetString(SI_PM_SYSTEM_TAKE_OTHER),
+            getFunc = function() return self.settings.quickTakeSystemOther end,
+            setFunc = function(value) self.settings.quickTakeSystemOther = value end,
+            width = "full",
+            disabled = function() return not self.settings.quickTakeSystemAttached end,
+            default = self.defaults.quickTakeSystemOther,
+        },
+        -- divider
+        { type = "divider", width = "full" },
+        -- System mail without attachments
+        {
+            type = "checkbox",
+            name = GetString(SI_PM_SYSTEM_DELETE_EMPTY),
+            tooltip = GetString(SI_PM_SYSTEM_DELETE_EMPTY_TOOLTIP_QUICK),
+            getFunc = function() return self.settings.quickTakeSystemDeleteEmpty end,
+            setFunc = function(value) self.settings.quickTakeSystemDeleteEmpty = value end,
+            width = "full",
+            default = self.defaults.quickTakeSystemDeleteEmpty,
+        },
+        }},
+        
+        -- divider
+        --{ type = "divider", width = "full" },
+        -- Player mail with attachments
+        
+        --[ PLAYER ]--
+        { type = "submenu", name = GetString(SI_PM_PLAYER), controls = {
+        
+        {
+            type = "checkbox",
+            name = GetString(SI_PM_PLAYER_TAKE_ATTACHED),
+            tooltip = GetString(SI_PM_PLAYER_TAKE_ATTACHED_TOOLTIP_QUICK),
+            getFunc = function() return self.settings.quickTakePlayerAttached end,
+            setFunc = function(value) self.settings.quickTakePlayerAttached = value end,
+            width = "full",
+            default = self.defaults.quickTakePlayerAttached,
+        },
+        {
+            type = "checkbox",
+            name = GetString(SI_PM_PLAYER_TAKE_RETURNED),
+            tooltip = GetString(SI_PM_PLAYER_TAKE_RETURNED_TOOLTIP_QUICK),
+            getFunc = function() return self.settings.quickTakePlayerReturned end,
+            setFunc = function(value) self.settings.quickTakePlayerReturned = value end,
+            width = "full",
+            default = self.defaults.quickTakePlayerReturned,
+        },
+        -- divider
+        { type = "divider", width = "full" },
+        -- Player mail without attachments
+        {
+            type = "checkbox",
+            name = GetString(SI_PM_PLAYER_DELETE_EMPTY),
+            tooltip = GetString(SI_PM_PLAYER_DELETE_EMPTY_TOOLTIP_QUICK),
+            getFunc = function() return self.settings.quickTakePlayerDeleteEmpty end,
+            setFunc = function(value) self.settings.quickTakePlayerDeleteEmpty = value end,
+            width = "full",
+            default = self.defaults.quickTakePlayerDeleteEmpty,
+        },
+        }},
+        
+        -- divider
+        --{ type = "divider", width = "full" },
+        
+        --[ COD ]--
+        { type = "submenu", name = GetString(SI_MAIL_SEND_COD), controls = {
+        -- Take COD mail
+        {
+            type = "checkbox",
+            name = GetString(SI_PM_COD),
+            tooltip = GetString(SI_PM_COD_TOOLTIP),
+            getFunc = function() return self.settings.quickTakeCodTake end,
+            setFunc = function(value) self.settings.quickTakeCodTake = value end,
+            width = "full",
+            default = self.defaults.quickTakeCodTake,
+        },
+        -- Absolute COD gold limit
+        {
+            type = "slider",
+            name = GetString(SI_PM_COD_LIMIT),
+            tooltip = GetString(SI_PM_COD_LIMIT_TOOLTIP),
+            getFunc = function() return self.settings.quickTakeCodGoldLimit end,
+            setFunc = function(value) self.settings.quickTakeCodGoldLimit = value end,
+            min = 0,
+            max = 200000,
+            width = "full", 
+            clampInput = false,
+            disabled = function() return not self.settings.quickTakeCodTake end,
+            default = self.defaults.quickTakeCodGoldLimit,
         },
         }},
         
