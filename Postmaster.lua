@@ -34,7 +34,8 @@ Postmaster = {
     -- for mail currently being taken.  Used to display summaries to chat.
     attachmentData = {},
     
-    -- Remembers mail removal requests that come in while the inbox is closed,
+    -- Remembers mail removal requests that don't receive a mail removed event from the server
+    -- or which have the event come in while the inbox is closed
     -- so that the removals can be processed once the inbox opens again.
     mailIdsMarkedForDeletion = {},
     
@@ -50,6 +51,9 @@ Postmaster = {
 
 -- Format for chat print and debug messages, with addon title prefix
 PM_CHAT_FORMAT = zo_strformat("<<1>>", Postmaster.title) .. "|cFFFFFF: <<1>>|r"
+
+-- Max milliseconds to wait for a mail removal event from the server after calling DeleteMail
+PM_DELETE_MAIL_TIMEOUT_MS = 1500
 
 -- Max length of a line in chat, after the prefix.
 PM_MAX_CHAT_LENGTH = 355 - string.len(PM_CHAT_FORMAT)
@@ -90,6 +94,14 @@ local function OnAddonLoaded(eventCode, addOnName)
     -- TODO: add gamepad inbox UI keybind support
 end
 
+-- Extracting item ids from item links
+local function GetItemIdFromLink(itemLink)
+    local itemId = select(4, ZO_LinkHandler_ParseLink(itemLink))
+    if itemId and itemId ~= "" then
+        return tonumber(itemId)
+    end
+end
+
 -- Register events
 EVENT_MANAGER:RegisterForEvent(Postmaster.name, EVENT_ADD_ON_LOADED, OnAddonLoaded)
 
@@ -100,6 +112,23 @@ function Postmaster.Debug(input, scopeDebug)
     Postmaster.Print(input)
 end
 
+--[[ Called a certain amount of time after a DeleteMail command is issued in order to handle the
+     situation where the server doesn't actually delete the mail. ]]
+function Postmaster.DeleteMailTimeout()
+    local self = Postmaster
+    local isInboxOpen = SCENE_MANAGER:IsShowing("mailInbox")
+    if not isInboxOpen then
+        return
+    end
+    self.Debug("DeleteMailTimeout()")
+    if self.abortRequested then
+        self:Reset()
+        KEYBIND_STRIP:UpdateKeybindButtonGroup(MAIL_INBOX.selectionKeybindStripDescriptor)
+        return
+    end
+    self:TryDeleteMarkedMail(MAIL_INBOX.mailId)
+end
+
 --[[ Registers a potential backpack slot as unique ]]--
 function Postmaster:DiscoverUniqueBackpackItem(slotIndex)
     local itemLink = GetItemLink(BAG_BACKPACK, slotIndex)
@@ -108,8 +137,7 @@ function Postmaster:DiscoverUniqueBackpackItem(slotIndex)
     end
     local isUnique = IsItemLinkUnique(itemLink)
     if isUnique then
-        local itemId = select(4, ZO_LinkHandler_ParseLink(itemLink))
-        self.backpackUniqueItems[slotIndex] = tonumber(itemId)
+        self.backpackUniqueItems[slotIndex] = GetItemIdFromLink(itemLink)
     end
 end
 
@@ -175,6 +203,19 @@ end
 --[[ True if Postmaster is doing any operations on the inbox. ]]
 function Postmaster:IsBusy()
     return self.taking or self.takingAll or self.deleting or self.returning
+end
+
+--[[ Returns true if the given item link is for a unique item that is already in the player backpack. ]]--
+function Postmaster:IsItemUniqueInBackpack(itemLink)
+    local isUnique = IsItemLinkUnique(itemLink)
+    if isUnique then
+        local itemId = GetItemIdFromLink(itemLink)
+        for slotIndex, backpackItemId in pairs(self.backpackUniqueItems) do
+            if backpackItemId == itemId then
+                return true
+            end
+        end
+    end
 end
 
 --[[ True if the inbox was closed when a RequestMailDelete() call came in for 
@@ -337,21 +378,23 @@ function Postmaster:RequestMailDelete(mailId)
         return
     end
     
+    -- Mark mail for deletion
+    self.Debug("Marking mail id "..tostring(mailId).." for deletion")
+    table.insert(self.mailIdsMarkedForDeletion, mailId)
+    
     -- If inbox is open...
     if SCENE_MANAGER:IsShowing("mailInbox") then
         -- If all attachments are gone, remove the message
         self.Debug("Deleting "..tostring(mailId))
+        
+        -- Wire up timeout callback
+        zo_callLater(self.DeleteMailTimeout, PM_DELETE_MAIL_TIMEOUT_MS)
+        
         DeleteMail(mailId, false)
-        PlaySound(SOUNDS.MAIL_ITEM_DELETED)
         
     -- Inbox is no longer open, so delete events won't be raised
     else
-        -- Mark mail for deletion the next time the mailbox is opened
-        self.Debug("Marking mail id "..tostring(mailId).." for deletion")
-        table.insert(self.mailIdsMarkedForDeletion, mailId)
-        
         if not AreId64sEqual(self.mailIdLastOpened,mailId) then
-            
             self.Debug("Marking mail id "..tostring(mailId).." to be opened when inbox does")
             MAIL_INBOX.mailId = nil
             MAIL_INBOX.requestMailId = mailId
@@ -626,8 +669,12 @@ function Postmaster:TakeOrDeleteSelected()
     else
         -- If all attachments are gone, remove the message
         self.Debug("Deleting "..tostring(mailId))
+        
+        -- Wire up timeout callback
+        table.insert(self.mailIdsMarkedForDeletion, mailId)
+        zo_callLater(self.DeleteMailTimeout, PM_DELETE_MAIL_TIMEOUT_MS)
+        
         DeleteMail(mailData.mailId, false)
-        PlaySound(SOUNDS.MAIL_ITEM_DELETED)
     end
 end
 
@@ -663,12 +710,12 @@ end
 function Postmaster:TryDeleteMarkedMail(mailId)
     local deleteIndex = self:IsMailMarkedForDeletion(mailId)
     if not deleteIndex then return end
-    table.remove(self.mailIdsMarkedForDeletion, deleteIndex)
     -- Resume the Take operation. will be cleared when the mail removed event handler fires.
     self.taking = true 
     self.Debug("deleting mail id "..tostring(mailId))
+    -- Wire up timeout callback
+    zo_callLater(self.DeleteMailTimeout, PM_DELETE_MAIL_TIMEOUT_MS)
     DeleteMail(mailId, false)
-    PlaySound(SOUNDS.MAIL_ITEM_DELETED)
     KEYBIND_STRIP:UpdateKeybindButtonGroup(MAIL_INBOX.selectionKeybindStripDescriptor)
     return deleteIndex
 end
@@ -681,7 +728,6 @@ function Postmaster:TryTakeAllCodMail()
     if mailData.codAmount > 0 then
         MAIL_INBOX.pendingAcceptCOD = true
         ZO_MailInboxShared_TakeAll(mailData.mailId)
-        PlaySound(SOUNDS.MAIL_ACCEPT_COD)
         MAIL_INBOX.pendingAcceptCOD = false
         return true
     end
@@ -1083,10 +1129,14 @@ end
      opening the next mail with attachments for Take All, or reset state 
      variables and refresh the keybind strip for Take. ]]
 function Postmaster.Event_MailRemoved(eventCode, mailId)
-    if IsInGamepadPreferredMode() then return end
     local self = Postmaster
+    local deleteIndex = self:IsMailMarkedForDeletion(mailId)
+    table.remove(self.mailIdsMarkedForDeletion, deleteIndex)
+    
+    if IsInGamepadPreferredMode() then return end
     
     if eventCode then
+        PlaySound(SOUNDS.MAIL_ITEM_DELETED)
         self.Debug("deleted mail id "..tostring(mailId))
     end
     
@@ -1286,27 +1336,28 @@ function Postmaster.Prehook_MailInboxShared_TakeAll(mailId)
     self.Debug("ZO_MailInboxShared_TakeAll("..tostring(mailId)..")")
     self.awaitingAttachments[self.GetMailIdString(mailId)] = {}
     local attachmentData = { items = {}, money = attachedMoney, cod = codAmount }
-    local uniqueAttachmentCount = 0
+    local uniqueAttachmentConflictCount = 0
     for attachIndex=1,numAttachments do
         local _, stack = GetAttachedItemInfo(mailId, attachIndex)
         local attachmentItem = { link = GetAttachedItemLink(mailId, attachIndex), count = stack or 1 }
-        if IsItemLinkUnique(attachmentItem.link) then
-            uniqueAttachmentCount = uniqueAttachmentCount + 1
+        if self:IsItemUniqueInBackpack(attachmentItem.link) then
+            uniqueAttachmentConflictCount = uniqueAttachmentConflictCount + 1
+        else
+            table.insert(attachmentData.items, attachmentItem)
         end
-        table.insert(attachmentData.items, attachmentItem)
     end
     local mailIdString = self.GetMailIdString(mailId)
     
     if numAttachments > 0 then
-        --[[if uniqueAttachmentCount == numAttachments then
-        
-            
+    
+        -- If all attachments were unique and already in the backpack
+        if uniqueAttachmentConflictCount == numAttachments then
             self.Debug("Take attachments for "..mailIdString
                        .." because it contains only unique items that are already in the backpack")
             self.mailIdsFailedDeletion[mailIdString] = true
             self.Event_MailRemoved(nil, mailId)
             return true
-        end]]
+        end
         if attachedMoney > 0 or codAmount > 0 then
             table.insert(self.awaitingAttachments[self.GetMailIdString(mailId)], true)
         end
