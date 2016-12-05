@@ -18,3 +18,4 @@ for stringId, value in pairs(POSTMASTER_STRINGS) do
 	ZO_CreateStringId(stringId, stringValue)
 end
 POSTMASTER_STRINGS = nil
+ZO_CreateStringId("SI_PM_MAIL_DELETE", " + " .. GetString(SI_MAIL_DELETE))

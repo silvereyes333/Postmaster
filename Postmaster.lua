@@ -5,7 +5,7 @@
 Postmaster = {
     name = "Postmaster",
     title = GetString(SI_PM_NAME),
-    version = "3.5.1",
+    version = "3.6.0",
     author = "|c99CCEFsilvereyes|r, |cEFEBBEGarkin|r & Zierk",
     
     -- For development use only. Set to true to see a ridiculously verbose 
@@ -55,6 +55,18 @@ PM_CHAT_FORMAT = zo_strformat("<<1>>", Postmaster.title) .. "|cFFFFFF: <<1>>|r"
 -- Max milliseconds to wait for a mail removal event from the server after calling DeleteMail
 PM_DELETE_MAIL_TIMEOUT_MS = 1500
 
+-- Number of time to try deleting the message if it fails
+PM_DELETE_MAIL_MAX_RETRIES = 3
+
+PM_MAIL_READ_TIMEOUT_MS = 1500
+PM_MAIL_READ_MAX_RETRIES = 1
+
+-- Max milliseconds to wait for attachments to be retreived after calling ZO_MailInboxShared_TakeAll
+PM_TAKE_TIMEOUT_MS = 1500
+
+-- Number of time to try taking attachments if the attempt fails
+PM_TAKE_ATTACHMENTS_MAX_RETRIES = 3
+
 -- Max length of a line in chat, after the prefix.
 PM_MAX_CHAT_LENGTH = 355 - string.len(PM_CHAT_FORMAT)
 
@@ -94,11 +106,211 @@ local function OnAddonLoaded(eventCode, addOnName)
     -- TODO: add gamepad inbox UI keybind support
 end
 
+local systemEmailSubjects = {
+    ["craft"] = {
+        zo_strlower(GetString(SI_PM_CRAFT_BLACKSMITH)),
+        zo_strlower(GetString(SI_PM_CRAFT_CLOTHIER)),
+        zo_strlower(GetString(SI_PM_CRAFT_ENCHANTER)),
+        zo_strlower(GetString(SI_PM_CRAFT_PROVISIONER)),
+        zo_strlower(GetString(SI_PM_CRAFT_WOODWORKER)),
+    },
+    ["guildStore"] = {
+        zo_strlower(GetString(SI_PM_GUILD_STORE_CANCELED)),
+        zo_strlower(GetString(SI_PM_GUILD_STORE_EXPIRED)),
+        zo_strlower(GetString(SI_PM_GUILD_STORE_PURCHASED)),
+        zo_strlower(GetString(SI_PM_GUILD_STORE_SOLD)),
+    },
+    ["pvp"] = {
+        zo_strlower(GetString(SI_PM_PVP_FOR_THE_WORTHY)),
+        zo_strlower(GetString(SI_PM_PVP_FOR_THE_ALLIANCE_1)),
+        zo_strlower(GetString(SI_PM_PVP_FOR_THE_ALLIANCE_2)),
+        zo_strlower(GetString(SI_PM_PVP_FOR_THE_ALLIANCE_3)),
+        zo_strlower(GetString(SI_PM_PVP_THE_ALLIANCE_THANKS_1)),
+        zo_strlower(GetString(SI_PM_PVP_THE_ALLIANCE_THANKS_2)),
+        zo_strlower(GetString(SI_PM_PVP_THE_ALLIANCE_THANKS_3)),
+        zo_strlower(GetString(SI_PM_PVP_LOYALTY)),
+    }
+}
+
+local undauntedEmailSenders = {
+    zo_strlower(GetString(SI_PM_UNDAUNTED_NPC_NORMAL)),
+    zo_strlower(GetString(SI_PM_UNDAUNTED_NPC_VET)),
+    zo_strlower(GetString(SI_PM_UNDAUNTED_NPC_TRIAL_1)),
+    zo_strlower(GetString(SI_PM_UNDAUNTED_NPC_TRIAL_2)),
+    zo_strlower(GetString(SI_PM_UNDAUNTED_NPC_TRIAL_3)),
+}
+
+local function CanTakeAllDelete(mailData, attachmentData)
+
+    local self = Postmaster
+    
+    if not mailData or not mailData.mailId or type(mailData.mailId) ~= "number" then 
+        self.Debug("mailData parameter not working right")
+        return false 
+    end
+    
+    local mailIdString = self.GetMailIdString(mailData.mailId)
+    if self.mailIdsFailedDeletion[mailIdString] == true then 
+        self.Debug("Cannot delete because this mail already failed deletion")
+        return false
+    end
+    
+    -- Item was meant to be deleted, but the inbox closed, so include it in 
+    -- the take all list
+    if self:IsMailMarkedForDeletion(mailData.mailId) then
+        return true
+    end
+    
+    
+    local deleteSettings = {
+        cod              = self.settings.takeAllCodDelete,
+        playerEmpty      = self.settings.takeAllPlayerDeleteEmpty,
+        playerAttached   = self.settings.takeAllPlayerAttachedDelete,
+        playerReturned   = self.settings.takeAllPlayerReturnedDelete,
+        systemEmpty      = self.settings.takeAllSystemDeleteEmpty,
+        systemAttached   = self.settings.takeAllSystemAttachedDelete,
+        systemGuildStore = self.settings.takeAllSystemGuildStoreDelete,
+        systemHireling   = self.settings.takeAllSystemHirelingDelete,
+        systemOther      = self.settings.takeAllSystemOtherDelete,
+        systemPvp        = self.settings.takeAllSystemPvpDelete,
+        systemUndaunted  = self.settings.takeAllSystemUndauntedDelete,
+    }
+    
+    -- Handle C.O.D. mail
+    if attachmentData and attachmentData.cod > 0 then
+        if not deleteSettings.cod then
+            self.Debug("Cannot delete COD mail")
+        end
+        return deleteSettings.cod
+    end
+    
+    local fromSystem = (mailData.fromCS or mailData.fromSystem)
+    local hasAttachments = attachmentData and (attachmentData.money > 0 or #attachmentData.items > 0)
+    if hasAttachments then
+        
+        -- Special handling for hireling mail, since we know even without opening it that
+        -- all the attachments can potentially go straight to the craft bag
+        local subjectField = "subject"
+        local isHirelingMail = fromSystem and self:MailFieldMatch(mailData, subjectField, systemEmailSubjects["craft"])
+        
+        if fromSystem then 
+            if deleteSettings.systemAttached then
+                
+                if isHirelingMail then
+                    if not deleteSettings.systemHireling then
+                        self.Debug("Cannot delete hireling mail")
+                    end
+                    return deleteSettings.systemHireling
+                
+                elseif self:MailFieldMatch(mailData, subjectField, systemEmailSubjects["guildStore"]) then
+                    if not deleteSettings.systemGuildStore then
+                        self.Debug("Cannot delete guild store mail")
+                    end
+                    return deleteSettings.systemGuildStore
+                    
+                elseif self:MailFieldMatch(mailData, subjectField, systemEmailSubjects["pvp"]) then
+                    if not deleteSettings.systemGuildStore then
+                        self.Debug("Cannot delete PvP rewards mail")
+                    end
+                    return deleteSettings.systemPvp
+                
+                elseif self:MailFieldMatch(mailData, "senderDisplayName", undauntedEmailSenders) then
+                    if not deleteSettings.systemUndaunted then
+                        self.Debug("Cannot delete Undaunted rewards mail")
+                    end
+                    return deleteSettings.systemUndaunted
+                    
+                else 
+                    if not deleteSettings.systemOther then
+                        self.Debug("Cannot delete uncategorized system mail")
+                    end
+                    return deleteSettings.systemOther
+                end
+                    
+            else
+                if not deleteSettings.systemAttached then
+                    self.Debug("Cannot delete system mail")
+                end
+                return false
+            end
+        elseif mailData.returned then
+                if not deleteSettings.playerReturned then
+                    self.Debug("Cannot delete returned mail")
+                end
+            return deleteSettings.playerReturned 
+        else
+            if not deleteSettings.playerAttached then
+                self.Debug("Cannot delete player mail with attachments")
+            end
+            return deleteSettings.playerAttached 
+        end
+    else
+        if fromSystem then
+            if not deleteSettings.systemEmpty then
+                self.Debug("Cannot delete empty system mail")
+            end
+            return deleteSettings.systemEmpty
+        else 
+            if not deleteSettings.playerEmpty then
+                self.Debug("Cannot delete empty player mail")
+            end
+            return deleteSettings.playerEmpty 
+        end
+    end
+    
+end
+
 -- Extracting item ids from item links
 local function GetItemIdFromLink(itemLink)
     local itemId = select(4, ZO_LinkHandler_ParseLink(itemLink))
     if itemId and itemId ~= "" then
         return tonumber(itemId)
+    end
+end
+
+local function MailDeleteFailed(timeoutData)
+    ZO_Alert(UI_ALERT_CATEGORY_ALERT, nil, SI_PM_DELETE_FAILED)
+    Postmaster:Reset()
+end
+
+local function MailDelete(mailId)
+    -- Wire up timeout callback
+    local LTO = LibStub("LibTimeout")
+    if LTO then
+        local options = { doneCallback = MailDeleteFailed, maxRetries = PM_DELETE_MAIL_MAX_RETRIES }
+        LTO:StartTimeout( options, PM_DELETE_MAIL_TIMEOUT_MS, MailDelete, mailId )
+    end
+    
+    DeleteMail(mailId, false)
+end
+
+local function MailReadFailed(timeoutData)
+    ZO_Alert(UI_ALERT_CATEGORY_ALERT, nil, SI_PM_READ_FAILED)
+    Postmaster:Reset()
+end
+
+local function MailRead()
+
+    local LTO = LibStub("LibTimeout")
+    if LTO then 
+        local options = { doneCallback = MailReadFailed, maxRetries = PM_MAIL_READ_MAX_RETRIES }
+        LTO:StartTimeout( options, PM_MAIL_READ_TIMEOUT_MS, MailRead )
+    end
+    -- If there exists another message in the inbox that has attachments, select it. otherwise, clear the selection.
+    local nextMailData = Postmaster:TakeAllGetNext()
+    ZO_ScrollList_SelectData(ZO_MailInboxList, nextMailData)
+    return nextMailData
+end
+
+local function TakeFailed(timeoutData)
+    ZO_Alert(UI_ALERT_CATEGORY_ALERT, nil, SI_PM_TAKE_ATTACHMENTS_FAILED)
+    Postmaster:Reset()
+end
+local function TakeTimeout(mailId)
+    local LTO = LibStub("LibTimeout")
+    if LTO then
+        local options = { doneCallback = TakeFailed, maxRetries = PM_TAKE_ATTACHMENTS_MAX_RETRIES }
+        LTO:StartTimeout( options, PM_TAKE_TIMEOUT_MS, ZO_MailInboxShared_TakeAll, mailId )
     end
 end
 
@@ -110,23 +322,6 @@ EVENT_MANAGER:RegisterForEvent(Postmaster.name, EVENT_ADD_ON_LOADED, OnAddonLoad
 function Postmaster.Debug(input, scopeDebug)
     if not Postmaster.debugMode and not scopeDebug then return end
     Postmaster.Print(input)
-end
-
---[[ Called a certain amount of time after a DeleteMail command is issued in order to handle the
-     situation where the server doesn't actually delete the mail. ]]
-function Postmaster.DeleteMailTimeout()
-    local self = Postmaster
-    local isInboxOpen = SCENE_MANAGER:IsShowing("mailInbox")
-    if not isInboxOpen then
-        return
-    end
-    self.Debug("DeleteMailTimeout()")
-    if self.abortRequested then
-        self:Reset()
-        KEYBIND_STRIP:UpdateKeybindButtonGroup(MAIL_INBOX.selectionKeybindStripDescriptor)
-        return
-    end
-    self:TryDeleteMarkedMail(MAIL_INBOX.mailId)
 end
 
 --[[ Registers a potential backpack slot as unique ]]--
@@ -198,6 +393,17 @@ function Postmaster.GetMailIdString(mailId)
     else return 
         tostring(mailId) 
     end
+end
+
+--[[ Returns the current mail messages data array, if one is selected ]]
+function Postmaster.GetOpenMailData()
+    local mailId = MAIL_INBOX:GetOpenMailId()
+    if type(mailId) ~= "number" then 
+        Postmaster.Debug("There is no open mail id "..tostring(mailId))
+        return 
+    end
+    local mailData = MAIL_INBOX:GetMailData(mailId)
+    return mailData
 end
 
 --[[ True if Postmaster is doing any operations on the inbox. ]]
@@ -304,7 +510,7 @@ end
 --[[ Outputs a verbose summary of all attachments and gold transferred by the 
      current Take or Take All command. ]]
 function Postmaster.PrintAttachmentSummary(attachmentData)
-    if not Postmaster.settings.verbose then return end
+    if not Postmaster.settings.verbose or not attachmentData then return end
     
     local summary = ""
     
@@ -368,6 +574,8 @@ function Postmaster:RequestMailDelete(mailId)
     
     -- Clean up tracking arrays
     self.awaitingAttachments[mailIdString] = nil
+    
+    local attachmentData = self.attachmentData[mailIdString]
     self.attachmentData[mailIdString] = nil
     
     local mailData = MAIL_INBOX:GetMailData(mailId)
@@ -378,6 +586,19 @@ function Postmaster:RequestMailDelete(mailId)
         return
     end
     
+    
+    -- Check that the current type of mail should be deleted
+    if self.takingAll then
+        if not CanTakeAllDelete(mailData, attachmentData) then
+            self.Debug("Not deleting mail id "..mailIdString.." because of configured options")
+            -- Skip actual mail removal and go directly to the postprocessing logic
+            self.mailIdsFailedDeletion[mailIdString] = true
+            self.Event_MailRemoved(nil, mailId)
+            return
+        end
+    end
+    
+    
     -- Mark mail for deletion
     self.Debug("Marking mail id "..tostring(mailId).." for deletion")
     table.insert(self.mailIdsMarkedForDeletion, mailId)
@@ -387,10 +608,7 @@ function Postmaster:RequestMailDelete(mailId)
         -- If all attachments are gone, remove the message
         self.Debug("Deleting "..tostring(mailId))
         
-        -- Wire up timeout callback
-        zo_callLater(self.DeleteMailTimeout, PM_DELETE_MAIL_TIMEOUT_MS)
-        
-        DeleteMail(mailId, false)
+        MailDelete(mailId)
         
     -- Inbox is no longer open, so delete events won't be raised
     else
@@ -407,15 +625,26 @@ function Postmaster:Reset()
     self.Debug("Reset")
     self.taking = false
     self.takingAll = false
-    self.abortRequested = false
     self.mailIdsFailedDeletion = {}
-    ZO_MailInboxList.autoSelect = true  
+    ZO_MailInboxList.autoSelect = true
+    -- Unwire timeout callbacks
+    local LTO = LibStub("LibTimeout")
+    if LTO then
+        LTO:CancelTimeout(MailDelete)
+        LTO:CancelTimeout(MailRead)
+        LTO:CancelTimeout(TakeTimeout)
+    end
+    KEYBIND_STRIP:UpdateKeybindButtonGroup(MAIL_INBOX.selectionKeybindStripDescriptor)
     if MAIL_INBOX.mailId then
-        local currentMailData = MAIL_INBOX:GetMailData(self.mailId)
+        local currentMailData = ZO_MailInboxList.selectedData
         if not currentMailData then
             self.Debug("Current mail data is nil. Setting MAIL_INBOX.mailId=nil")
             MAIL_INBOX.mailId = nil
+            MAIL_INBOX.selectedData = nil
             ZO_ScrollList_AutoSelectData(ZO_MailInboxList)
+        elseif not MAIL_INBOX.selectedData then
+            MAIL_INBOX.mailId = currentMailData.mailId
+            MAIL_INBOX.selectedData = currentMailData
         end
     end
 end
@@ -501,43 +730,12 @@ function Postmaster.StringMatchFirstPrefix(s, prefixes)
     end
 end
 
-local systemEmailSubjects = {
-    ["craft"] = {
-        zo_strlower(GetString(SI_PM_CRAFT_BLACKSMITH)),
-        zo_strlower(GetString(SI_PM_CRAFT_CLOTHIER)),
-        zo_strlower(GetString(SI_PM_CRAFT_ENCHANTER)),
-        zo_strlower(GetString(SI_PM_CRAFT_PROVISIONER)),
-        zo_strlower(GetString(SI_PM_CRAFT_WOODWORKER)),
-    },
-    ["guildStore"] = {
-        zo_strlower(GetString(SI_PM_GUILD_STORE_CANCELED)),
-        zo_strlower(GetString(SI_PM_GUILD_STORE_EXPIRED)),
-        zo_strlower(GetString(SI_PM_GUILD_STORE_PURCHASED)),
-        zo_strlower(GetString(SI_PM_GUILD_STORE_SOLD)),
-    },
-    ["pvp"] = {
-        zo_strlower(GetString(SI_PM_PVP_FOR_THE_WORTHY)),
-        zo_strlower(GetString(SI_PM_PVP_FOR_THE_ALLIANCE_1)),
-        zo_strlower(GetString(SI_PM_PVP_FOR_THE_ALLIANCE_2)),
-        zo_strlower(GetString(SI_PM_PVP_FOR_THE_ALLIANCE_3)),
-        zo_strlower(GetString(SI_PM_PVP_THE_ALLIANCE_THANKS_1)),
-        zo_strlower(GetString(SI_PM_PVP_THE_ALLIANCE_THANKS_2)),
-        zo_strlower(GetString(SI_PM_PVP_THE_ALLIANCE_THANKS_3)),
-        zo_strlower(GetString(SI_PM_PVP_LOYALTY)),
-    }
-}
 
-local undauntedEmailSenders = {
-    zo_strlower(GetString(SI_PM_UNDAUNTED_NPC_NORMAL)),
-    zo_strlower(GetString(SI_PM_UNDAUNTED_NPC_VET)),
-    zo_strlower(GetString(SI_PM_UNDAUNTED_NPC_TRIAL_1)),
-    zo_strlower(GetString(SI_PM_UNDAUNTED_NPC_TRIAL_2)),
-    zo_strlower(GetString(SI_PM_UNDAUNTED_NPC_TRIAL_3)),
-}
+--[[ True if the given mail can be taken according to the given settings ]]
+local function CanTakeShared(mailData, settings)
 
---[[ True if the given mail can be taken by Take All operations according
-     to current options panel criteria. ]]
-function Postmaster:TakeAllCanTake(mailData)
+    local self = Postmaster
+    
     if not mailData or not mailData.mailId or type(mailData.mailId) ~= "number" then 
         return false 
     end
@@ -556,10 +754,10 @@ function Postmaster:TakeAllCanTake(mailData)
     elseif mailData.codAmount > 0 then
     
         -- Skip C.O.D. mails, if so configured
-        if not self.settings.takeAllCodTake then return false
+        if not settings.codTake then return false
         
         -- Enforce C.O.D. absolute gold limit
-        elseif self.settings.takeAllCodGoldLimit > 0 and mailData.codAmount > self.settings.takeAllCodGoldLimit then return false
+        elseif settings.codGoldLimit > 0 and mailData.codAmount > settings.codGoldLimit then return false
         
         -- Skip C.O.D. mails that we don't have enough money to pay for
         elseif mailData.codAmount > GetCurrentMoney() then return false 
@@ -583,53 +781,94 @@ function Postmaster:TakeAllCanTake(mailData)
         -- theoretically, stacking and craft bags could free up slots. But 
         -- reproducing that business logic here sounds hard, so I gave up.
         if mailData.numAttachments > 0 
-           and (freeSlots - mailData.numAttachments) < self.settings.reservedSlots
+           and (freeSlots - mailData.numAttachments) < settings.reservedSlots
            and not attachmentsToCraftBag
         then 
             return false 
         end
         
         if fromSystem then 
-            if self.settings.takeAllSystemAttached then
+            if settings.systemAttached then
                 
                 if isHirelingMail then
-                    return self.settings.takeAllSystemHireling
+                    return settings.systemHireling
                 
                 elseif self:MailFieldMatch(mailData, subjectField, systemEmailSubjects["guildStore"]) then
-                    return self.settings.takeAllSystemGuildStore
+                    return settings.systemGuildStore
                     
                 elseif self:MailFieldMatch(mailData, subjectField, systemEmailSubjects["pvp"]) then
-                    return self.settings.takeAllSystemPvp
+                    return settings.systemPvp
                 
                 elseif self:MailFieldMatch(mailData, "senderDisplayName", undauntedEmailSenders) then
-                    return self.settings.takeAllSystemUndaunted
+                    return settings.systemUndaunted
                     
                 else 
-                    return self.settings.takeAllSystemOther
+                    return settings.systemOther
                 end
                     
             else
                 return false
             end
         elseif mailData.returned then
-            return self.settings.takeAllPlayerReturned 
+            return settings.playerReturned 
         else
-            return self.settings.takeAllPlayerAttached 
+            return settings.playerAttached 
         end
     else
         if fromSystem then 
-            return self.settings.takeAllSystemDeleteEmpty
+            return settings.systemDeleteEmpty
         else 
-            return self.settings.takeAllPlayerDeleteEmpty 
+            return settings.playerDeleteEmpty 
         end
     end
+end
+
+
+--[[ True if the given mail can be taken by Take operations according
+     to current options panel criteria. ]]
+function Postmaster:QuickTakeCanTake(mailData)
+    return CanTakeShared(mailData, {
+        ["codTake"]           = self.settings.quickTakeCodTake,
+        ["codGoldLimit"]      = self.settings.quickTakeCodGoldLimit,
+        ["reservedSlots"]     = 0,
+        ["systemAttached"]    = self.settings.quickTakeSystemAttached,
+        ["systemHireling"]    = self.settings.quickTakeSystemHireling,
+        ["systemGuildStore"]  = self.settings.quickTakeSystemGuildStore,
+        ["systemPvp"]         = self.settings.quickTakeSystemPvp,
+        ["systemUndaunted"]   = self.settings.quickTakeSystemUndaunted,
+        ["systemOther"]       = self.settings.quickTakeSystemOther,
+        ["playerReturned"]    = self.settings.quickTakePlayerReturned,
+        ["playerAttached"]    = self.settings.quickTakePlayerAttached,
+        ["systemDeleteEmpty"] = true,
+        ["playerDeleteEmpty"] = true,
+    })
+end
+
+--[[ True if the given mail can be taken by Take All operations according
+     to current options panel criteria. ]]
+function Postmaster:TakeAllCanTake(mailData)
+    return CanTakeShared(mailData, {
+        ["codTake"]           = self.settings.takeAllCodTake,
+        ["codGoldLimit"]      = self.settings.takeAllCodGoldLimit,
+        ["reservedSlots"]     = self.settings.reservedSlots,
+        ["systemAttached"]    = self.settings.takeAllSystemAttached,
+        ["systemHireling"]    = self.settings.takeAllSystemHireling,
+        ["systemGuildStore"]  = self.settings.takeAllSystemGuildStore,
+        ["systemPvp"]         = self.settings.takeAllSystemPvp,
+        ["systemUndaunted"]   = self.settings.takeAllSystemUndaunted,
+        ["systemOther"]       = self.settings.takeAllSystemOther,
+        ["playerReturned"]    = self.settings.takeAllPlayerReturned,
+        ["playerAttached"]    = self.settings.takeAllPlayerAttached,
+        ["systemDeleteEmpty"] = self.settings.takeAllSystemDeleteEmpty,
+        ["playerDeleteEmpty"] = self.settings.takeAllPlayerDeleteEmpty,
+    })
 end
 
 --[[ True if the currently-selected mail can be taken by Take All operations 
      according to current options panel criteria. ]]
 function Postmaster:TakeAllCanTakeSelectedMail()
-    if ZO_MailInboxList.selectedData 
-       and self:TakeAllCanTake(ZO_MailInboxList.selectedData) 
+    if MAIL_INBOX.selectedData 
+       and self:TakeAllCanTake(MAIL_INBOX.selectedData) 
     then 
         return true 
     end
@@ -650,10 +889,8 @@ function Postmaster:TakeAllSelectNext()
     -- Don't need to get anything. The current selection already has attachments.
     if self:TakeAllCanTakeSelectedMail() then return true end
     
-    -- If there exists another message in the inbox that has attachments, select it.
-    local nextMailData = self:TakeAllGetNext()
+    local nextMailData = MailRead()
     if nextMailData then
-        ZO_ScrollList_SelectData(ZO_MailInboxList, nextMailData)
         return true
     end
 end
@@ -662,19 +899,17 @@ end
      deletes the mail if it has no attachments. ]]
 function Postmaster:TakeOrDeleteSelected()
     if self:TryTakeAllCodMail() then return end
-    local mailData = ZO_MailInboxList.selectedData
+    local mailData = MAIL_INBOX.selectedData
     local hasAttachments = mailData.attachedMoney > 0 or mailData.numAttachments > 0
     if hasAttachments then
+        self.taking = true
         self.originalDescriptors.take.callback()
     else
         -- If all attachments are gone, remove the message
-        self.Debug("Deleting "..tostring(mailId))
+        self.Debug("Deleting "..tostring(mailData.mailId))
         
-        -- Wire up timeout callback
-        table.insert(self.mailIdsMarkedForDeletion, mailId)
-        zo_callLater(self.DeleteMailTimeout, PM_DELETE_MAIL_TIMEOUT_MS)
-        
-        DeleteMail(mailData.mailId, false)
+        -- Delete the mail
+        self:RequestMailDelete(mailData.mailId)
     end
 end
 
@@ -713,9 +948,7 @@ function Postmaster:TryDeleteMarkedMail(mailId)
     -- Resume the Take operation. will be cleared when the mail removed event handler fires.
     self.taking = true 
     self.Debug("deleting mail id "..tostring(mailId))
-    -- Wire up timeout callback
-    zo_callLater(self.DeleteMailTimeout, PM_DELETE_MAIL_TIMEOUT_MS)
-    DeleteMail(mailId, false)
+    self:RequestDeleteMail(mailId)
     KEYBIND_STRIP:UpdateKeybindButtonGroup(MAIL_INBOX.selectionKeybindStripDescriptor)
     return deleteIndex
 end
@@ -724,8 +957,9 @@ end
      Take All operation. ]]
 function Postmaster:TryTakeAllCodMail()
     if not self.settings.takeAllCodTake then return end
-    local mailData = ZO_MailInboxList.selectedData
+    local mailData = MAIL_INBOX.selectedData
     if mailData.codAmount > 0 then
+        self.taking = true
         MAIL_INBOX.pendingAcceptCOD = true
         ZO_MailInboxShared_TakeAll(mailData.mailId)
         MAIL_INBOX.pendingAcceptCOD = false
@@ -835,7 +1069,7 @@ function Postmaster.Keybind_Negative_Callback()
     if self.taking then 
         -- Abort take all command
         if self.takingAll then
-            self.abortRequested = true          
+            self:Reset()
         end
     -- Return to sender when not in the middle of a take all
     elseif self.originalDescriptors.returnToSender.visible() then
@@ -898,9 +1132,14 @@ function Postmaster.Keybind_Primary_Callback()
     then
         self.Debug("deleting mail id "..tostring(MAIL_INBOX.mailId))
         self.originalDescriptors.delete.callback()
-    else
-        self.originalDescriptors.take.callback()
+        return
     end
+    
+    local mailData = self.GetOpenMailData()
+    if self:QuickTakeCanTake(mailData) then
+        self.taking = true
+    end
+    self.originalDescriptors.take.callback()
 end
 function Postmaster.Keybind_Primary_GetName()
     local self = Postmaster
@@ -909,7 +1148,13 @@ function Postmaster.Keybind_Primary_GetName()
     then
         return self.originalDescriptors.delete.name
     end
-    return GetString(SI_LOOT_TAKE)
+    
+    local mailData = self.GetOpenMailData()
+    if self:QuickTakeCanTake(mailData) then
+        return GetString(SI_LOOT_TAKE)
+    else
+        return GetString(SI_MAIL_READ_ATTACHMENTS_TAKE)
+    end
 end
 function Postmaster.Keybind_Primary_Visible()
     local self = Postmaster
@@ -928,12 +1173,7 @@ function Postmaster.Keybind_Reply_Callback()
     local self = Postmaster
     
     -- Look up the current mail message in the inbox
-    local mailId = MAIL_INBOX:GetOpenMailId()
-    if type(mailId) ~= "number" then 
-        Postmaster.Debug("There is no open mail id "..tostring(mailId))
-        return 
-    end
-    local mailData = MAIL_INBOX:GetMailData(mailId)
+    local mailData = self.GetOpenMailData()
     
     -- Make sure it's a non-returned mail from another player
     if not mailData or mailData.fromSystem or mailData.returned then return end
@@ -964,7 +1204,6 @@ end
 function Postmaster.Keybind_TakeAll_Callback()
     local self = Postmaster
     if self:IsBusy() then return end
-    self.abortRequested = false  
     if self:TakeAllCanTakeSelectedMail() then
         self.Debug("Selected mail has attachments. Taking.")
         self.taking    = true
@@ -1104,15 +1343,12 @@ function Postmaster.Event_MailReadable(eventCode, mailId)
     if IsInGamepadPreferredMode() then return end
     local self = Postmaster
     self.Debug("Event_MailReadable("..tostring(mailId)..")")
-    -- An abort request came in while we were waiting for the 
-    -- EVENT_MAIL_READABLE event. Go ahead and abort
-    if self.abortRequested then
-        self:Reset()
-        KEYBIND_STRIP:UpdateKeybindButtonGroup(MAIL_INBOX.selectionKeybindStripDescriptor)
+    local LTO = LibStub("LibTimeout")
+    if LTO then LTO:CancelTimeout(MailRead) end
         
     -- If taking all, then go ahead and start the next Take loop, since the
     -- mail and attachments are readable now.
-    elseif self.takingAll then 
+    if self.takingAll then 
         self:TakeOrDeleteSelected()
         
     -- If a mail is selected that was previously marked for deletion but never
@@ -1130,12 +1366,17 @@ end
      variables and refresh the keybind strip for Take. ]]
 function Postmaster.Event_MailRemoved(eventCode, mailId)
     local self = Postmaster
+    if not self.taking then return end
     local deleteIndex = self:IsMailMarkedForDeletion(mailId)
     table.remove(self.mailIdsMarkedForDeletion, deleteIndex)
     
     if IsInGamepadPreferredMode() then return end
     
     if eventCode then
+        
+        -- Unwire timeout callback
+        local LTO = LibStub("LibTimeout")
+        if LTO then LTO:CancelTimeout(MailDelete) end
         PlaySound(SOUNDS.MAIL_ITEM_DELETED)
         self.Debug("deleted mail id "..tostring(mailId))
     end
@@ -1145,20 +1386,10 @@ function Postmaster.Event_MailRemoved(eventCode, mailId)
     
     local isInboxOpen = SCENE_MANAGER:IsShowing("mailInbox")
     
-    -- Clear out scroll list selection if autoselect is off
-    if not ZO_MailInboxList.autoSelect then
-        ZO_MailInboxList.selectedData = nil
-        ZO_MailInboxList.selectedDataIndex = nil
-        ZO_MailInboxList.lastSelectedDataIndex = nil
-        if isInboxOpen then
-            MAIL_INBOX:EndRead()
-        end
-    end
-    
     -- For non-canceled take all requests, select the next mail for taking.
     -- It will be taken automatically by Event_MailReadable() once the 
     -- EVENT_MAIL_READABLE event comes back from the server.
-    if isInboxOpen and self.takingAll and not self.abortRequested then
+    if isInboxOpen and self.takingAll then
         self.Debug("Selecting next mail with attachments")
         if self:TakeAllSelectNext() then return end
     end
@@ -1188,6 +1419,7 @@ end
 function Postmaster.Event_MailSendSuccess(eventCode) 
     if IsInGamepadPreferredMode() then return end
     local self = Postmaster
+    if not self.taking then return end
     self.Debug("Event_MailSendSuccess()")
     local mailIdString,codMail = self:GetFirstCompleteCodMail()
     if not codMail then return end
@@ -1201,7 +1433,11 @@ end
 function Postmaster.Event_MailTakeAttachedItemSuccess(eventCode, mailId)
     if IsInGamepadPreferredMode() then return end
     local self = Postmaster
+    if not self.taking then return end
     self.Debug("attached items taken "..tostring(mailId))
+    -- Stop take attachments retries
+    local LTO = LibStub("LibTimeout")
+    if LTO then LTO:CancelTimeout(TakeTimeout) end
     local waitingForMoney = table.remove(self.awaitingAttachments[self.GetMailIdString(mailId)])
     if waitingForMoney then 
         self.Debug("still waiting for money or COD. exiting.")
@@ -1215,7 +1451,11 @@ end
 function Postmaster.Event_MailTakeAttachedMoneySuccess(eventCode, mailId)
     if IsInGamepadPreferredMode() then return end
     local self = Postmaster
+    if not self.taking then return end
     self.Debug("attached money taken "..tostring(mailId))
+    -- Stop take attachments retries
+    local LTO = LibStub("LibTimeout")
+    if LTO then LTO:CancelTimeout(TakeTimeout) end
     local waitingForItems = table.remove(self.awaitingAttachments[self.GetMailIdString(mailId)])
     if waitingForItems then 
         self.Debug("still waiting for items. exiting.")
@@ -1230,6 +1470,7 @@ end
 function Postmaster.Event_MoneyUpdate(eventCode, newMoney, oldMoney, reason)
     if IsInGamepadPreferredMode() then return end
     local self = Postmaster
+    if not self.taking then return end
     self.Debug("Event_MoneyUpdate("..tostring(eventCode)..","..tostring(newMoney)..","..tostring(oldMoney)..","..tostring(reason)..")")
     if reason ~= CURRENCY_CHANGE_REASON_MAIL or oldMoney <= newMoney then 
         self.Debug("not mail reason or money change not negative")
@@ -1247,6 +1488,10 @@ function Postmaster.Event_MoneyUpdate(eventCode, newMoney, oldMoney, reason)
         self.Debug("did not find any mail items with a COD amount of "..tostring(goldChanged))
         return
     end
+    
+    -- Stop take attachments retries
+    local LTO = LibStub("LibTimeout")
+    if LTO then LTO:CancelTimeout(TakeTimeout) end
     
     -- This is a C.O.D. payment, so trigger a mail delete if all items have been
     -- removed from the mail already.
@@ -1325,14 +1570,15 @@ end
      and initializing controller state variables for the take operation. ]]
 function Postmaster.Prehook_MailInboxShared_TakeAll(mailId)
     local self = Postmaster
+    if not self.taking then
+        return
+    end
     local numAttachments, attachedMoney, codAmount = GetMailAttachmentInfo(mailId)
     if codAmount > 0 then
         if self.takingAll then
             if not self.settings.takeAllCodTake then return end
         elseif not MAIL_INBOX.pendingAcceptCOD then return end
-    end
-    self.taking = true
-    self.abortRequested = false  
+    end 
     self.Debug("ZO_MailInboxShared_TakeAll("..tostring(mailId)..")")
     self.awaitingAttachments[self.GetMailIdString(mailId)] = {}
     local attachmentData = { items = {}, money = attachedMoney, cod = codAmount }
@@ -1352,7 +1598,7 @@ function Postmaster.Prehook_MailInboxShared_TakeAll(mailId)
     
         -- If all attachments were unique and already in the backpack
         if uniqueAttachmentConflictCount == numAttachments then
-            self.Debug("Take attachments for "..mailIdString
+            self.Debug("Not taking attachments for "..mailIdString
                        .." because it contains only unique items that are already in the backpack")
             self.mailIdsFailedDeletion[mailIdString] = true
             self.Event_MailRemoved(nil, mailId)
@@ -1360,6 +1606,8 @@ function Postmaster.Prehook_MailInboxShared_TakeAll(mailId)
         end
         if attachedMoney > 0 or codAmount > 0 then
             table.insert(self.awaitingAttachments[self.GetMailIdString(mailId)], true)
+            -- Wire up timeout callback
+            TakeTimeout(mailId)
         end
     end
     self.attachmentData[mailIdString] = attachmentData

@@ -1,8 +1,8 @@
 ## Title: Postmaster
 ## Author: |c99CCEFsilvereyes|r, |cEFEBBEGarkin|r & Zierk
 ## Description: Mail addon to simplify inbox management
-## Version: 3.5.1
-## APIVersion: 100017
+## Version: 3.6.0
+## APIVersion: 100017 100018
 ## OptionalDependsOn: LibStub LibAddonMenu-2.0 MailR wykkydsMailBox
 ## SavedVariables: Postmaster_Data
 
@@ -18,6 +18,7 @@ lib\LibAddonMenu-2.0\controls\header.lua
 lib\LibAddonMenu-2.0\controls\panel.lua
 lib\LibAddonMenu-2.0\controls\slider.lua
 lib\LibAddonMenu-2.0\controls\submenu.lua
+lib\LibTimeout\LibTimeout.lua
 
 ; Language files
 localization\en.lua
