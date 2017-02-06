@@ -948,7 +948,7 @@ function Postmaster:TryDeleteMarkedMail(mailId)
     -- Resume the Take operation. will be cleared when the mail removed event handler fires.
     self.taking = true 
     self.Debug("deleting mail id "..tostring(mailId))
-    self:RequestDeleteMail(mailId)
+    self:RequestMailDelete(mailId)
     KEYBIND_STRIP:UpdateKeybindButtonGroup(MAIL_INBOX.selectionKeybindStripDescriptor)
     return deleteIndex
 end
