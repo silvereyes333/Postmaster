@@ -5,6 +5,8 @@
 --Register LTO with LibStub
 local MAJOR, MINOR = "LibTimeout", 1
 local lto, minorVersion = LibStub:NewLibrary(MAJOR, MINOR)
+if not lto then return end --the same or newer version of this lib is already loaded into memory
+
 local callbacks = {}
 local retryCounts = {}
 function pack(...)

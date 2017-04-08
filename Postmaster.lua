@@ -5,7 +5,7 @@
 Postmaster = {
     name = "Postmaster",
     title = GetString(SI_PM_NAME),
-    version = "3.6.2",
+    version = "3.6.3",
     author = "|c99CCEFsilvereyes|r, |cEFEBBEGarkin|r & Zierk",
     
     -- For development use only. Set to true to see a ridiculously verbose 
@@ -50,7 +50,8 @@ Postmaster = {
 }
 
 -- Format for chat print and debug messages, with addon title prefix
-PM_CHAT_FORMAT = zo_strformat("<<1>>", Postmaster.title) .. "|cFFFFFF: <<1>>|r"
+PM_CHAT_PREFIX = zo_strformat("<<1>>", Postmaster.title) .. "|cFFFFFF: "
+PM_CHAT_FORMAT = PM_CHAT_PREFIX .. " <<1>>|r"
 
 -- Max milliseconds to wait for a mail removal event from the server after calling DeleteMail
 PM_DELETE_MAIL_TIMEOUT_MS = 1500
@@ -76,6 +77,8 @@ PM_BOUNCE_MAIL_PREFIXES = {
     "BOUNCE",
     "RETURN"
 }
+
+local LLS = LibStub("LibLootSummary")
 
 -- Initalizing the addon
 local function OnAddonLoaded(eventCode, addOnName)
@@ -510,26 +513,15 @@ end
 --[[ Outputs a verbose summary of all attachments and gold transferred by the 
      current Take or Take All command. ]]
 function Postmaster.PrintAttachmentSummary(attachmentData)
-    if not Postmaster.settings.verbose or not attachmentData then return end
+    if not Postmaster.settings.verbose or not attachmentData or not LLS then return end
     
     local summary = ""
+    LLS:SetPrefix(PM_CHAT_PREFIX)
     
     -- Add items summary
     for attachIndex=1,#attachmentData.items do
         local attachmentItem = attachmentData.items[attachIndex]
-        if attachIndex > 1 then
-            summary = summary .. " "
-        end
-        local countString = zo_strformat(GetString(SI_HOOK_POINT_STORE_REPAIR_KIT_COUNT), attachmentItem.count)
-        local itemString = zo_strformat("<<1>> <<2>>", attachmentItem.link, countString)
-        
-        -- Make sure that item link x quantity remains indivisible in summary so that we don't end up with 
-        -- counts on a separate line.
-        if string.len(summary) + string.len(itemString) > PM_MAX_CHAT_LENGTH then
-            Postmaster.Print(summary)
-            summary = ""
-        end
-        summary = summary .. itemString
+        LLS:AddItemLink(attachmentItem.link, attachmentItem.count)
     end
     
     -- Add money summary
@@ -540,14 +532,10 @@ function Postmaster.PrintAttachmentSummary(attachmentData)
         money = -attachmentData.cod 
     end
     if money then
-        if #attachmentData.items > 0 then
-            summary = summary .. GetString(SI_PM_AND)
-        end
-        local moneyString = ZO_CurrencyControl_FormatCurrencyAndAppendIcon(money, true, CURT_MONEY, IsInGamepadPreferredMode())
-        summary = zo_strformat("<<1>><<2>>", summary, moneyString)
+        LLS:AddCurrency(CURT_MONEY, money)
     end
     
-    Postmaster.Print(summary)
+    LLS:Print()
 end
 
 --[[ Called to delete the current mail after all attachments are taken and all 
