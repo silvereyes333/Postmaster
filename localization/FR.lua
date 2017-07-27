@@ -23,7 +23,7 @@ local strings = {
     ["SI_PM_SYSTEM_DELETE_ATTACHED"]             = "Effacer courriers systèmes avec pièces jointes",
     ["SI_PM_SYSTEM_TAKE_ATTACHED_TOOLTIP"]       = "Lorsque cette option est activée, la commande <<1>> récupérera les pièces jointes et, si demandé, effacera les courriers concernés",
     ["SI_PM_SYSTEM_TAKE_ATTACHED_TOOLTIP_QUICK"] = { "Lorsque cette option est activée, la commande <<1>> récupérera les pièces jointes et effacera les courriers concernés", SI_PM_TAKE },
-    ["SI_PM_SYSTEM_TAKE_PVP"]                    = "Récompenses de guerre de l'alliance / PvP",
+    ["SI_PM_SYSTEM_TAKE_PVP"]                    = "Récompenses de guerre de l'alliance / Champs de bataille / PvP",
     ["SI_PM_SYSTEM_TAKE_CRAFTING"]               = "Fournisseur",
     ["SI_PM_SYSTEM_TAKE_UNDAUNTED"]              = "Indomptables",
     ["SI_PM_SYSTEM_TAKE_OTHER"]                  = "Toutes les autres pièces jointes du système",
@@ -88,6 +88,7 @@ local strings = {
     ["SI_PM_UNDAUNTED_NPC_TRIAL_1"]              = "Turuk Rougegriffes",
     ["SI_PM_UNDAUNTED_NPC_TRIAL_2"]              = "Kailstig la Hache",
     ["SI_PM_UNDAUNTED_NPC_TRIAL_3"]              = "Mordra la puissante",
+    ["SI_PM_BATTLEGROUNDS_NPC"]                  = "Maître de guerre Rivyn",
 }
 
 -- Overwrite English strings

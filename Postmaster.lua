@@ -5,7 +5,7 @@
 Postmaster = {
     name = "Postmaster",
     title = GetString(SI_PM_NAME),
-    version = "3.6.4",
+    version = "3.7.0",
     author = "|c99CCEFsilvereyes|r, |cEFEBBEGarkin|r & Zierk",
     
     -- For development use only. Set to true to see a ridiculously verbose 
@@ -135,12 +135,17 @@ local systemEmailSubjects = {
     }
 }
 
-local undauntedEmailSenders = {
-    zo_strlower(GetString(SI_PM_UNDAUNTED_NPC_NORMAL)),
-    zo_strlower(GetString(SI_PM_UNDAUNTED_NPC_VET)),
-    zo_strlower(GetString(SI_PM_UNDAUNTED_NPC_TRIAL_1)),
-    zo_strlower(GetString(SI_PM_UNDAUNTED_NPC_TRIAL_2)),
-    zo_strlower(GetString(SI_PM_UNDAUNTED_NPC_TRIAL_3)),
+local systemEmailSenders = {
+    ["undaunted"] = {
+        zo_strlower(GetString(SI_PM_UNDAUNTED_NPC_NORMAL)),
+        zo_strlower(GetString(SI_PM_UNDAUNTED_NPC_VET)),
+        zo_strlower(GetString(SI_PM_UNDAUNTED_NPC_TRIAL_1)),
+        zo_strlower(GetString(SI_PM_UNDAUNTED_NPC_TRIAL_2)),
+        zo_strlower(GetString(SI_PM_UNDAUNTED_NPC_TRIAL_3)),
+    },
+    ["pvp"] = {
+        zo_strlower(GetString(SI_PM_BATTLEGROUNDS_NPC)),
+    },
 }
 
 local function CanTakeAllDelete(mailData, attachmentData)
@@ -211,13 +216,15 @@ local function CanTakeAllDelete(mailData, attachmentData)
                     end
                     return deleteSettings.systemGuildStore
                     
-                elseif self:MailFieldMatch(mailData, subjectField, systemEmailSubjects["pvp"]) then
-                    if not deleteSettings.systemGuildStore then
+                elseif self:MailFieldMatch(mailData, subjectField, systemEmailSubjects["pvp"]) 
+                       or self:MailFieldMatch(mailData, "senderDisplayName", systemEmailSenders["pvp"])
+                then
+                    if not deleteSettings.systemPvp then
                         self.Debug("Cannot delete PvP rewards mail")
                     end
                     return deleteSettings.systemPvp
                 
-                elseif self:MailFieldMatch(mailData, "senderDisplayName", undauntedEmailSenders) then
+                elseif self:MailFieldMatch(mailData, "senderDisplayName", systemEmailSenders["undaunted"]) then
                     if not deleteSettings.systemUndaunted then
                         self.Debug("Cannot delete Undaunted rewards mail")
                     end
@@ -784,10 +791,12 @@ local function CanTakeShared(mailData, settings)
                 elseif self:MailFieldMatch(mailData, subjectField, systemEmailSubjects["guildStore"]) then
                     return settings.systemGuildStore
                     
-                elseif self:MailFieldMatch(mailData, subjectField, systemEmailSubjects["pvp"]) then
+                elseif self:MailFieldMatch(mailData, subjectField, systemEmailSubjects["pvp"])
+                       or self:MailFieldMatch(mailData, "senderDisplayName", systemEmailSenders["pvp"])
+                then
                     return settings.systemPvp
                 
-                elseif self:MailFieldMatch(mailData, "senderDisplayName", undauntedEmailSenders) then
+                elseif self:MailFieldMatch(mailData, "senderDisplayName", systemEmailSenders["undaunted"]) then
                     return settings.systemUndaunted
                     
                 else 
