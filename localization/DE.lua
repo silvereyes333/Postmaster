@@ -72,6 +72,7 @@ local strings = {
     ["SI_PM_GUILD_STORE_PURCHASED"]              = "Gegenstand gekauft",
     ["SI_PM_GUILD_STORE_SOLD"]                   = "Gegenstand verkauft",
     ["SI_PM_PVP_FOR_THE_WORTHY"]                 = "Gerechter Lohn!",
+    ["SI_PM_PVP_THANKS"]                         = "Wir danken Euch, Krieger",
     ["SI_PM_PVP_FOR_THE_ALLIANCE_1"]             = "Für das Bündnis!",
     ["SI_PM_PVP_FOR_THE_ALLIANCE_2"]             = "",
     ["SI_PM_PVP_FOR_THE_ALLIANCE_3"]             = "",

@@ -5,7 +5,7 @@
 Postmaster = {
     name = "Postmaster",
     title = GetString(SI_PM_NAME),
-    version = "3.7.0",
+    version = "3.7.1",
     author = "|c99CCEFsilvereyes|r, |cEFEBBEGarkin|r & Zierk",
     
     -- For development use only. Set to true to see a ridiculously verbose 
@@ -125,6 +125,7 @@ local systemEmailSubjects = {
     },
     ["pvp"] = {
         zo_strlower(GetString(SI_PM_PVP_FOR_THE_WORTHY)),
+        zo_strlower(GetString(SI_PM_PVP_THANKS)),
         zo_strlower(GetString(SI_PM_PVP_FOR_THE_ALLIANCE_1)),
         zo_strlower(GetString(SI_PM_PVP_FOR_THE_ALLIANCE_2)),
         zo_strlower(GetString(SI_PM_PVP_FOR_THE_ALLIANCE_3)),

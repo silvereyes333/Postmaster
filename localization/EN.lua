@@ -81,6 +81,7 @@ POSTMASTER_STRINGS = {
     ["SI_PM_GUILD_STORE_PURCHASED"]              = "Item Purchased",
     ["SI_PM_GUILD_STORE_SOLD"]                   = "Item Sold",
     ["SI_PM_PVP_FOR_THE_WORTHY"]                 = "Rewards for the Worthy!",
+    ["SI_PM_PVP_THANKS"]                         = "Our Thanks, Warrior",
     ["SI_PM_PVP_FOR_THE_ALLIANCE_1"]             = "For the Dominion!",
     ["SI_PM_PVP_FOR_THE_ALLIANCE_2"]             = "For the Pact!",
     ["SI_PM_PVP_FOR_THE_ALLIANCE_3"]             = "For the Covenant!",

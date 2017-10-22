@@ -76,6 +76,7 @@ local strings = {
     ["SI_PM_GUILD_STORE_PURCHASED"]              = "Objet acheté",
     ["SI_PM_GUILD_STORE_SOLD"]                   = "Objet vendu",
     ["SI_PM_PVP_FOR_THE_WORTHY"]                 = "La récompense des braves !",
+    ["SI_PM_PVP_THANKS"]                         = "Merci, guerrier",
     ["SI_PM_PVP_FOR_THE_ALLIANCE_1"]             = "Pour l'Alliance !",
     ["SI_PM_PVP_FOR_THE_ALLIANCE_2"]             = "",
     ["SI_PM_PVP_FOR_THE_ALLIANCE_3"]             = "",
