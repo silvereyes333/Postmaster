@@ -2,7 +2,6 @@
 local strings = {
     ["SI_PM_AND"]                                = " und ", 
     ["SI_PM_SEPARATOR_HINT"]                     = "Mehrere Begriffe mit einem Komma trennen!",
-    ["SI_PM_CHAMPION_160_REWARD"]                = "Belohnung – Champion 160",
     ["SI_PM_VERBOSE"]                            = "Beuteverlauf im Chatfenster",
     ["SI_PM_VERBOSE_TOOLTIP"]                    = "Alle entnommen Gegenstände werden im Chatfenster angezeigt.",
     ["SI_PM_VERBOSE_COMBINE"]                    = "Beuteverlauf kombinieren",

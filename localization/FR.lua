@@ -3,7 +3,6 @@ local strings = {
     ["SI_PM_AND"]                                = " et ", 
     ["SI_PM_LIST_SEPARATOR"]                     = ",", 
     ["SI_PM_SEPARATOR_HINT"]                     = "Séparer des mots avec une virgule (,)",
-    ["SI_PM_CHAMPION_160_REWARD"]                = "Récompense de Champion 160",
     ["SI_PM_VERBOSE"]                            = "Message de réception dans le chat",
     ["SI_PM_VERBOSE_TOOLTIP"]                    = "Envoi un message dans le chat lors de la récupération des pièces jointes (courrier)",
     ["SI_PM_VERBOSE_COMBINE"]                    = "Résumer les messages de réception",

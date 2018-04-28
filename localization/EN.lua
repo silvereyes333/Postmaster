@@ -7,7 +7,6 @@ POSTMASTER_STRINGS = {
     ["SI_PM_WORD_SEPARATOR"]                     = " ",
     ["SI_PM_LIST_SEPARATOR"]                     = ",", 
     ["SI_PM_SEPARATOR_HINT"]                     = "Separate terms with a comma (,)",
-    ["SI_PM_CHAMPION_160_REWARD"]                = "Champion Reward 160",
     ["SI_PM_VERBOSE"]                            = "Loot Messages in Chat",
     ["SI_PM_VERBOSE_TOOLTIP"]                    = "Sends verbose messages to chat when mail attachments are retrieved",
     ["SI_PM_VERBOSE_COMBINE"]                    = "Combine Loot Messages",

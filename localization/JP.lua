@@ -3,7 +3,6 @@ local strings = {
     ["SI_PM_AND"]                                = "と", 
     ["SI_PM_WORD_SEPARATOR"]                     = "", 
     ["SI_PM_SEPARATOR_HINT"]                     = "用語をカンマで区切ります。 (,)",
-    ["SI_PM_CHAMPION_160_REWARD"]                = "チャンピオン160 報酬",
     ["SI_PM_VERBOSE"]                            = "チャットに取得メッセージ",
     ["SI_PM_VERBOSE_TOOLTIP"]                    = "メールに添付されたアイテムを取得時、詳細なメッセージをチャットに送ります。",
     ["SI_PM_VERBOSE_COMBINE"]                    = "取得メッセージを結合",

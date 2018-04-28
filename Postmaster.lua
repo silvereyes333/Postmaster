@@ -5,7 +5,7 @@
 Postmaster = {
     name = "Postmaster",
     title = GetString(SI_PM_NAME),
-    version = "3.7.3",
+    version = "3.7.4",
     author = "|c99CCEFsilvereyes|r, |cEFEBBEGarkin|r & Zierk",
     
     -- For development use only. Set to true to see a ridiculously verbose 
@@ -575,7 +575,7 @@ function Postmaster:RequestMailDelete(mailId)
     self.attachmentData[mailIdString] = nil
     
     local mailData = MAIL_INBOX:GetMailData(mailId)
-    if mailData.attachedMoney > 0 or mailData.numAttachments > 0 then
+    if (mailData.attachedMoney and mailData.attachedMoney > 0) or (mailData.numAttachments and mailData.numAttachments > 0) then
         self.Debug("Cannot delete mail id "..mailIdString.." because it is not empty")
         self.mailIdsFailedDeletion[mailIdString] = true
         self.Event_MailRemoved(nil, mailId)
@@ -747,7 +747,7 @@ local function CanTakeShared(mailData, settings)
         return true
     
     -- Handle C.O.D. mail
-    elseif mailData.codAmount > 0 then
+    elseif mailData.codAmount and mailData.codAmount > 0 then
     
         -- Skip C.O.D. mails, if so configured
         if not settings.codTake then return false
@@ -762,7 +762,7 @@ local function CanTakeShared(mailData, settings)
     end
     
     local fromSystem = (mailData.fromCS or mailData.fromSystem)
-    local hasAttachments = mailData.attachedMoney > 0 or mailData.numAttachments > 0
+    local hasAttachments = (mailData.attachedMoney and mailData.attachedMoney > 0) or (mailData.numAttachments and mailData.numAttachments > 0)
     if hasAttachments then
         
         -- Special handling for hireling mail, since we know even without opening it that
@@ -776,7 +776,7 @@ local function CanTakeShared(mailData, settings)
         -- to contain all attachments.  This logic is overly simplistic, since 
         -- theoretically, stacking and craft bags could free up slots. But 
         -- reproducing that business logic here sounds hard, so I gave up.
-        if mailData.numAttachments > 0 
+        if mailData.numAttachments and mailData.numAttachments > 0 
            and (freeSlots - mailData.numAttachments) < settings.reservedSlots
            and not attachmentsToCraftBag
         then 
@@ -898,7 +898,8 @@ end
 function Postmaster:TakeOrDeleteSelected()
     if self:TryTakeAllCodMail() then return end
     local mailData = MAIL_INBOX.selectedData
-    local hasAttachments = mailData.attachedMoney > 0 or mailData.numAttachments > 0
+    local hasAttachments = (mailData.attachedMoney and mailData.attachedMoney) > 0 
+      or (mailData.numAttachments and mailData.numAttachments > 0)
     if hasAttachments then
         self.taking = true
         self.originalDescriptors.take.callback()
@@ -956,7 +957,7 @@ end
 function Postmaster:TryTakeAllCodMail()
     if not self.settings.takeAllCodTake then return end
     local mailData = MAIL_INBOX.selectedData
-    if mailData.codAmount > 0 then
+    if mailData.codAmount and mailData.codAmount > 0 then
         self.taking = true
         MAIL_INBOX.pendingAcceptCOD = true
         ZO_MailInboxShared_TakeAll(mailData.mailId)
