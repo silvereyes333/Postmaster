@@ -5,7 +5,7 @@
 Postmaster = {
     name = "Postmaster",
     title = GetString(SI_PM_NAME),
-    version = "3.7.4",
+    version = "3.8.0",
     author = "|c99CCEFsilvereyes|r, |cEFEBBEGarkin|r & Zierk",
     
     -- For development use only. Set to true to see a ridiculously verbose 
@@ -284,45 +284,79 @@ local function MailDeleteFailed(timeoutData)
     Postmaster:Reset()
 end
 
-local function MailDelete(mailId)
-    -- Wire up timeout callback
-    local LTO = LibStub("LibTimeout")
-    if LTO then
-        local options = { doneCallback = MailDeleteFailed, maxRetries = PM_DELETE_MAIL_MAX_RETRIES }
-        LTO:StartTimeout( options, PM_DELETE_MAIL_TIMEOUT_MS, MailDelete, mailId )
+local MailDelete
+local function GetMailDeleteCallback(mailId, retries)
+    return function()
+        retries = retries - 1
+        if retries < 0 then
+            MailDeleteFailed()
+        else
+            MailDelete(mailId, retries)
+        end
     end
+end
+
+MailDelete = function(mailId, retries)
+    -- Wire up timeout callback
+    local self = Postmaster
+    if not retries then
+        retries = PM_DELETE_MAIL_MAX_RETRIES
+    end
+    EVENT_MANAGER:RegisterForUpdate(self.name .. "Delete", PM_DELETE_MAIL_TIMEOUT_MS, GetMailDeleteCallback(mailId, retries))
     
     DeleteMail(mailId, false)
 end
 
-local function MailReadFailed(timeoutData)
-    ZO_Alert(UI_ALERT_CATEGORY_ALERT, nil, SI_PM_READ_FAILED)
-    Postmaster:Reset()
+local MailRead
+local function GetMailReadCallback(retries)
+    return function()
+        local self = Postmaster
+        retries = retries - 1
+        if retries < 0 then
+            ZO_Alert(UI_ALERT_CATEGORY_ALERT, nil, SI_PM_READ_FAILED)
+            self:Reset()
+        else
+            MailRead(retries)
+        end
+    end
 end
 
-local function MailRead()
+MailRead = function(retries)
 
-    local LTO = LibStub("LibTimeout")
-    if LTO then 
-        local options = { doneCallback = MailReadFailed, maxRetries = PM_MAIL_READ_MAX_RETRIES }
-        LTO:StartTimeout( options, PM_MAIL_READ_TIMEOUT_MS, MailRead )
+    local self = Postmaster
+    if not retries then
+        retries = PM_MAIL_READ_MAX_RETRIES
     end
+    EVENT_MANAGER:RegisterForUpdate(self.name .. "Read", PM_MAIL_READ_TIMEOUT_MS, GetMailReadCallback(retries) )
+    
     -- If there exists another message in the inbox that has attachments, select it. otherwise, clear the selection.
-    local nextMailData = Postmaster:TakeAllGetNext()
+    local nextMailData = self:TakeAllGetNext()
     ZO_ScrollList_SelectData(ZO_MailInboxList, nextMailData)
     return nextMailData
 end
 
-local function TakeFailed(timeoutData)
+local function TakeFailed()
     ZO_Alert(UI_ALERT_CATEGORY_ALERT, nil, SI_PM_TAKE_ATTACHMENTS_FAILED)
     Postmaster:Reset()
 end
-local function TakeTimeout(mailId)
-    local LTO = LibStub("LibTimeout")
-    if LTO then
-        local options = { doneCallback = TakeFailed, maxRetries = PM_TAKE_ATTACHMENTS_MAX_RETRIES }
-        LTO:StartTimeout( options, PM_TAKE_TIMEOUT_MS, ZO_MailInboxShared_TakeAll, mailId )
+
+local function GetTakeCallback(mailId, retries)
+    return function()
+        retries = retries - 1
+        if retries < 0 then
+            TakeFailed()
+        else
+            TakeTimeout(mailId, retries)
+        end
     end
+end
+local function TakeTimeout(mailId, retries)
+    local self = Postmaster
+    if not retries then
+        retries = PM_TAKE_ATTACHMENTS_MAX_RETRIES
+    end
+    EVENT_MANAGER:RegisterForUpdate(self.name .. "Take", PM_TAKE_TIMEOUT_MS, GetTakeCallback(mailId, retries) )
+    ZO_MailInboxShared_TakeAll(mailId)
 end
 
 -- Register events
@@ -521,7 +555,8 @@ end
 --[[ Outputs a verbose summary of all attachments and gold transferred by the 
      current Take or Take All command. ]]
 function Postmaster.PrintAttachmentSummary(attachmentData)
-    if not Postmaster.settings.verbose or not attachmentData or not LLS then return end
+    local self = Postmaster
+    if not self.settings.verbose or not attachmentData or not LLS then return end
     
     local summary = ""
     LLS:SetPrefix(PM_CHAT_PREFIX)
@@ -624,12 +659,9 @@ function Postmaster:Reset()
     self.mailIdsFailedDeletion = {}
     ZO_MailInboxList.autoSelect = true
     -- Unwire timeout callbacks
-    local LTO = LibStub("LibTimeout")
-    if LTO then
-        LTO:CancelTimeout(MailDelete)
-        LTO:CancelTimeout(MailRead)
-        LTO:CancelTimeout(TakeTimeout)
-    end
+    EVENT_MANAGER:UnregisterForUpdate(self.name .. "Delete")
+    EVENT_MANAGER:UnregisterForUpdate(self.name .. "Read")
+    EVENT_MANAGER:UnregisterForUpdate(self.name .. "Take")
     KEYBIND_STRIP:UpdateKeybindButtonGroup(MAIL_INBOX.selectionKeybindStripDescriptor)
     if MAIL_INBOX.mailId then
         local currentMailData = ZO_MailInboxList.selectedData
@@ -1342,8 +1374,7 @@ function Postmaster.Event_MailReadable(eventCode, mailId)
     if IsInGamepadPreferredMode() then return end
     local self = Postmaster
     self.Debug("Event_MailReadable("..tostring(mailId)..")")
-    local LTO = LibStub("LibTimeout")
-    if LTO then LTO:CancelTimeout(MailRead) end
+    EVENT_MANAGER:UnregisterForUpdate(self.name .. "Read")
         
     -- If taking all, then go ahead and start the next Take loop, since the
     -- mail and attachments are readable now.
@@ -1374,8 +1405,7 @@ function Postmaster.Event_MailRemoved(eventCode, mailId)
     if eventCode then
         
         -- Unwire timeout callback
-        local LTO = LibStub("LibTimeout")
-        if LTO then LTO:CancelTimeout(MailDelete) end
+        EVENT_MANAGER:UnregisterForUpdate(self.name .. "Delete")
         PlaySound(SOUNDS.MAIL_ITEM_DELETED)
         self.Debug("deleted mail id "..tostring(mailId))
     end
@@ -1435,8 +1465,7 @@ function Postmaster.Event_MailTakeAttachedItemSuccess(eventCode, mailId)
     if not self.taking then return end
     self.Debug("attached items taken "..tostring(mailId))
     -- Stop take attachments retries
-    local LTO = LibStub("LibTimeout")
-    if LTO then LTO:CancelTimeout(TakeTimeout) end
+    EVENT_MANAGER:UnregisterForUpdate(self.name .. "Take")
     local waitingForMoney = table.remove(self.awaitingAttachments[self.GetMailIdString(mailId)])
     if waitingForMoney then 
         self.Debug("still waiting for money or COD. exiting.")
@@ -1453,8 +1482,7 @@ function Postmaster.Event_MailTakeAttachedMoneySuccess(eventCode, mailId)
     if not self.taking then return end
     self.Debug("attached money taken "..tostring(mailId))
     -- Stop take attachments retries
-    local LTO = LibStub("LibTimeout")
-    if LTO then LTO:CancelTimeout(TakeTimeout) end
+    EVENT_MANAGER:UnregisterForUpdate(self.name .. "Take")
     local waitingForItems = table.remove(self.awaitingAttachments[self.GetMailIdString(mailId)])
     if waitingForItems then 
         self.Debug("still waiting for items. exiting.")
@@ -1489,8 +1517,7 @@ function Postmaster.Event_MoneyUpdate(eventCode, newMoney, oldMoney, reason)
     end
     
     -- Stop take attachments retries
-    local LTO = LibStub("LibTimeout")
-    if LTO then LTO:CancelTimeout(TakeTimeout) end
+    EVENT_MANAGER:UnregisterForUpdate(self.name .. "Take")
     
     -- This is a C.O.D. payment, so trigger a mail delete if all items have been
     -- removed from the mail already.
@@ -1522,7 +1549,8 @@ end
 
 --[[ Suppress mail delete and/or return to sender dialog in keyboard mode, if configured ]]
 function Postmaster.Prehook_Dialogs_ShowDialog(name, data, textParams, isGamepad)
-    if Postmaster.settings.deleteDialogSuppress and name == "DELETE_MAIL" then 
+    local self = Postmaster
+    if self.settings.deleteDialogSuppress and name == "DELETE_MAIL" then 
         MAIL_INBOX:ConfirmDelete(MAIL_INBOX.mailId)
         return true
     elseif Postmaster.settings.returnDialogSuppress and name == "MAIL_RETURN_ATTACHMENTS" then
@@ -1533,7 +1561,8 @@ end
 
 --[[ Suppress mail delete and/or return to sender dialog in gamepad mode, if configured ]]
 function Postmaster.Prehook_Dialogs_ShowGamepadDialog(name, data, textParams)
-    if Postmaster.settings.deleteDialogSuppress and name == "DELETE_MAIL" then 
+    local self = Postmaster
+    if self.settings.deleteDialogSuppress and name == "DELETE_MAIL" then 
         MAIL_MANAGER_GAMEPAD.inbox:Delete()
         return true
     elseif Postmaster.settings.returnDialogSuppress and name == "MAIL_RETURN_ATTACHMENTS" then

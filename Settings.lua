@@ -3,6 +3,7 @@
                 SETTINGS
     ===================================
   ]]
+local LibSavedVars = LibStub("LibSavedVars")
 local function InvertBooleanSetting(settings, oldSetting, newSetting)
     if settings[oldSetting] == nil then 
         return
@@ -17,15 +18,13 @@ local function RenameSetting(settings, oldSetting, newSetting)
     settings[newSetting] = settings[oldSetting]
     settings[oldSetting] = nil
 end
-local function UpgradeSettings(settings)
+local function UpgradeSettings(self, settings)
     if not settings.dataVersion then
-        settings.dataVersion = 3
         InvertBooleanSetting(settings, "skipCod", "takeAllCodTake")
         InvertBooleanSetting(settings, "skipEmptyPlayerMail", "takeAllPlayerDeleteEmpty")
         InvertBooleanSetting(settings, "skipOtherPlayerMail", "takeAllPlayerAttached")
         InvertBooleanSetting(settings, "skipEmptySystemMail", "takeAllSystemDeleteEmpty")
     elseif settings.dataVersion < 3 then
-        settings.dataVersion = 3
         RenameSetting(settings, "codTake", "takeAllCodTake")
         RenameSetting(settings, "codGoldLimit", "takeAllCodGoldLimit")
         RenameSetting(settings, "playerDeleteEmpty", "takeAllPlayerDeleteEmpty")
@@ -39,6 +38,7 @@ local function UpgradeSettings(settings)
         RenameSetting(settings, "systemTakePvp", "takeAllSystemPvp")
         RenameSetting(settings, "systemTakeUndaunted", "takeAllSystemUndaunted")
     end
+    settings.dataVersion = 4
 end
 function Postmaster:SettingsSetup()
 
@@ -81,10 +81,11 @@ function Postmaster:SettingsSetup()
         quickTakeSystemUndaunted = true,
     }
     
-    -- Initialize saved variable
-    self.settings = ZO_SavedVars:NewAccountWide("Postmaster_Data", 1, nil, self.defaults)
+    -- Initialize saved variables
+    self.settings = LibSavedVars:New(self.name .. "_Account", self.name .. "_Character", self.defaults, true)
     
-    UpgradeSettings(self.settings)
+    local legacyAccountSettings = ZO_SavedVars:NewAccountWide(self.name .. "_Data", 1)
+    self.settings:Migrate(legacyAccountSettings, UpgradeSettings, self)
     
     local LAM2 = LibStub("LibAddonMenu-2.0")
     if not LAM2 then return end
@@ -102,6 +103,10 @@ function Postmaster:SettingsSetup()
     self.settingsPanel = LAM2:RegisterAddonPanel(Postmaster.name .. "Options", panelData)
     
     local optionsTable = {
+        
+        -- Account-wide settings
+        self.settings:GetLibAddonMenuAccountCheckbox(),
+        
         {
             type = "description",
             text = GetString(SI_PM_HELP_01),
