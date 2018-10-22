@@ -4,42 +4,9 @@
     ===================================
   ]]
 local LibSavedVars = LibStub("LibSavedVars")
-local function InvertBooleanSetting(settings, oldSetting, newSetting)
-    if settings[oldSetting] == nil then 
-        return
-    end
-    settings[newSetting] = not settings[oldSetting]
-    settings[oldSetting] = nil
-end
-local function RenameSetting(settings, oldSetting, newSetting)
-    if settings[oldSetting] == nil then 
-        return
-    end
-    settings[newSetting] = settings[oldSetting]
-    settings[oldSetting] = nil
-end
-local function UpgradeSettings(self, settings)
-    if not settings.dataVersion then
-        InvertBooleanSetting(settings, "skipCod", "takeAllCodTake")
-        InvertBooleanSetting(settings, "skipEmptyPlayerMail", "takeAllPlayerDeleteEmpty")
-        InvertBooleanSetting(settings, "skipOtherPlayerMail", "takeAllPlayerAttached")
-        InvertBooleanSetting(settings, "skipEmptySystemMail", "takeAllSystemDeleteEmpty")
-    elseif settings.dataVersion < 3 then
-        RenameSetting(settings, "codTake", "takeAllCodTake")
-        RenameSetting(settings, "codGoldLimit", "takeAllCodGoldLimit")
-        RenameSetting(settings, "playerDeleteEmpty", "takeAllPlayerDeleteEmpty")
-        RenameSetting(settings, "playerTakeAttached", "takeAllPlayerAttached")
-        RenameSetting(settings, "playerTakeReturned", "takeAllPlayerReturned")
-        RenameSetting(settings, "systemDeleteEmpty", "takeAllSystemDeleteEmpty")
-        RenameSetting(settings, "systemTakeAttached", "takeAllSystemAttached")
-        RenameSetting(settings, "systemTakeGuildStore", "takeAllSystemGuildStore")
-        RenameSetting(settings, "systemTakeHireling", "takeAllSystemHireling")
-        RenameSetting(settings, "systemTakeOther", "takeAllSystemOther")
-        RenameSetting(settings, "systemTakePvp", "takeAllSystemPvp")
-        RenameSetting(settings, "systemTakeUndaunted", "takeAllSystemUndaunted")
-    end
-    settings.dataVersion = 4
-end
+local renamedSettings
+local renamedAndInvertedSettings
+
 function Postmaster:SettingsSetup()
 
     self.defaults = {
@@ -82,10 +49,13 @@ function Postmaster:SettingsSetup()
     }
     
     -- Initialize saved variables
-    self.settings = LibSavedVars:New(self.name .. "_Account", self.name .. "_Character", self.defaults, true)
-    
-    local legacyAccountSettings = ZO_SavedVars:NewAccountWide(self.name .. "_Data", 1)
-    self.settings:Migrate(legacyAccountSettings, UpgradeSettings, self)
+    self.settings = LibSavedVars
+        :NewAccountWide(self.name .. "_Account", self.defaults)
+        :AddCharacterSettingsToggle(self.name .. "_Character")
+        :MigrateFromAccountWide({ name = self.name .. "_Data" })
+        :RenameSettingsAndInvert(2, renamedAndInvertedSettings)
+        :RenameSettings(3, renamedSettings)
+        :RemoveSettings(5, "dataVersion")
     
     local LAM2 = LibStub("LibAddonMenu-2.0")
     if not LAM2 then return end
@@ -657,3 +627,26 @@ function Postmaster:SettingsSetup()
     SLASH_COMMANDS["/postmaster"] = self.OpenSettingsPanel
     SLASH_COMMANDS["/pm"] = self.OpenSettingsPanel
 end
+
+renamedAndInvertedSettings = 
+    {
+        ["skipCod"]             = "takeAllCodTake",
+        ["skipEmptyPlayerMail"] = "takeAllPlayerDeleteEmpty",
+        ["skipOtherPlayerMail"] = "takeAllPlayerAttached",
+        ["skipEmptySystemMail"] = "takeAllSystemDeleteEmpty",
+    }
+renamedSettings = 
+    {
+        ["codTake"]              = "takeAllCodTake",
+        ["codGoldLimit"]         = "takeAllCodGoldLimit",
+        ["playerDeleteEmpty"]    = "takeAllPlayerDeleteEmpty",
+        ["playerTakeAttached"]   = "takeAllPlayerAttached",
+        ["playerTakeReturned"]   = "takeAllPlayerReturned",
+        ["systemDeleteEmpty"]    = "takeAllSystemDeleteEmpty",
+        ["systemTakeAttached"]   = "takeAllSystemAttached",
+        ["systemTakeGuildStore"] = "takeAllSystemGuildStore",
+        ["systemTakeHireling"]   = "takeAllSystemHireling",
+        ["systemTakeOther"]      = "takeAllSystemOther",
+        ["systemTakePvp"]        = "takeAllSystemPvp",
+        ["systemTakeUndaunted"]  = "takeAllSystemUndaunted",
+    }
