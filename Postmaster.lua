@@ -5,7 +5,7 @@
 Postmaster = {
     name = "Postmaster",
     title = GetString(SI_PM_NAME),
-    version = "3.8.0",
+    version = "3.8.1",
     author = "|c99CCEFsilvereyes|r, |cEFEBBEGarkin|r & Zierk",
     
     -- For development use only. Set to true to see a ridiculously verbose 
@@ -296,7 +296,7 @@ local function GetMailDeleteCallback(mailId, retries)
     end
 end
 
-MailDelete = function(mailId, retries)
+function MailDelete(mailId, retries)
     -- Wire up timeout callback
     local self = Postmaster
     if not retries then
@@ -321,7 +321,7 @@ local function GetMailReadCallback(retries)
     end
 end
 
-MailRead = function(retries)
+function MailRead(retries)
 
     local self = Postmaster
     if not retries then
@@ -340,6 +340,7 @@ local function TakeFailed()
     Postmaster:Reset()
 end
 
+local TakeTimeout
 local function GetTakeCallback(mailId, retries)
     return function()
         retries = retries - 1
@@ -347,16 +348,16 @@ local function GetTakeCallback(mailId, retries)
             TakeFailed()
         else
             TakeTimeout(mailId, retries)
+            ZO_MailInboxShared_TakeAll(mailId)
         end
     end
 end
-local function TakeTimeout(mailId, retries)
+function TakeTimeout(mailId, retries)
     local self = Postmaster
     if not retries then
         retries = PM_TAKE_ATTACHMENTS_MAX_RETRIES
     end
     EVENT_MANAGER:RegisterForUpdate(self.name .. "Take", PM_TAKE_TIMEOUT_MS, GetTakeCallback(mailId, retries) )
-    ZO_MailInboxShared_TakeAll(mailId)
 end
 
 -- Register events
@@ -1464,12 +1465,12 @@ function Postmaster.Event_MailTakeAttachedItemSuccess(eventCode, mailId)
     local self = Postmaster
     if not self.taking then return end
     self.Debug("attached items taken "..tostring(mailId))
-    -- Stop take attachments retries
-    EVENT_MANAGER:UnregisterForUpdate(self.name .. "Take")
     local waitingForMoney = table.remove(self.awaitingAttachments[self.GetMailIdString(mailId)])
     if waitingForMoney then 
         self.Debug("still waiting for money or COD. exiting.")
     else
+        -- Stop take attachments retries
+        EVENT_MANAGER:UnregisterForUpdate(self.name .. "Take")
         self:RequestMailDelete(mailId)
     end
 end
@@ -1481,12 +1482,12 @@ function Postmaster.Event_MailTakeAttachedMoneySuccess(eventCode, mailId)
     local self = Postmaster
     if not self.taking then return end
     self.Debug("attached money taken "..tostring(mailId))
-    -- Stop take attachments retries
-    EVENT_MANAGER:UnregisterForUpdate(self.name .. "Take")
     local waitingForItems = table.remove(self.awaitingAttachments[self.GetMailIdString(mailId)])
     if waitingForItems then 
         self.Debug("still waiting for items. exiting.")
     else
+        -- Stop take attachments retries
+        EVENT_MANAGER:UnregisterForUpdate(self.name .. "Take")
         self:RequestMailDelete(mailId)
     end
 end
