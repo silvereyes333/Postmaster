@@ -6,6 +6,7 @@
 local LibSavedVars = LibStub("LibSavedVars")
 local renamedSettings
 local renamedAndInvertedSettings
+local refreshPrefix
 
 function Postmaster:SettingsSetup()
 
@@ -15,6 +16,11 @@ function Postmaster:SettingsSetup()
         deleteDialogSuppress = false,
         returnDialogSuppress = false,
         verbose = true,
+        chatColor = { 1, 1, 1, 1 },
+        shortPrefix = true,
+        chatUseSystemColor = true,
+        chatContainerOpen = true,
+        chatContentsSummary = true,
         takeAllCodTake = false,
         takeAllCodDelete = true,
         takeAllCodGoldLimit = 10000,
@@ -56,8 +62,11 @@ function Postmaster:SettingsSetup()
         :RenameSettingsAndInvert(2, renamedAndInvertedSettings)
         :RenameSettings(3, renamedSettings)
         :RemoveSettings(5, "dataVersion")
+        
+    self.chatColor = ZO_ColorDef:New(unpack(self.settings.chatColor))
+    refreshPrefix()
     
-    local LAM2 = LibStub("LibAddonMenu-2.0")
+    local LAM2 = LibAddonMenu2 or LibStub("LibAddonMenu-2.0")
     if not LAM2 then return end
     
     local panelData = {
@@ -562,25 +571,82 @@ function Postmaster:SettingsSetup()
         },
         }}}},
         
-        --[ OPTIONS ]--
+        --[ OPTIONS ]--        
         
-        -- spacer
-        { type = "description", width = "full" },
+        {
+            type     = "submenu",
+            name     = GetString(SI_PM_CHAT_MESSAGES),
+            controls = {
+          
+                -- Verbose option
+                {
+                    type = "checkbox",
+                    name = GetString(SI_PM_VERBOSE),
+                    tooltip = GetString(SI_PM_VERBOSE_TOOLTIP),
+                    getFunc = function() return self.settings.verbose end,
+                    setFunc = function(value) self.settings.verbose = value end,
+                    width = "full",
+                    default = self.defaults.verbose,
+                },
+                -- Short prefix
+                {
+                    type = "checkbox",
+                    name = GetString(SI_PM_SHORT_PREFIX),
+                    tooltip = GetString(SI_PM_SHORT_PREFIX_TOOLTIP),
+                    getFunc = function() return self.settings.shortPrefix end,
+                    setFunc = function(value)
+                                  self.settings.shortPrefix = value
+                                  refreshPrefix()
+                              end,
+                    default = self.defaults.shortPrefix,
+                    disabled = function() return not self.settings.verbose end,
+                },
+                -- Use default system color
+                {
+                    type = "checkbox",
+                    name = GetString(SI_PM_CHAT_USE_SYSTEM_COLOR),
+                    getFunc = function() return self.settings.chatUseSystemColor end,
+                    setFunc = function(value)
+                                  self.settings.chatUseSystemColor = value
+                                  refreshPrefix()
+                              end,
+                    default = self.defaults.chatUseSystemColor,
+                    disabled = function() return not self.settings.verbose end,
+                },
+                -- Message color
+                {
+                    type = "colorpicker",
+                    name = GetString(SI_PM_CHAT_COLOR),
+                    getFunc = function() return unpack(self.settings.chatColor) end,
+                    setFunc = function(r, g, b, a)
+                                  self.settings.chatColor = { r, g, b, a }
+                                  self.chatColor = ZO_ColorDef:New(r, g, b, a)
+                                  refreshPrefix()
+                              end,
+                    default = self.defaults.chatColor,
+                    disabled = function() return self.settings.chatUseSystemColor or not self.settings.verbose end,
+                },
+                -- Old Prefix Colors
+                {
+                    type = "checkbox",
+                    name = GetString(SI_PM_COLORED_PREFIX),
+                    tooltip = GetString(SI_PM_COLORED_PREFIX_TOOLTIP),
+                    getFunc = function() return self.settings.coloredPrefix end,
+                    setFunc = function(value)
+                                  self.settings.coloredPrefix = value
+                                  refreshPrefix()
+                              end,
+                    default = self.defaults.coloredPrefix,
+                    disabled = function() return not self.settings.verbose end,
+                },
+            },
+        },
+        
         -- header
         {
             type = "header",
             name = GetString(SI_GAMEPAD_OPTIONS_MENU),
             width = "full"
-        },
-        -- Verbose option
-        {
-            type = "checkbox",
-            name = GetString(SI_PM_VERBOSE),
-            tooltip = GetString(SI_PM_VERBOSE_TOOLTIP),
-            getFunc = function() return self.settings.verbose end,
-            setFunc = function(value) self.settings.verbose = value end,
-            width = "full",
-            default = self.defaults.verbose,
         },
         -- Delete confirmation dialog suppression
         {
@@ -626,6 +692,28 @@ function Postmaster:SettingsSetup()
     
     SLASH_COMMANDS["/postmaster"] = self.OpenSettingsPanel
     SLASH_COMMANDS["/pm"] = self.OpenSettingsPanel
+end
+
+----------------------------------------------------------------------------
+--
+--       Local methods
+-- 
+----------------------------------------------------------------------------
+
+function refreshPrefix()
+    local self = Postmaster
+    local stringId
+    local startColor = self.settings.chatUseSystemColor and "" or "|c" .. self.chatColor:ToHex()
+    if self.settings.coloredPrefix then
+        self.prefix = GetString(self.settings.shortPrefix and SI_PM_PREFIX_SHORT_COLORED or SI_PM_PREFIX_COLOR)
+            .. startColor .. " "
+    else
+        self.prefix = startColor
+            .. GetString(self.settings.shortPrefix and SI_PM_PREFIX_SHORT or SI_PM_PREFIX)
+            .. " "
+    end
+    self.suffix = self.settings.chatUseSystemColor and "" or "|r"
+    PM_MAX_CHAT_LENGTH = 360 - string.len(self.prefix) - string.len(self.suffix)
 end
 
 renamedAndInvertedSettings = 

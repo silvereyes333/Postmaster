@@ -5,8 +5,8 @@
 Postmaster = {
     name = "Postmaster",
     title = GetString(SI_PM_NAME),
-    version = "3.8.2",
-    author = "|c99CCEFsilvereyes|r, |cEFEBBEGarkin|r & Zierk",
+    version = "3.9.0",
+    author = "silvereyes, Garkin & Zierk",
     
     -- For development use only. Set to true to see a ridiculously verbose 
     -- activity log for this addon in the chat window.
@@ -68,17 +68,12 @@ PM_TAKE_TIMEOUT_MS = 1500
 -- Number of time to try taking attachments if the attempt fails
 PM_TAKE_ATTACHMENTS_MAX_RETRIES = 3
 
--- Max length of a line in chat, after the prefix.
-PM_MAX_CHAT_LENGTH = 355 - string.len(PM_CHAT_FORMAT)
-
 -- Prefixes for bounce mail subjects
 PM_BOUNCE_MAIL_PREFIXES = {
     "RTS",
     "BOUNCE",
     "RETURN"
 }
-
-local LLS = LibStub("LibLootSummary")
 
 -- Initalizing the addon
 local function OnAddonLoaded(eventCode, addOnName)
@@ -546,9 +541,10 @@ end
 
 --[[ Outputs formatted message to chat window ]]
 function Postmaster.Print(input)
+    local self = Postmaster
     local lines = Postmaster.SplitLines(input, PM_MAX_CHAT_LENGTH, {"%s","\n","|h|h"})
     for i=1,#lines do
-        local output = zo_strformat(PM_CHAT_FORMAT, lines[i])
+        local output = self.prefix .. lines[i] .. self.suffix
         d(output)
     end
 end
@@ -557,15 +553,16 @@ end
      current Take or Take All command. ]]
 function Postmaster.PrintAttachmentSummary(attachmentData)
     local self = Postmaster
-    if not self.settings.verbose or not attachmentData or not LLS then return end
+    if not self.settings.verbose or not attachmentData then return end
     
     local summary = ""
-    LLS:SetPrefix(PM_CHAT_PREFIX)
+    LibLootSummary:SetPrefix(self.prefix)
+    LibLootSummary:SetSuffix(self.suffix)
     
     -- Add items summary
     for attachIndex=1,#attachmentData.items do
         local attachmentItem = attachmentData.items[attachIndex]
-        LLS:AddItemLink(attachmentItem.link, attachmentItem.count)
+        LibLootSummary:AddItemLink(attachmentItem.link, attachmentItem.count)
     end
     
     -- Add money summary
@@ -576,10 +573,10 @@ function Postmaster.PrintAttachmentSummary(attachmentData)
         money = -attachmentData.cod 
     end
     if money then
-        LLS:AddCurrency(CURT_MONEY, money)
+        LibLootSummary:AddCurrency(CURT_MONEY, money)
     end
     
-    LLS:Print()
+    LibLootSummary:Print()
 end
 
 --[[ Called to delete the current mail after all attachments are taken and all 
