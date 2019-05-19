@@ -3,7 +3,7 @@
                 SETTINGS
     ===================================
   ]]
-local LibSavedVars = LibStub("LibSavedVars")
+local LibSavedVars = LibSavedVars or LibStub("LibSavedVars")
 local renamedSettings
 local renamedAndInvertedSettings
 local refreshPrefix
@@ -705,8 +705,8 @@ function refreshPrefix()
     local stringId
     local startColor = self.settings.chatUseSystemColor and "" or "|c" .. self.chatColor:ToHex()
     if self.settings.coloredPrefix then
-        self.prefix = GetString(self.settings.shortPrefix and SI_PM_PREFIX_SHORT_COLORED or SI_PM_PREFIX_COLOR)
-            .. startColor .. " "
+        self.prefix = GetString(self.settings.shortPrefix and SI_PM_PREFIX_SHORT_COLOR or SI_PM_PREFIX_COLOR)
+            .. (self.settings.chatUseSystemColor and "|r" or "") .. startColor .. " "
     else
         self.prefix = startColor
             .. GetString(self.settings.shortPrefix and SI_PM_PREFIX_SHORT or SI_PM_PREFIX)
