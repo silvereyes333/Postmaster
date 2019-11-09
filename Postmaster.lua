@@ -5,7 +5,7 @@
 Postmaster = {
     name = "Postmaster",
     title = GetString(SI_PM_NAME),
-    version = "3.9.2",
+    version = "3.10.0",
     author = "silvereyes, Garkin & Zierk",
     
     -- For development use only. Set to true to see a ridiculously verbose 
@@ -46,12 +46,10 @@ Postmaster = {
     
     -- Contains details about C.O.D. mail being taken, since events related to
     -- taking C.O.D.s do not contain mail ids as parameters.
-    codMails = {}
+    codMails = {},
+    
+    classes = {},
 }
-
--- Format for chat print and debug messages, with addon title prefix
-PM_CHAT_PREFIX = zo_strformat("<<1>>", Postmaster.title) .. "|cFFFFFF: "
-PM_CHAT_FORMAT = PM_CHAT_PREFIX .. " <<1>>|r"
 
 -- Max milliseconds to wait for a mail removal event from the server after calling DeleteMail
 PM_DELETE_MAIL_TIMEOUT_MS = 1500
@@ -360,9 +358,12 @@ EVENT_MANAGER:RegisterForEvent(Postmaster.name, EVENT_ADD_ON_LOADED, OnAddonLoad
 
 
 --[[ Outputs formatted message to chat window if debugging is turned on ]]
-function Postmaster.Debug(input, scopeDebug)
-    if not Postmaster.debugMode and not scopeDebug then return end
-    Postmaster.Print(input)
+function Postmaster.Debug(input, force)
+    local self = Postmaster
+    if not force and not self.debugMode then
+        return
+    end
+    d("[PM-DEBUG] " .. input)
 end
 
 --[[ Registers a potential backpack slot as unique ]]--
@@ -508,9 +509,7 @@ end
 
 --[[ Opens the addon settings panel ]]
 function Postmaster.OpenSettingsPanel()
-    local LAM2 = LibStub("LibAddonMenu-2.0")
-    if not LAM2 then return end
-    LAM2:OpenToPanel(Postmaster.settingsPanel)
+    LibAddonMenu2:OpenToPanel(Postmaster.settingsPanel)
 end
 
 --[[ Similar to ZO_PreHook(), except runs the hook function after the existing
@@ -542,27 +541,19 @@ end
 --[[ Outputs formatted message to chat window ]]
 function Postmaster.Print(input)
     local self = Postmaster
-    local lines = Postmaster.SplitLines(input, PM_MAX_CHAT_LENGTH, {"%s","\n","|h|h"})
-    for i=1,#lines do
-        local output = self.prefix .. lines[i] .. self.suffix
-        d(output)
-    end
+    local output = self.prefix .. input .. self.suffix
+    self.chat:Print(output)
 end
 
---[[ Outputs a verbose summary of all attachments and gold transferred by the 
-     current Take or Take All command. ]]
-function Postmaster.PrintAttachmentSummary(attachmentData)
+--[[ Collects a summary of attachment data ]]
+function Postmaster.CollectAttachments(sender, attachmentData)
     local self = Postmaster
-    if not self.settings.verbose or not attachmentData then return end
-    
-    local summary = ""
-    LibLootSummary:SetPrefix(self.prefix)
-    LibLootSummary:SetSuffix(self.suffix)
+    if not self.settings.chatContentsSummary.enabled or not attachmentData then return end
     
     -- Add items summary
     for attachIndex=1,#attachmentData.items do
         local attachmentItem = attachmentData.items[attachIndex]
-        LibLootSummary:AddItemLink(attachmentItem.link, attachmentItem.count)
+        self.summary:AddItemLink(sender, attachmentItem.link, attachmentItem.count)
     end
     
     -- Add money summary
@@ -573,10 +564,8 @@ function Postmaster.PrintAttachmentSummary(attachmentData)
         money = -attachmentData.cod 
     end
     if money then
-        LibLootSummary:AddCurrency(CURT_MONEY, money)
+        self.summary:AddCurrency(sender, CURT_MONEY, money)
     end
-    
-    LibLootSummary:Print()
 end
 
 --[[ Called to delete the current mail after all attachments are taken and all 
@@ -595,11 +584,12 @@ function Postmaster:RequestMailDelete(mailId)
         return
     end
     
-    -- Print summary if verbose setting is on. 
+    -- Collect summary of attachments
     -- Do this here, immediately after all attachments are collected and C.O.D. are paid, 
     -- Don't wait until the mail removed event, because it may or may not go 
     -- through if the user closes the inbox.
-    self.PrintAttachmentSummary(self.attachmentData[mailIdString])
+    local mailData = MAIL_INBOX:GetMailData(mailId)
+    self.CollectAttachments(mailData.fromSystem and "@SYSTEM" or mailData.senderDisplayName, self.attachmentData[mailIdString])
     
     -- Clean up tracking arrays
     self.awaitingAttachments[mailIdString] = nil
@@ -607,7 +597,6 @@ function Postmaster:RequestMailDelete(mailId)
     local attachmentData = self.attachmentData[mailIdString]
     self.attachmentData[mailIdString] = nil
     
-    local mailData = MAIL_INBOX:GetMailData(mailId)
     if (mailData.attachedMoney and mailData.attachedMoney > 0) or (mailData.numAttachments and mailData.numAttachments > 0) then
         self.Debug("Cannot delete mail id "..mailIdString.." because it is not empty")
         self.mailIdsFailedDeletion[mailIdString] = true
@@ -655,6 +644,8 @@ function Postmaster:Reset()
     self.taking = false
     self.takingAll = false
     self.mailIdsFailedDeletion = {}
+    -- Print attachment summary
+    self.summary:Print()
     ZO_MailInboxList.autoSelect = true
     -- Unwire timeout callbacks
     EVENT_MANAGER:UnregisterForUpdate(self.name .. "Delete")
@@ -960,9 +951,7 @@ function Postmaster:TryAutoReturnMail()
            and Postmaster.StringMatchFirstPrefix(zo_strupper(mailData.subject), PM_BOUNCE_MAIL_PREFIXES) 
         then
             ReturnMail(mailData.mailId)
-            if self.settings.verbose then
-                self.Print(zo_strformat(GetString(SI_PM_BOUNCE_MESSAGE), mailData.senderDisplayName))
-            end
+            self.Print(zo_strformat(GetString(SI_PM_BOUNCE_MESSAGE), mailData.senderDisplayName))
         end
     end
     self.inboxUpdated = false

@@ -1,15 +1,9 @@
 -- French strings
 local strings = {
-    ["SI_PM_AND"]                                = " et ", 
-    ["SI_PM_LIST_SEPARATOR"]                     = ",", 
-    ["SI_PM_SEPARATOR_HINT"]                     = "Séparer des mots avec une virgule (,)",
     ["SI_PM_CHAT_MESSAGES"]                      = "Messages Chat",
-    ["SI_PM_VERBOSE"]                            = "Message de réception dans le chat",
-    ["SI_PM_VERBOSE_TOOLTIP"]                    = "Envoi un message dans le chat lors de la récupération des pièces jointes (courrier)",
-    ["SI_PM_VERBOSE_COMBINE"]                    = "Résumer les messages de réception",
-    ["SI_PM_VERBOSE_COMBINE_TOOLTIP"]            = "Résume toutes les pièces jointes prises par <<1>> après l' ensemble de l'opération est terminée , au lieu de après chaque courrier est pris",
     ["SI_PM_SHORT_PREFIX"]                       = "Utiliser le préfixe court dans la messagerie",
     ["SI_PM_SHORT_PREFIX_TOOLTIP"]               = "Affiche le préfixe [PM] au lieu de [Postmaster] dans les messages de discussion.",
+    ["SI_PM_PREFIX_HEADER"]                      = "Préfixe",
     ["SI_PM_COLORED_PREFIX"]                     = "Utiliser les couleurs de préfixe Postmaster 3.8",
     ["SI_PM_COLORED_PREFIX_TOOLTIP"]             = { "Fait que le préfixe des messages de discussion utilise les couleurs bleues de Postmaster 3.8 (c'est-à-dire <<1>>|r ou <<2>>|r) au lieu du paramètre Couleur des Messages Chat.", SI_PM_PREFIX_COLOR, SI_PM_PREFIX_SHORT_COLOR },
     ["SI_PM_CHAT_USE_SYSTEM_COLOR"]              = "Utiliser la couleur de message système par défaut",

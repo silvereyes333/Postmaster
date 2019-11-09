@@ -1,13 +1,12 @@
 ## Title: Postmaster
 ## Author: silvereyes, Garkin & Zierk
 ## Description: Mail addon to simplify inbox management
-## Version: 3.9.2
-## APIVersion: 100028 100029
-## DependsOn: LibSavedVars LibAddonMenu-2.0 LibLootSummary
-## OptionalDependsOn: MailR wykkydsMailBox LibStub
+## Version: 3.10.0
+## APIVersion: 100029 100030
+## DependsOn: LibSavedVars>=40200 LibAddonMenu-2.0>=28 LibLootSummary>=20000 LibChatMessage
+## OptionalDependsOn: MailR wykkydsMailBox
 ## SavedVariables: Postmaster_Account
 ## SavedVariables: Postmaster_Character
-## SavedVariables: Postmaster_Data
 
 ## This Add-On is not created by, affiliated with or sponsored by ZeniMax Media Inc. or its affiliates. 
 ## The Elder Scrolls® and related logos are registered trademarks or trademarks of ZeniMax Media Inc. in the 
@@ -21,5 +20,8 @@ localization\CreateStrings.lua
 ; Addon
 Postmaster.lua
 
-; Settings
+; Classes
+classes/ChatProxy.lua
+classes/GroupedSenderSummary.lua
+classes/SenderSummary.lua
 Settings.lua

@@ -1,32 +1,24 @@
 POSTMASTER_STRING_NO_FORMAT = -1
 ZO_CreateStringId("SI_PM_NAME",                "Postmaster")
 ZO_CreateStringId("SI_PM_PREFIX",              "Postmaster")
-ZO_CreateStringId("SI_PM_PREFIX_COLOR",        "|c99CCEFPostmaster")
+ZO_CreateStringId("SI_PM_PREFIX_COLOR",        "|c99CCEFPostmaster|r")
 ZO_CreateStringId("SI_PM_PREFIX_SHORT",        "PM")
-ZO_CreateStringId("SI_PM_PREFIX_SHORT_COLOR", "|c99CCEFPM")
+ZO_CreateStringId("SI_PM_PREFIX_SHORT_COLOR", "|c99CCEFPM|r")
 ZO_CreateStringId("SI_PM_TAKE",     zo_strformat("|cFF00FF<<1>>|r", GetString(SI_LOOT_TAKE)))
 ZO_CreateStringId("SI_PM_TAKE_ALL", zo_strformat("|cFF00FF<<1>>|r", GetString(SI_LOOT_TAKE_ALL)))
+local INDENT = "|t100%:100%:art/icons/placeholder/icon_blank.dds|t"
 POSTMASTER_STRINGS = {
-    ["SI_PM_AND"]                                = " and ", 
     ["SI_PM_WORD_SEPARATOR"]                     = " ",
-    ["SI_PM_LIST_SEPARATOR"]                     = ",", 
-    ["SI_PM_SEPARATOR_HINT"]                     = "Separate terms with a comma (,)",
-    
     ["SI_PM_CHAT_MESSAGES"]                      = "Chat Messages",
     ["SI_PM_SHORT_PREFIX"]                       = "Use Short Prefix",
     ["SI_PM_SHORT_PREFIX_TOOLTIP"]               = "Causes chat messages to be prefixed with [PM] instead of [Postmaster]",
+    ["SI_PM_PREFIX_HEADER"]                      = "Prefix",
+    ["SI_PM_PREFIX_COMMAND1"]                    = { INDENT .. "|cEEEE00[<<1>>]|r" },
+    ["SI_PM_PREFIX_COMMAND2"]                    = { "|c55C755/chatmessage tag <<1>>|r" },
     ["SI_PM_COLORED_PREFIX"]                     = "Use Postmaster 3.8 Colored Prefix",
     ["SI_PM_COLORED_PREFIX_TOOLTIP"]             = { "Causes the prefix for chat messages to use the blue Postmaster 3.8 color (i.e. <<1>>|r or <<2>>|r) instead of the Chat Message Color setting.", SI_PM_PREFIX_COLOR, SI_PM_PREFIX_SHORT_COLOR },
     ["SI_PM_CHAT_USE_SYSTEM_COLOR"]              = "Use Default System Message Color",
     ["SI_PM_CHAT_COLOR"]                         = "Chat Message Color",
-    
-    ["SI_PM_VERBOSE"]                            = "Loot Messages in Chat",
-    ["SI_PM_VERBOSE_TOOLTIP"]                    = "Sends verbose messages to chat when mail attachments are retrieved",
-    ["SI_PM_VERBOSE_COMBINE"]                    = "Combine Loot Messages",
-    ["SI_PM_VERBOSE_COMBINE_TOOLTIP"]            = "Summarizes all attachments taken by <<1>> after the entire operation is complete, instead of after each mail is looted",
-    
-    
-    
     ["SI_PM_DELETE_DIALOG_SUPPRESS"]             = "Suppress Delete Confirmation",
     ["SI_PM_DELETE_DIALOG_SUPPRESS_TOOLTIP"]     = "When this option is enabled, deleting messages that have no attachments will no longer require confirmation. The messages will be deleted immediately.",
     ["SI_PM_RETURN_DIALOG_SUPPRESS"]             = "Suppress Return Confirmation",

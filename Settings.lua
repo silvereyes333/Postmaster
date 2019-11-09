@@ -3,10 +3,7 @@
                 SETTINGS
     ===================================
   ]]
-local LibSavedVars = LibSavedVars or LibStub("LibSavedVars")
-local renamedSettings
-local renamedAndInvertedSettings
-local refreshPrefix
+local createChatProxy, renamedSettings, renamedAndInvertedSettings, refreshPrefix, version6
 
 function Postmaster:SettingsSetup()
 
@@ -19,8 +16,13 @@ function Postmaster:SettingsSetup()
         chatColor = { 1, 1, 1, 1 },
         shortPrefix = true,
         chatUseSystemColor = true,
-        chatContainerOpen = true,
-        chatContentsSummary = true,
+        chatContentsSummary = {
+            enabled = true,
+            minQuality = ITEM_QUALITY_MIN_VALUE,
+            showIcon = true,
+            showTrait = true,
+            hideSingularQuantities = true
+        },
         takeAllCodTake = false,
         takeAllCodDelete = true,
         takeAllCodGoldLimit = 10000,
@@ -58,16 +60,18 @@ function Postmaster:SettingsSetup()
     self.settings = LibSavedVars
         :NewAccountWide(self.name .. "_Account", self.defaults)
         :AddCharacterSettingsToggle(self.name .. "_Character")
-        :MigrateFromAccountWide({ name = self.name .. "_Data" })
         :RenameSettingsAndInvert(2, renamedAndInvertedSettings)
         :RenameSettings(3, renamedSettings)
         :RemoveSettings(5, "dataVersion")
-        
+        :Version(6, version6)
+    
+    self.chat = self.classes.ChatProxy:New()
+    self.templateSummary = self.classes.SenderSummary:New({ chat = self.chat, sortedByQuality = true })
+    self.templateSummary:SetOptions(self.settings.chatContentsSummary, self.defaults.chatContentsSummary)
+    self.summary = self.classes.GroupedSenderSummary:New(self.templateSummary)
+    
     self.chatColor = ZO_ColorDef:New(unpack(self.settings.chatColor))
     refreshPrefix()
-    
-    local LAM2 = LibAddonMenu2 or LibStub("LibAddonMenu-2.0")
-    if not LAM2 then return end
     
     local panelData = {
         type = "panel",
@@ -79,7 +83,7 @@ function Postmaster:SettingsSetup()
         registerForRefresh = true,
         registerForDefaults = true,
     }
-    self.settingsPanel = LAM2:RegisterAddonPanel(Postmaster.name .. "Options", panelData)
+    self.settingsPanel = LibAddonMenu2:RegisterAddonPanel(Postmaster.name .. "Options", panelData)
     
     local optionsTable = {
         
@@ -544,16 +548,16 @@ function Postmaster:SettingsSetup()
         {
             type = "checkbox",
             name = GetString(SI_PM_MAIL_DELETE),
-            getFunc = function() return self.settings.takeAllCodTakeDelete end,
+            getFunc = function() return self.settings.takeAllCodDelete end,
             setFunc = function(value)
                 if not value then
                     self.settings.takeAllPlayerDeleteEmpty = false
                 end
-                self.settings.takeAllCodTakeDelete = value
+                self.settings.takeAllCodDelete = value
             end,
             width = "full",
             disabled = function() return not self.settings.takeAllCodTake end,
-            default = self.defaults.takeAllCodTake,
+            default = self.defaults.takeAllCodDelete,
         },
         -- Absolute COD gold limit
         {
@@ -577,30 +581,6 @@ function Postmaster:SettingsSetup()
             type     = "submenu",
             name     = GetString(SI_PM_CHAT_MESSAGES),
             controls = {
-          
-                -- Verbose option
-                {
-                    type = "checkbox",
-                    name = GetString(SI_PM_VERBOSE),
-                    tooltip = GetString(SI_PM_VERBOSE_TOOLTIP),
-                    getFunc = function() return self.settings.verbose end,
-                    setFunc = function(value) self.settings.verbose = value end,
-                    width = "full",
-                    default = self.defaults.verbose,
-                },
-                -- Short prefix
-                {
-                    type = "checkbox",
-                    name = GetString(SI_PM_SHORT_PREFIX),
-                    tooltip = GetString(SI_PM_SHORT_PREFIX_TOOLTIP),
-                    getFunc = function() return self.settings.shortPrefix end,
-                    setFunc = function(value)
-                                  self.settings.shortPrefix = value
-                                  refreshPrefix()
-                              end,
-                    default = self.defaults.shortPrefix,
-                    disabled = function() return not self.settings.verbose end,
-                },
                 -- Use default system color
                 {
                     type = "checkbox",
@@ -611,7 +591,6 @@ function Postmaster:SettingsSetup()
                                   refreshPrefix()
                               end,
                     default = self.defaults.chatUseSystemColor,
-                    disabled = function() return not self.settings.verbose end,
                 },
                 -- Message color
                 {
@@ -624,7 +603,25 @@ function Postmaster:SettingsSetup()
                                   refreshPrefix()
                               end,
                     default = self.defaults.chatColor,
-                    disabled = function() return self.settings.chatUseSystemColor or not self.settings.verbose end,
+                    disabled = function() return self.settings.chatUseSystemColor end,
+                },
+                
+                -- Prefix header
+                {
+                    type = "header",
+                    name = GetString(SI_PM_PREFIX_HEADER),
+                },
+                -- Short prefix
+                {
+                    type = "checkbox",
+                    name = GetString(SI_PM_SHORT_PREFIX),
+                    tooltip = GetString(SI_PM_SHORT_PREFIX_TOOLTIP),
+                    getFunc = function() return self.settings.shortPrefix end,
+                    setFunc = function(value)
+                                  self.settings.shortPrefix = value
+                                  refreshPrefix()
+                              end,
+                    default = self.defaults.shortPrefix,
                 },
                 -- Old Prefix Colors
                 {
@@ -637,8 +634,16 @@ function Postmaster:SettingsSetup()
                                   refreshPrefix()
                               end,
                     default = self.defaults.coloredPrefix,
-                    disabled = function() return not self.settings.verbose end,
                 },
+                
+                -- Loot History
+                {
+                    type = "header",
+                    name = GetString(SI_INTERFACE_OPTIONS_LOOT_TOGGLE_LOOT_HISTORY),
+                },
+                
+                -- Log loot summary to chat
+                self.templateSummary:GenerateLam2LootOptions(self.title, self.settings.chatContentsSummary, self.defaults.chatContentsSummary),
             },
         },
         
@@ -688,7 +693,7 @@ function Postmaster:SettingsSetup()
         }
     }
         
-    LAM2:RegisterOptionControls(Postmaster.name .. "Options", optionsTable)
+    LibAddonMenu2:RegisterOptionControls(Postmaster.name .. "Options", optionsTable)
     
     SLASH_COMMANDS["/postmaster"] = self.OpenSettingsPanel
     SLASH_COMMANDS["/pm"] = self.OpenSettingsPanel
@@ -702,18 +707,28 @@ end
 
 function refreshPrefix()
     local self = Postmaster
-    local stringId
-    local startColor = self.settings.chatUseSystemColor and "" or "|c" .. self.chatColor:ToHex()
-    if self.settings.coloredPrefix then
-        self.prefix = GetString(self.settings.shortPrefix and SI_PM_PREFIX_SHORT_COLOR or SI_PM_PREFIX_COLOR)
-            .. (self.settings.chatUseSystemColor and "|r" or "") .. startColor .. " "
+    local shortTag = self.settings.coloredPrefix and GetString(SI_PM_PREFIX_SHORT_COLOR) or GetString(SI_PM_PREFIX_SHORT)
+    self.chat:SetShortTag(shortTag)
+    local longTag = self.settings.coloredPrefix and GetString(SI_PM_PREFIX_COLOR) or GetString(SI_PM_PREFIX)
+    self.chat:SetLongTag(longTag)
+    self.chat:SetShortTagPrefixEnabled(self.settings.shortPrefix)
+    
+    if self.settings.chatUseSystemColor or self.settings.coloredPrefix then
+        self.chat:SetTagColor(nil)
     else
-        self.prefix = startColor
-            .. GetString(self.settings.shortPrefix and SI_PM_PREFIX_SHORT or SI_PM_PREFIX)
-            .. " "
+        self.chat:SetTagColor(self.chatColor)
     end
+    
+    self.prefix = self.settings.chatUseSystemColor and "" or ("|c" .. self.chatColor:ToHex())
     self.suffix = self.settings.chatUseSystemColor and "" or "|r"
-    PM_MAX_CHAT_LENGTH = 360 - string.len(self.prefix) - string.len(self.suffix)
+    self.templateSummary:SetPrefix(self.prefix)
+    self.templateSummary:SetSuffix(self.suffix)
+end
+
+function version6(sv)
+    sv.chatContentsSummary = {
+        enabled = sv.verbose
+    }
 end
 
 renamedAndInvertedSettings = 

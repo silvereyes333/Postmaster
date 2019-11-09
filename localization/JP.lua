@@ -1,15 +1,10 @@
 -- Japanese strings
 local strings = {
-    ["SI_PM_AND"]                                = "と", 
-    ["SI_PM_WORD_SEPARATOR"]                     = "", 
-    ["SI_PM_SEPARATOR_HINT"]                     = "用語をカンマで区切ります。 (,)",
+    ["SI_PM_WORD_SEPARATOR"]                     = "",
     ["SI_PM_CHAT_MESSAGES"]                      = "チャットメッセージ",
-    ["SI_PM_VERBOSE"]                            = "チャットに取得メッセージ",
-    ["SI_PM_VERBOSE_TOOLTIP"]                    = "メールに添付されたアイテムを取得時、詳細なメッセージをチャットに送ります。",
-    ["SI_PM_VERBOSE_COMBINE"]                    = "取得メッセージを結合",
-    ["SI_PM_VERBOSE_COMBINE_TOOLTIP"]            = "メールを一つづつ取得した後ではなく、全ての操作が完了した後、<<1>>によって取得された全ての添付ファイルを要約します。",
     ["SI_PM_SHORT_PREFIX"]                       = "短いプレフィックスを使用",
     ["SI_PM_SHORT_PREFIX_TOOLTIP"]               = "チャットメッセージの先頭に[Postmaster]ではなく[PM]を付けます。",
+    ["SI_PM_PREFIX_HEADER"]                      = "プレフィックス",
     ["SI_PM_COLORED_PREFIX"]                     = "Postmaster 3.8プレフィックスカラーを使用",
     ["SI_PM_COLORED_PREFIX_TOOLTIP"]             = { "チャットメッセージのプレフィックスの色として、[チャットメッセージの色]設定ではなく、青いPostmaster 3.8の色（<<1>>|rまたは<<2>>|r）を使用します。", SI_PM_PREFIX_COLOR, SI_PM_PREFIX_SHORT_COLOR },
     ["SI_PM_CHAT_USE_SYSTEM_COLOR"]              = "システムチャットメッセージと同じ色を使用する",
