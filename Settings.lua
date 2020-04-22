@@ -18,7 +18,7 @@ function Postmaster:SettingsSetup()
         chatUseSystemColor = true,
         chatContentsSummary = {
             enabled = true,
-            minQuality = ITEM_QUALITY_MIN_VALUE,
+            minQuality = ITEM_QUALITY_MIN_VALUE or ITEM_FUNCTIONAL_QUALITY_MIN_VALUE,
             showIcon = true,
             showTrait = true,
             hideSingularQuantities = true
