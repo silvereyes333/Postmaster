@@ -3,7 +3,7 @@
                 SETTINGS
     ===================================
   ]]
-local createChatProxy, renamedSettings, renamedAndInvertedSettings, refreshPrefix, version6
+local createChatProxy, refreshPrefix, version6
 
 function Postmaster:SettingsSetup()
 
@@ -21,7 +21,8 @@ function Postmaster:SettingsSetup()
             minQuality = ITEM_QUALITY_MIN_VALUE or ITEM_FUNCTIONAL_QUALITY_MIN_VALUE,
             showIcon = true,
             showTrait = true,
-            hideSingularQuantities = true
+            hideSingularQuantities = true,
+            iconSize = 90,
         },
         takeAllCodTake = false,
         takeAllCodDelete = true,
@@ -60,15 +61,17 @@ function Postmaster:SettingsSetup()
     self.settings = LibSavedVars
         :NewAccountWide(self.name .. "_Account", self.defaults)
         :AddCharacterSettingsToggle(self.name .. "_Character")
-        :RenameSettingsAndInvert(2, renamedAndInvertedSettings)
-        :RenameSettings(3, renamedSettings)
         :RemoveSettings(5, "dataVersion")
         :Version(6, version6)
     
+    if LSV_Data.EnableDefaultsTrimming then
+        self.settings:EnableDefaultsTrimming()
+    end
+    
     self.chat = self.classes.ChatProxy:New()
-    self.templateSummary = self.classes.SenderSummary:New({ chat = self.chat, sortedByQuality = true })
+    self.templateSummary = self.classes.AccountSummary:New({ chat = self.chat, sortedByQuality = true })
     self.templateSummary:SetOptions(self.settings.chatContentsSummary, self.defaults.chatContentsSummary)
-    self.summary = self.classes.GroupedSenderSummary:New(self.templateSummary)
+    self.summary = self.classes.GroupedAccountSummary:New(self.templateSummary)
     
     self.chatColor = ZO_ColorDef:New(unpack(self.settings.chatColor))
     refreshPrefix()
@@ -84,6 +87,16 @@ function Postmaster:SettingsSetup()
         registerForDefaults = true,
     }
     self.settingsPanel = LibAddonMenu2:RegisterAddonPanel(Postmaster.name .. "Options", panelData)
+    
+    self.chatContentsSummaryProxy = setmetatable({},
+        {
+            __index = function(_, key)
+                return Postmaster.settings.chatContentsSummary[key]
+            end,
+            __newindex = function(_, key, value)
+                Postmaster.settings.chatContentsSummary[key] = value
+            end,
+        })
     
     local optionsTable = {
         
@@ -602,7 +615,10 @@ function Postmaster:SettingsSetup()
                                   self.chatColor = ZO_ColorDef:New(r, g, b, a)
                                   refreshPrefix()
                               end,
-                    default = self.defaults.chatColor,
+                    default = function()
+                                  local r, g, b, a = unpack(self.defaults.chatColor)
+                                  return { r=r, g=g, b=b, a=a }
+                              end,
                     disabled = function() return self.settings.chatUseSystemColor end,
                 },
                 
@@ -643,7 +659,7 @@ function Postmaster:SettingsSetup()
                 },
                 
                 -- Log loot summary to chat
-                self.templateSummary:GenerateLam2LootOptions(self.title, self.settings.chatContentsSummary, self.defaults.chatContentsSummary),
+                self.templateSummary:GenerateLam2LootOptions(self.title, self.chatContentsSummaryProxy, self.defaults.chatContentsSummary),
             },
         },
         
@@ -730,26 +746,3 @@ function version6(sv)
         enabled = sv.verbose
     }
 end
-
-renamedAndInvertedSettings = 
-    {
-        ["skipCod"]             = "takeAllCodTake",
-        ["skipEmptyPlayerMail"] = "takeAllPlayerDeleteEmpty",
-        ["skipOtherPlayerMail"] = "takeAllPlayerAttached",
-        ["skipEmptySystemMail"] = "takeAllSystemDeleteEmpty",
-    }
-renamedSettings = 
-    {
-        ["codTake"]              = "takeAllCodTake",
-        ["codGoldLimit"]         = "takeAllCodGoldLimit",
-        ["playerDeleteEmpty"]    = "takeAllPlayerDeleteEmpty",
-        ["playerTakeAttached"]   = "takeAllPlayerAttached",
-        ["playerTakeReturned"]   = "takeAllPlayerReturned",
-        ["systemDeleteEmpty"]    = "takeAllSystemDeleteEmpty",
-        ["systemTakeAttached"]   = "takeAllSystemAttached",
-        ["systemTakeGuildStore"] = "takeAllSystemGuildStore",
-        ["systemTakeHireling"]   = "takeAllSystemHireling",
-        ["systemTakeOther"]      = "takeAllSystemOther",
-        ["systemTakePvp"]        = "takeAllSystemPvp",
-        ["systemTakeUndaunted"]  = "takeAllSystemUndaunted",
-    }

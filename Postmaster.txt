@@ -1,9 +1,10 @@
 ## Title: Postmaster
 ## Author: silvereyes, Garkin & Zierk
 ## Description: Mail addon to simplify inbox management
-## Version: 3.11.0
+## Version: 3.11.1
 ## APIVersion: 100030 100031
-## DependsOn: LibSavedVars>=40200 LibAddonMenu-2.0>=28 LibLootSummary>=20000 LibChatMessage
+## AddOnVersion: 31101
+## DependsOn: LibSavedVars>=50000 LibAddonMenu-2.0>=28 LibLootSummary>=20000 LibChatMessage
 ## OptionalDependsOn: MailR wykkydsMailBox
 ## SavedVariables: Postmaster_Account
 ## SavedVariables: Postmaster_Character
@@ -22,6 +23,6 @@ Postmaster.lua
 
 ; Classes
 classes/ChatProxy.lua
-classes/GroupedSenderSummary.lua
-classes/SenderSummary.lua
+classes/GroupedAccountSummary.lua
+classes/AccountSummary.lua
 Settings.lua
