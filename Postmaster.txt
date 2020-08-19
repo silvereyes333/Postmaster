@@ -2,8 +2,8 @@
 ## Author: silvereyes, Garkin & Zierk
 ## Description: Mail addon to simplify inbox management
 ## Version: 3.11.1
-## APIVersion: 100030 100031
-## AddOnVersion: 31101
+## APIVersion: 100031 100032
+## AddOnVersion: 31102
 ## DependsOn: LibSavedVars>=50000 LibAddonMenu-2.0>=28 LibLootSummary>=20000 LibChatMessage
 ## OptionalDependsOn: MailR wykkydsMailBox
 ## SavedVariables: Postmaster_Account
