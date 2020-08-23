@@ -5,7 +5,7 @@
 Postmaster = {
     name = "Postmaster",
     title = GetString(SI_PM_NAME),
-    version = "3.11.2",
+    version = "3.11.3",
     author = "silvereyes, Garkin & Zierk",
     
     -- For development use only. Set to true to see a ridiculously verbose 
@@ -919,7 +919,7 @@ end
 function Postmaster:TakeOrDeleteSelected()
     if self:TryTakeAllCodMail() then return end
     local mailData = MAIL_INBOX.selectedData
-    local hasAttachments = (mailData.attachedMoney and mailData.attachedMoney) > 0 
+    local hasAttachments = (mailData.attachedMoney and mailData.attachedMoney > 0)
       or (mailData.numAttachments and mailData.numAttachments > 0)
     if hasAttachments then
         self.taking = true
