@@ -5,7 +5,7 @@
 Postmaster = {
     name = "Postmaster",
     title = GetString(SI_PM_NAME),
-    version = "3.11.4",
+    version = "3.12.0",
     author = "silvereyes, Garkin & Zierk",
     
     -- For development use only. Set to true to see a ridiculously verbose 
@@ -324,7 +324,11 @@ function MailRead(retries)
     
     -- If there exists another message in the inbox that has attachments, select it. otherwise, clear the selection.
     local nextMailData = self:TakeAllGetNext()
-    ZO_ScrollList_SelectData(ZO_MailInboxList, nextMailData)
+    if ZO_MailInboxList then
+        ZO_ScrollList_SelectData(ZO_MailInboxList, nextMailData)
+    else
+        MAIL_INBOX.navigationTree:Commit(nextMailData and nextMailData.node, false)
+    end
     return nextMailData
 end
 
@@ -419,8 +423,10 @@ end
 function Postmaster.GetMailData()
     if IsInGamepadPreferredMode() then 
         return MAIL_MANAGER_GAMEPAD.inbox.mailList.dataList, "dataSource"
-    else
+    elseif ZO_MailInboxList then
         return ZO_MailInboxList.data, "data"
+    else
+        return MAIL_INBOX.masterList
     end
 end
 
@@ -444,8 +450,19 @@ function Postmaster.GetOpenMailData()
         Postmaster.Debug("There is no open mail id "..tostring(mailId))
         return 
     end
-    local mailData = MAIL_INBOX:GetMailData(mailId)
-    return mailData
+    local mailData, index = MAIL_INBOX:GetMailData(mailId)
+    return index and mailData[index] or mailData
+end
+
+function Postmaster.GetSelectedMailData()
+    local selectedMailData
+    if ZO_MailInboxList then
+        selectedMailData = ZO_MailInboxList.selectedData
+    else
+        local selectedNode = MAIL_INBOX.navigationTree:GetSelectedNode()
+        selectedMailData = selectedNode and selectedNode.data
+    end
+    return selectedMailData
 end
 
 --[[ True if Postmaster is doing any operations on the inbox. ]]
@@ -646,22 +663,36 @@ function Postmaster:Reset()
     self.mailIdsFailedDeletion = {}
     -- Print attachment summary
     self.summary:Print()
-    ZO_MailInboxList.autoSelect = true
+    if ZO_MailInboxList then
+        ZO_MailInboxList.autoSelect = true
+    else
+        MAIL_INBOX.isFirstTimeOpening = true
+    end
     -- Unwire timeout callbacks
     EVENT_MANAGER:UnregisterForUpdate(self.name .. "Delete")
     EVENT_MANAGER:UnregisterForUpdate(self.name .. "Read")
     EVENT_MANAGER:UnregisterForUpdate(self.name .. "Take")
     KEYBIND_STRIP:UpdateKeybindButtonGroup(MAIL_INBOX.selectionKeybindStripDescriptor)
+    
+    -- TODO: Delete the below code when U29 is released
+    if not ZO_MailInboxList then return end
     if MAIL_INBOX.mailId then
-        local currentMailData = ZO_MailInboxList.selectedData
+        local currentMailData self.GetSelectedMailData()        
         if not currentMailData then
             self.Debug("Current mail data is nil. Setting MAIL_INBOX.mailId=nil")
             MAIL_INBOX.mailId = nil
             MAIL_INBOX.selectedData = nil
-            ZO_ScrollList_AutoSelectData(ZO_MailInboxList)
-        elseif not MAIL_INBOX.selectedData then
+            MAIL_INBOX.selectMailIdOnRefresh = nil
+            if ZO_MailInboxList then
+                ZO_ScrollList_AutoSelectData(ZO_MailInboxList)
+            else
+                --MAIL_INBOX:RefreshData()
+            end
+        else
             MAIL_INBOX.mailId = currentMailData.mailId
-            MAIL_INBOX.selectedData = currentMailData
+            if ZO_MailInboxList and not MAIL_INBOX.selectedData then
+                MAIL_INBOX.selectedData = currentMailData
+            end
         end
     end
 end
@@ -798,7 +829,7 @@ local function CanTakeShared(mailData, settings)
         -- theoretically, stacking and craft bags could free up slots. But 
         -- reproducing that business logic here sounds hard, so I gave up.
         if mailData.numAttachments and mailData.numAttachments > 0 
-           and (freeSlots - mailData.numAttachments) < settings.reservedSlots
+           and (freeSlots - mailData.numAttachments) < (settings.reservedSlots or 0)
            and not attachmentsToCraftBag
         then 
             return false 
@@ -866,7 +897,7 @@ end
 --[[ True if the given mail can be taken by Take All operations according
      to current options panel criteria. ]]
 function Postmaster:TakeAllCanTake(mailData)
-    return CanTakeShared(mailData, {
+    local canTake = CanTakeShared(mailData, {
         ["codTake"]           = self.settings.takeAllCodTake,
         ["codGoldLimit"]      = self.settings.takeAllCodGoldLimit,
         ["reservedSlots"]     = self.settings.reservedSlots,
@@ -881,13 +912,16 @@ function Postmaster:TakeAllCanTake(mailData)
         ["systemDeleteEmpty"] = self.settings.takeAllSystemDeleteEmpty,
         ["playerDeleteEmpty"] = self.settings.takeAllPlayerDeleteEmpty,
     })
+    self.Debug("TakeAllCanTake mail id " .. tostring(mailData and mailData.mailId) .. "? " .. tostring(canTake))
+    return canTake
 end
 
 --[[ True if the currently-selected mail can be taken by Take All operations 
      according to current options panel criteria. ]]
 function Postmaster:TakeAllCanTakeSelectedMail()
-    if MAIL_INBOX.selectedData 
-       and self:TakeAllCanTake(MAIL_INBOX.selectedData) 
+    local selectedMailData = self.GetSelectedMailData()
+    if selectedMailData
+       and self:TakeAllCanTake(selectedMailData) 
     then 
         return true 
     end
@@ -895,12 +929,17 @@ end
 
 --[[ Gets the next highest-priority mail data instance that Take All can take ]]
 function Postmaster:TakeAllGetNext()
-    for i=1,#ZO_MailInboxList.data do
-        local item = ZO_MailInboxList.data[i]
-        if self:TakeAllCanTake(item.data) then
-            return item.data
+    local data, index = self.GetMailData()
+    for _, item in ipairs(data) do
+        if index then
+            item = item[index]
+        end
+        if self:TakeAllCanTake(item) then
+            self.Debug("TakeAllGetNext() returning mail id " .. tostring(item.mailId))
+            return item
         end
     end
+    self.Debug("TakeAllGetNext() returning nil")
 end
 
 --[[ Selects the next highest-priority mail data instance that Take All can take ]]
@@ -918,7 +957,7 @@ end
      deletes the mail if it has no attachments. ]]
 function Postmaster:TakeOrDeleteSelected()
     if self:TryTakeAllCodMail() then return end
-    local mailData = MAIL_INBOX.selectedData
+    local mailData = self.GetSelectedMailData()
     local hasAttachments = (mailData.attachedMoney and mailData.attachedMoney > 0)
       or (mailData.numAttachments and mailData.numAttachments > 0)
     if hasAttachments then
@@ -943,7 +982,7 @@ function Postmaster:TryAutoReturnMail()
     self.returning = true
     local data, mailDataIndex = self.GetMailData()
     for _,entry in pairs(data) do
-        local mailData = entry[mailDataIndex]
+        local mailData = mailDataIndex and entry[mailDataIndex] or entry
         if mailData and mailData.mailId and not mailData.fromCS 
            and not mailData.fromSystem and mailData.codAmount == 0 
            and (mailData.numAttachments > 0 or mailData.attachedMoney > 0)
@@ -975,7 +1014,7 @@ end
      Take All operation. ]]
 function Postmaster:TryTakeAllCodMail()
     if not self.settings.takeAllCodTake then return end
-    local mailData = MAIL_INBOX.selectedData
+    local mailData = self.GetSelectedMailData()
     if mailData.codAmount and mailData.codAmount > 0 then
         self.taking = true
         MAIL_INBOX.pendingAcceptCOD = true
@@ -1226,13 +1265,21 @@ function Postmaster.Keybind_TakeAll_Callback()
         self.Debug("Selected mail has attachments. Taking.")
         self.taking    = true
         self.takingAll = true
-        ZO_MailInboxList.autoSelect = false
+        if ZO_MailInboxList then
+            ZO_MailInboxList.autoSelect = false
+        else
+            MAIL_INBOX.selectMailIdOnRefresh = nil
+        end
         self:TakeOrDeleteSelected()
     elseif self:TakeAllSelectNext() then
         self.Debug("Getting next mail with attachments")
         self.taking    = true
         self.takingAll = true
-        ZO_MailInboxList.autoSelect = false
+        if ZO_MailInboxList then
+            ZO_MailInboxList.autoSelect = false
+        else
+            MAIL_INBOX.selectMailIdOnRefresh = nil
+        end
         -- will call the take or delete callback when the message is read
     end
 end
@@ -1654,6 +1701,7 @@ end
      items that are selected when the inbox is closed, and then remember them 
      in MAIL_INBOX.requestMailId so that the items can be selected as soon as 
      the inbox opens again. ]]
+-- TODO: Delete this entire hook when U29 is released
 function Postmaster.Prehook_ScrollList_SelectData(list, data, control, reselectingDuringRebuild)
     if IsInGamepadPreferredMode() then return end
     if list ~= ZO_MailInboxList then return end
@@ -1686,7 +1734,7 @@ end
 --[[ Wire up all posthook handlers ]]
 function Postmaster:PosthookSetup()
     self.PostHook(MAIL_MANAGER_GAMEPAD.inbox, "RefreshMailList", self.Posthook_InboxScrollList_RefreshData)
-    self.PostHook(ZO_MailInboxList, "RefreshData", self.Posthook_InboxScrollList_RefreshData)
+    self.PostHook(ZO_MailInboxList or MAIL_INBOX, "RefreshData", self.Posthook_InboxScrollList_RefreshData)
 end
 
 --[[ Runs after the inbox scroll list's data refreshes, for both gamepad and 
