@@ -5,7 +5,7 @@
 Postmaster = {
     name = "Postmaster",
     title = GetString(SI_PM_NAME),
-    version = "3.12.0",
+    version = "3.13.0",
     author = "silvereyes, Garkin & Zierk",
     
     -- For development use only. Set to true to see a ridiculously verbose 
@@ -110,11 +110,13 @@ local systemEmailSubjects = {
         zo_strlower(GetString(SI_PM_CRAFT_PROVISIONER)),
         zo_strlower(GetString(SI_PM_CRAFT_WOODWORKER)),
     },
-    ["guildStore"] = {
+    ["guildStoreSales"] = {
+        zo_strlower(GetString(SI_PM_GUILD_STORE_SOLD)),
+    },
+    ["guildStoreItems"] = {
         zo_strlower(GetString(SI_PM_GUILD_STORE_CANCELED)),
         zo_strlower(GetString(SI_PM_GUILD_STORE_EXPIRED)),
         zo_strlower(GetString(SI_PM_GUILD_STORE_PURCHASED)),
-        zo_strlower(GetString(SI_PM_GUILD_STORE_SOLD)),
     },
     ["pvp"] = {
         zo_strlower(GetString(SI_PM_PVP_FOR_THE_WORTHY)),
@@ -171,7 +173,8 @@ local function CanTakeAllDelete(mailData, attachmentData)
         playerReturned   = self.settings.takeAllPlayerReturnedDelete,
         systemEmpty      = self.settings.takeAllSystemDeleteEmpty,
         systemAttached   = self.settings.takeAllSystemAttachedDelete,
-        systemGuildStore = self.settings.takeAllSystemGuildStoreDelete,
+        systemGuildStoreSales = self.settings.takeAllSystemGuildStoreSalesDelete,
+        systemGuildStoreItems = self.settings.takeAllSystemGuildStoreItemsDelete,
         systemHireling   = self.settings.takeAllSystemHirelingDelete,
         systemOther      = self.settings.takeAllSystemOtherDelete,
         systemPvp        = self.settings.takeAllSystemPvpDelete,
@@ -204,11 +207,17 @@ local function CanTakeAllDelete(mailData, attachmentData)
                     end
                     return deleteSettings.systemHireling
                 
-                elseif self:MailFieldMatch(mailData, subjectField, systemEmailSubjects["guildStore"]) then
-                    if not deleteSettings.systemGuildStore then
-                        self.Debug("Cannot delete guild store mail")
+                elseif self:MailFieldMatch(mailData, subjectField, systemEmailSubjects["guildStoreSales"]) then
+                    if not deleteSettings.systemGuildStoreSales then
+                        self.Debug("Cannot delete guild store sales mail")
                     end
-                    return deleteSettings.systemGuildStore
+                    return deleteSettings.systemGuildStoreSales
+                
+                elseif self:MailFieldMatch(mailData, subjectField, systemEmailSubjects["guildStoreItems"]) then
+                    if not deleteSettings.systemGuildStoreItems then
+                        self.Debug("Cannot delete guild store items mail")
+                    end
+                    return deleteSettings.systemGuildStoreItems
                     
                 elseif self:MailFieldMatch(mailData, subjectField, systemEmailSubjects["pvp"]) 
                        or self:MailFieldMatch(mailData, "senderDisplayName", systemEmailSenders["pvp"])
@@ -841,8 +850,11 @@ local function CanTakeShared(mailData, settings)
                 if isHirelingMail then
                     return settings.systemHireling
                 
-                elseif self:MailFieldMatch(mailData, subjectField, systemEmailSubjects["guildStore"]) then
-                    return settings.systemGuildStore
+                elseif self:MailFieldMatch(mailData, subjectField, systemEmailSubjects["guildStoreSales"]) then
+                    return settings.systemGuildStoreSales
+                
+                elseif self:MailFieldMatch(mailData, subjectField, systemEmailSubjects["guildStoreItems"]) then
+                    return settings.systemGuildStoreItems
                     
                 elseif self:MailFieldMatch(mailData, subjectField, systemEmailSubjects["pvp"])
                        or self:MailFieldMatch(mailData, "senderDisplayName", systemEmailSenders["pvp"])
@@ -883,7 +895,8 @@ function Postmaster:QuickTakeCanTake(mailData)
         ["reservedSlots"]     = 0,
         ["systemAttached"]    = self.settings.quickTakeSystemAttached,
         ["systemHireling"]    = self.settings.quickTakeSystemHireling,
-        ["systemGuildStore"]  = self.settings.quickTakeSystemGuildStore,
+        ["systemGuildStoreSales"]  = self.settings.quickTakeSystemGuildStoreSales,
+        ["systemGuildStoreItems"]  = self.settings.quickTakeSystemGuildStoreItems,
         ["systemPvp"]         = self.settings.quickTakeSystemPvp,
         ["systemUndaunted"]   = self.settings.quickTakeSystemUndaunted,
         ["systemOther"]       = self.settings.quickTakeSystemOther,
@@ -903,7 +916,8 @@ function Postmaster:TakeAllCanTake(mailData)
         ["reservedSlots"]     = self.settings.reservedSlots,
         ["systemAttached"]    = self.settings.takeAllSystemAttached,
         ["systemHireling"]    = self.settings.takeAllSystemHireling,
-        ["systemGuildStore"]  = self.settings.takeAllSystemGuildStore,
+        ["systemGuildStoreSales"]  = self.settings.takeAllSystemGuildStoreSales,
+        ["systemGuildStoreItems"]  = self.settings.takeAllSystemGuildStoreItems,
         ["systemPvp"]         = self.settings.takeAllSystemPvp,
         ["systemUndaunted"]   = self.settings.takeAllSystemUndaunted,
         ["systemOther"]       = self.settings.takeAllSystemOther,

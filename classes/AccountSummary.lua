@@ -30,7 +30,7 @@ end
 function class.AccountSummary:Print()
     local tagSuffix = self.chat.tagSuffix
     if self.account then
-        local mailIconSize = math.max(self.iconSize, 100)
+        local mailIconSize = math.max(self:GetOption('iconSize'), 100)
         mailIconSize = string.format("%s%%", tostring(mailIconSize))
         local mailIconString = zo_iconFormatInheritColor(self.mailIcon, mailIconSize, mailIconSize)
         local account = mailIconString .. self.account

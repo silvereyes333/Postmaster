@@ -3,7 +3,7 @@
                 SETTINGS
     ===================================
   ]]
-local createChatProxy, refreshPrefix, version6
+local createChatProxy, refreshPrefix, version6, version7
 
 function Postmaster:SettingsSetup()
 
@@ -21,8 +21,13 @@ function Postmaster:SettingsSetup()
             minQuality = ITEM_QUALITY_MIN_VALUE or ITEM_FUNCTIONAL_QUALITY_MIN_VALUE,
             showIcon = true,
             showTrait = true,
+            showNotCollected = true,
             hideSingularQuantities = true,
             iconSize = 90,
+            delimiter = " ",
+            combineDuplicates = true,
+            sortedByQuality = true,
+            linkStyle = LINK_STYLE_DEFAULT,
         },
         takeAllCodTake = false,
         takeAllCodDelete = true,
@@ -35,8 +40,10 @@ function Postmaster:SettingsSetup()
         takeAllSystemDeleteEmpty = false,
         takeAllSystemAttached = true,
         takeAllSystemAttachedDelete = true,
-        takeAllSystemGuildStore = true,
-        takeAllSystemGuildStoreDelete = true,
+        takeAllSystemGuildStoreSales = true,
+        takeAllSystemGuildStoreSalesDelete = true,
+        takeAllSystemGuildStoreItems = true,
+        takeAllSystemGuildStoreItemsDelete = true,
         takeAllSystemHireling = true,
         takeAllSystemHirelingDelete = true,
         takeAllSystemOther = true,
@@ -50,7 +57,8 @@ function Postmaster:SettingsSetup()
         quickTakePlayerAttached = true,
         quickTakePlayerReturned = true,
         quickTakeSystemAttached = true,
-        quickTakeSystemGuildStore = true,
+        quickTakeSystemGuildStoreSales = true,
+        quickTakeSystemGuildStoreItems = true,
         quickTakeSystemHireling = true,
         quickTakeSystemOther = true,
         quickTakeSystemPvp = true,
@@ -63,6 +71,7 @@ function Postmaster:SettingsSetup()
         :AddCharacterSettingsToggle(self.name .. "_Character")
         :RemoveSettings(5, "dataVersion")
         :Version(6, version6)
+        :Version(7, version7)
     
     if LSV_Data.EnableDefaultsTrimming then
         self.settings:EnableDefaultsTrimming()
@@ -70,7 +79,6 @@ function Postmaster:SettingsSetup()
     
     self.chat = self.classes.ChatProxy:New()
     self.templateSummary = self.classes.AccountSummary:New({ chat = self.chat, sortedByQuality = true })
-    self.templateSummary:SetOptions(self.settings.chatContentsSummary, self.defaults.chatContentsSummary)
     self.summary = self.classes.GroupedAccountSummary:New(self.templateSummary)
     
     self.chatColor = ZO_ColorDef:New(unpack(self.settings.chatColor))
@@ -162,16 +170,27 @@ function Postmaster:SettingsSetup()
             disabled = function() return not self.settings.quickTakeSystemAttached end,
             default = self.defaults.quickTakeSystemHireling,
         },
-        
-        -- Guild store mail
+            
+        -- Guild store sales
         {
             type = "checkbox",
-            name = GetString(SI_WINDOW_TITLE_TRADING_HOUSE),
-            getFunc = function() return self.settings.quickTakeSystemGuildStore end,
-            setFunc = function(value) self.settings.quickTakeSystemGuildStore = value end,
+            name = zo_strformat(GetString(SI_INVENTORY_FILTER_WITH_SUB_TAB), GetString(SI_WINDOW_TITLE_TRADING_HOUSE), GetString("SI_GUILDHISTORYCATEGORY", GUILD_HISTORY_STORE)),
+            getFunc = function() return self.settings.quickTakeSystemGuildStoreSales end,
+            setFunc = function(value) self.settings.quickTakeSystemGuildStoreSales = value end,
             width = "full",
             disabled = function() return not self.settings.quickTakeSystemAttached end,
-            default = self.defaults.quickTakeSystemGuildStore,
+            default = self.defaults.quickTakeSystemGuildStoreSales,
+        },
+        
+        -- Guild store items
+        {
+            type = "checkbox",
+            name = zo_strformat(GetString(SI_INVENTORY_FILTER_WITH_SUB_TAB), GetString(SI_WINDOW_TITLE_TRADING_HOUSE), GetString(SI_GAMEPAD_MAIL_SEND_ITEMS_HEADER)),
+            getFunc = function() return self.settings.quickTakeSystemGuildStoreItems end,
+            setFunc = function(value) self.settings.quickTakeSystemGuildStoreItems = value end,
+            width = "full",
+            disabled = function() return not self.settings.quickTakeSystemAttached end,
+            default = self.defaults.quickTakeSystemGuildStoreItems,
         },
         
         -- Undaunted mail
@@ -357,29 +376,54 @@ function Postmaster:SettingsSetup()
             default = self.defaults.takeAllSystemHirelingDelete,
         },
         
-        -- Guild store mail
+        -- Guild store sales
         {
             type = "checkbox",
-            name = GetString(SI_WINDOW_TITLE_TRADING_HOUSE),
-            getFunc = function() return self.settings.takeAllSystemGuildStore end,
-            setFunc = function(value) self.settings.takeAllSystemGuildStore = value end,
+            name = zo_strformat(GetString(SI_INVENTORY_FILTER_WITH_SUB_TAB), GetString(SI_WINDOW_TITLE_TRADING_HOUSE), GetString("SI_GUILDHISTORYCATEGORY", GUILD_HISTORY_STORE)),
+            getFunc = function() return self.settings.takeAllSystemGuildStoreSales end,
+            setFunc = function(value) self.settings.takeAllSystemGuildStoreSales = value end,
             width = "full",
             disabled = function() return not self.settings.takeAllSystemAttached end,
-            default = self.defaults.takeAllSystemGuildStore,
+            default = self.defaults.takeAllSystemGuildStoreSales,
         },
         {
             type = "checkbox",
             name = GetString(SI_PM_MAIL_DELETE),
-            getFunc = function() return self.settings.takeAllSystemGuildStoreDelete end,
+            getFunc = function() return self.settings.takeAllSystemGuildStoreSalesDelete end,
             setFunc = function(value)
                 if not value then
                     self.settings.takeAllSystemDeleteEmpty = false
                 end
-                self.settings.takeAllSystemGuildStoreDelete = value
+                self.settings.takeAllSystemGuildStoreSalesDelete = value
             end,
             width = "full",
-            disabled = function() return not self.settings.takeAllSystemAttached or not self.settings.takeAllSystemAttachedDelete or not self.settings.takeAllSystemGuildStore end,
-            default = self.defaults.takeAllSystemGuildStoreDelete,
+            disabled = function() return not self.settings.takeAllSystemAttached or not self.settings.takeAllSystemAttachedDelete or not self.settings.takeAllSystemGuildStoreSales end,
+            default = self.defaults.takeAllSystemGuildStoreSalesDelete,
+        },
+        
+        -- Guild store items
+        {
+            type = "checkbox",
+            name = zo_strformat(GetString(SI_INVENTORY_FILTER_WITH_SUB_TAB), GetString(SI_WINDOW_TITLE_TRADING_HOUSE), GetString(SI_GAMEPAD_MAIL_SEND_ITEMS_HEADER)),
+            getFunc = function() return self.settings.takeAllSystemGuildStoreItems end,
+            setFunc = function(value) self.settings.takeAllSystemGuildStoreItems = value end,
+            width = "full",
+            disabled = function() return not self.settings.takeAllSystemAttached end,
+            default = self.defaults.takeAllSystemGuildStoreItems,
+        },
+        {
+            type = "checkbox",
+            name = GetString(SI_PM_MAIL_DELETE),
+            getFunc = function() return self.settings.takeAllSystemGuildStoreItemsDelete end,
+            setFunc = function(value)
+                if not value then
+                    self.settings.takeAllSystemDeleteEmpty = false
+                end
+                self.settings.takeAllSystemGuildStoreItemsDelete = value
+            end,
+            width = "full",
+            disabled = function() return not self.settings.takeAllSystemAttached or not self.settings.takeAllSystemAttachedDelete or not self.settings.takeAllSystemGuildStoreItems end,
+            default = self.defaults.takeAllSystemGuildStoreItemsDelete,
         },
         
         -- Undaunted mail
@@ -449,7 +493,8 @@ function Postmaster:SettingsSetup()
                 if not self.settings.takeAllSystemAttachedDelete then return true end
                 if not self.settings.takeAllSystemPvpDelete
                    or not self.settings.takeAllSystemHirelingDelete
-                   or not self.settings.takeAllSystemGuildStoreDelete
+                   or not self.settings.takeAllSystemGuildStoreSalesDelete
+                   or not self.settings.takeAllSystemGuildStoreItemsDelete
                    or not self.settings.takeAllSystemUndauntedDelete
                    or not self.settings.takeAllSystemOtherDelete
                 then
@@ -745,4 +790,16 @@ function version6(sv)
     sv.chatContentsSummary = {
         enabled = sv.verbose
     }
+end
+
+function version7(sv)
+    sv.takeAllSystemGuildStoreSales = sv.takeAllSystemGuildStore
+    sv.takeAllSystemGuildStoreItems = sv.takeAllSystemGuildStore
+    sv.takeAllSystemGuildStore = nil
+    sv.takeAllSystemGuildStoreSalesDelete = sv.takeAllSystemGuildStoreDelete
+    sv.takeAllSystemGuildStoreItemsDelete = sv.takeAllSystemGuildStoreDelete
+    sv.takeAllSystemGuildStoreDelete = nil
+    sv.quickTakeSystemGuildStoreSales = sv.quickTakeSystemGuildStore
+    sv.quickTakeSystemGuildStoreItems = sv.quickTakeSystemGuildStore
+    sv.quickTakeSystemGuildStore = nil
 end
