@@ -5,7 +5,7 @@
 Postmaster = {
     name = "Postmaster",
     title = GetString(SI_PM_NAME),
-    version = "3.13.0",
+    version = "3.13.1",
     author = "silvereyes, Garkin & Zierk",
     
     -- For development use only. Set to true to see a ridiculously verbose 
@@ -430,13 +430,23 @@ end
      or gamepad. The second output parameter is the name of the mailData field 
      for items in the returned list. ]]
 function Postmaster.GetMailData()
-    if IsInGamepadPreferredMode() then 
-        return MAIL_MANAGER_GAMEPAD.inbox.mailList.dataList, "dataSource"
+    local data, index
+    if IsInGamepadPreferredMode() then
+        if not MAIL_MANAGER_GAMEPAD.inbox.mailList then
+            return {}
+        end
+        data = MAIL_MANAGER_GAMEPAD.inbox.mailList.dataList
+        index = "dataSource"
     elseif ZO_MailInboxList then
-        return ZO_MailInboxList.data, "data"
+        data = ZO_MailInboxList.data
+        index = "data"
     else
-        return MAIL_INBOX.masterList
+        data = MAIL_INBOX.masterList
     end
+    if data == nil then
+        return {}
+    end
+    return data, index
 end
 
 --[[ Returns a safe string representation of the given mail ID. Useful as an 
