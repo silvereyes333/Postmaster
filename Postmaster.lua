@@ -5,7 +5,7 @@
 Postmaster = {
     name = "Postmaster",
     title = GetString(SI_PM_NAME),
-    version = "3.13.1",
+    version = "3.13.2",
     author = "silvereyes, Garkin & Zierk",
     
     -- For development use only. Set to true to see a ridiculously verbose 
@@ -333,11 +333,7 @@ function MailRead(retries)
     
     -- If there exists another message in the inbox that has attachments, select it. otherwise, clear the selection.
     local nextMailData = self:TakeAllGetNext()
-    if ZO_MailInboxList then
-        ZO_ScrollList_SelectData(ZO_MailInboxList, nextMailData)
-    else
-        MAIL_INBOX.navigationTree:Commit(nextMailData and nextMailData.node, false)
-    end
+    MAIL_INBOX.navigationTree:Commit(nextMailData and nextMailData.node, false)
     return nextMailData
 end
 
@@ -437,9 +433,6 @@ function Postmaster.GetMailData()
         end
         data = MAIL_MANAGER_GAMEPAD.inbox.mailList.dataList
         index = "dataSource"
-    elseif ZO_MailInboxList then
-        data = ZO_MailInboxList.data
-        index = "data"
     else
         data = MAIL_INBOX.masterList
     end
@@ -474,13 +467,8 @@ function Postmaster.GetOpenMailData()
 end
 
 function Postmaster.GetSelectedMailData()
-    local selectedMailData
-    if ZO_MailInboxList then
-        selectedMailData = ZO_MailInboxList.selectedData
-    else
-        local selectedNode = MAIL_INBOX.navigationTree:GetSelectedNode()
-        selectedMailData = selectedNode and selectedNode.data
-    end
+    local selectedNode = MAIL_INBOX.navigationTree:GetSelectedNode()
+    local selectedMailData = selectedNode and selectedNode.data
     return selectedMailData
 end
 
@@ -676,44 +664,19 @@ end
 
 --[[ Sets state variables back to defaults and ensures a consistent inbox state ]]
 function Postmaster:Reset()
-    self.Debug("Reset")
-    self.taking = false
-    self.takingAll = false
-    self.mailIdsFailedDeletion = {}
-    -- Print attachment summary
-    self.summary:Print()
-    if ZO_MailInboxList then
-        ZO_MailInboxList.autoSelect = true
-    else
-        MAIL_INBOX.isFirstTimeOpening = true
-    end
     -- Unwire timeout callbacks
     EVENT_MANAGER:UnregisterForUpdate(self.name .. "Delete")
     EVENT_MANAGER:UnregisterForUpdate(self.name .. "Read")
     EVENT_MANAGER:UnregisterForUpdate(self.name .. "Take")
     KEYBIND_STRIP:UpdateKeybindButtonGroup(MAIL_INBOX.selectionKeybindStripDescriptor)
+    MAIL_INBOX.isFirstTimeOpening = true
+    self.Debug("Reset")
+    self.taking = false
+    self.takingAll = false
+    self.mailIdsFailedDeletion = {}
     
-    -- TODO: Delete the below code when U29 is released
-    if not ZO_MailInboxList then return end
-    if MAIL_INBOX.mailId then
-        local currentMailData self.GetSelectedMailData()        
-        if not currentMailData then
-            self.Debug("Current mail data is nil. Setting MAIL_INBOX.mailId=nil")
-            MAIL_INBOX.mailId = nil
-            MAIL_INBOX.selectedData = nil
-            MAIL_INBOX.selectMailIdOnRefresh = nil
-            if ZO_MailInboxList then
-                ZO_ScrollList_AutoSelectData(ZO_MailInboxList)
-            else
-                --MAIL_INBOX:RefreshData()
-            end
-        else
-            MAIL_INBOX.mailId = currentMailData.mailId
-            if ZO_MailInboxList and not MAIL_INBOX.selectedData then
-                MAIL_INBOX.selectedData = currentMailData
-            end
-        end
-    end
+    -- Print attachment summary
+    self.summary:Print()
 end
 
 --[[ Generates an array of lines all less than the given maximum string length,
@@ -1289,21 +1252,13 @@ function Postmaster.Keybind_TakeAll_Callback()
         self.Debug("Selected mail has attachments. Taking.")
         self.taking    = true
         self.takingAll = true
-        if ZO_MailInboxList then
-            ZO_MailInboxList.autoSelect = false
-        else
-            MAIL_INBOX.selectMailIdOnRefresh = nil
-        end
+        MAIL_INBOX.selectMailIdOnRefresh = nil
         self:TakeOrDeleteSelected()
     elseif self:TakeAllSelectNext() then
         self.Debug("Getting next mail with attachments")
         self.taking    = true
         self.takingAll = true
-        if ZO_MailInboxList then
-            ZO_MailInboxList.autoSelect = false
-        else
-            MAIL_INBOX.selectMailIdOnRefresh = nil
-        end
+        MAIL_INBOX.selectMailIdOnRefresh = nil
         -- will call the take or delete callback when the message is read
     end
 end
@@ -1599,7 +1554,6 @@ function Postmaster:PrehookSetup()
     ZO_PreHook(KEYBIND_STRIP, "SetUpButton", self.Prehook_KeybindStrip_ButtonSetup)
     ZO_PreHook("ZO_MailInboxShared_TakeAll", self.Prehook_MailInboxShared_TakeAll)
     ZO_PreHook("RequestReadMail", self.Prehook_RequestReadMail)
-    ZO_PreHook("ZO_ScrollList_SelectData", self.Prehook_ScrollList_SelectData)
     ZO_PreHook("ZO_Dialogs_ShowDialog", self.Prehook_Dialogs_ShowDialog)
     ZO_PreHook("ZO_Dialogs_ShowGamepadDialog", self.Prehook_Dialogs_ShowGamepadDialog)
 end
@@ -1721,32 +1675,6 @@ function Postmaster.Prehook_RequestReadMail(mailId)
     return deny
 end
 
---[[ Runs before any scroll list selects an item by its data. We listen for inbox
-     items that are selected when the inbox is closed, and then remember them 
-     in MAIL_INBOX.requestMailId so that the items can be selected as soon as 
-     the inbox opens again. ]]
--- TODO: Delete this entire hook when U29 is released
-function Postmaster.Prehook_ScrollList_SelectData(list, data, control, reselectingDuringRebuild)
-    if IsInGamepadPreferredMode() then return end
-    if list ~= ZO_MailInboxList then return end
-    local self = Postmaster
-    self.Debug("ZO_ScrollList_SelectData("..tostring(list)
-        ..", "..tostring(data)..", "..tostring(control)..", "
-        ..tostring(reselectingDuringRebuild)..")")
-    local inboxState = MAIL_INBOX_SCENE.state
-    if inboxState == SCENE_HIDDEN or inboxState == SCENE_HIDING then
-        self.Debug("Clearing inbox mail id")
-        -- clear mail id to avoid exceptions during inbox open
-        -- it will be reselected by the EVENT_MAIL_READABLE event
-        MAIL_INBOX.mailId = nil 
-        -- remember the mail id so that it can be requested on mailbox open
-        if data and type(data.mailId) == "number" then 
-            self.Debug("Setting inbox requested mail id to "..tostring(data.mailId))
-            MAIL_INBOX.requestMailId = data.mailId 
-        end
-    end
-end
-
 
 
 --[[ 
@@ -1758,7 +1686,7 @@ end
 --[[ Wire up all posthook handlers ]]
 function Postmaster:PosthookSetup()
     self.PostHook(MAIL_MANAGER_GAMEPAD.inbox, "RefreshMailList", self.Posthook_InboxScrollList_RefreshData)
-    self.PostHook(ZO_MailInboxList or MAIL_INBOX, "RefreshData", self.Posthook_InboxScrollList_RefreshData)
+    self.PostHook(MAIL_INBOX, "RefreshData", self.Posthook_InboxScrollList_RefreshData)
 end
 
 --[[ Runs after the inbox scroll list's data refreshes, for both gamepad and 
