@@ -28,6 +28,7 @@ function Postmaster:SettingsSetup()
             combineDuplicates = true,
             sortedByQuality = true,
             linkStyle = LINK_STYLE_DEFAULT,
+            showCounter = true,
         },
         takeAllCodTake = false,
         takeAllCodDelete = true,
@@ -79,7 +80,7 @@ function Postmaster:SettingsSetup()
     
     self.chat = self.classes.ChatProxy:New()
     self.templateSummary = self.classes.AccountSummary:New({ chat = self.chat, sortedByQuality = true })
-    self.summary = self.classes.GroupedAccountSummary:New(self.templateSummary)
+    self.templateSummary:SetCounterText(GetString(SI_PM_MESSAGE))
     
     self.chatColor = ZO_ColorDef:New(unpack(self.settings.chatColor))
     refreshPrefix()
@@ -755,6 +756,8 @@ function Postmaster:SettingsSetup()
     }
         
     LibAddonMenu2:RegisterOptionControls(Postmaster.name .. "Options", optionsTable)
+    
+    self.summary = self.classes.GroupedAccountSummary:New(self.templateSummary)
     
     SLASH_COMMANDS["/postmaster"] = self.OpenSettingsPanel
     SLASH_COMMANDS["/pm"] = self.OpenSettingsPanel

@@ -5,7 +5,7 @@
 Postmaster = {
     name = "Postmaster",
     title = GetString(SI_PM_NAME),
-    version = "3.13.2",
+    version = "3.14.0",
     author = "silvereyes, Garkin & Zierk",
     
     -- For development use only. Set to true to see a ridiculously verbose 
@@ -590,6 +590,8 @@ function Postmaster.CollectAttachments(sender, attachmentData)
     if money then
         self.summary:AddCurrency(sender, CURT_MONEY, money)
     end
+    
+    self.summary:IncrementMailCount(sender)
 end
 
 --[[ Called to delete the current mail after all attachments are taken and all 

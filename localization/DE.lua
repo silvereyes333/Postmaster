@@ -90,6 +90,7 @@ local strings = {
     ["SI_PM_DELETE_FAILED"]                      = "Beim Löschen der Nachricht trat ein Fehler auf. Bitte versuche es erneut.",
     ["SI_PM_TAKE_ATTACHMENTS_FAILED"]            = "Beim Entnehmen der Anhänge trat ein Fehler auf. Bitte versuche es erneut.",
     ["SI_PM_READ_FAILED"]                        = "Beim Öffnen der nächsten Nachricht trat ein Fehler auf. Bitte versuche es erneut.",
+    ["SI_PM_MESSAGE"]                            = "Nachricht^f",
 }
 
 -- Overwrite English strings

@@ -33,6 +33,10 @@ function class.GroupedAccountSummary:AddItemLink(sender, itemLink, quantity, don
     local summary = getSummary(self, sender)
     summary:AddItemLink(itemLink, quantity, dontChangeStyle)
 end
+function class.GroupedAccountSummary:IncrementMailCount(sender)
+    local summary = getSummary(self, sender)
+    summary:IncrementCounter()
+end
 function class.GroupedAccountSummary:Print()
     local summaries = {}
     for _, summary in pairs(self.summaries) do
@@ -48,8 +52,7 @@ end
 function getSummary(self, sender)
     local summary = self.summaries[sender]
     if not summary then
-        summary = class.AccountSummary:New()
-        ZO_DeepTableCopy(self.templateSummary, summary)
+        summary = self.templateSummary:Clone()
         summary:SetAccount(sender)
         self.summaries[sender] = summary
     end

@@ -22,6 +22,19 @@ function class.AccountSummary:Initialize(options)
     end
 end
 
+function class.AccountSummary:Clone()
+    local summary = class.AccountSummary:New(self.options)
+    summary.chat = self.chat
+    summary.account = self.account
+    summary.counterText = self.counterText
+    summary.defaults = self.defaults
+    summary.mailIcon = self.mailIcon
+    summary.mailType = self.mailType
+    summary.prefix = self.prefix
+    summary.suffix = self.suffix
+    return summary
+end
+
 function class.AccountSummary:SetAccount(account)
     self.account = account
 end

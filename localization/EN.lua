@@ -106,4 +106,5 @@ POSTMASTER_STRINGS = {
     ["SI_PM_DELETE_FAILED"]                      = "There was a problem deleting mail. Please try again.",
     ["SI_PM_TAKE_ATTACHMENTS_FAILED"]            = "There was a problem taking attachments. Please try again.",
     ["SI_PM_READ_FAILED"]                        = "There was a problem reading the next mail message. Please try again.",
+    ["SI_PM_MESSAGE"]                            = "message",
 }

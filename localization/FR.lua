@@ -90,6 +90,7 @@ local strings = {
     ["SI_PM_UNDAUNTED_NPC_TRIAL_2"]              = "Kailstig la Hache",
     ["SI_PM_UNDAUNTED_NPC_TRIAL_3"]              = "Mordra la puissante",
     ["SI_PM_BATTLEGROUNDS_NPC"]                  = "Maître de guerre Rivyn",
+    ["SI_PM_MESSAGE"]                            = "courrier",
 }
 
 -- Overwrite English strings
