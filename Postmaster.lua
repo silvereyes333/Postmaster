@@ -5,7 +5,7 @@
 Postmaster = {
     name = "Postmaster",
     title = GetString(SI_PM_NAME),
-    version = "3.14.0",
+    version = "3.14.1",
     author = "silvereyes, Garkin & Zierk",
     
     -- For development use only. Set to true to see a ridiculously verbose 
@@ -390,8 +390,7 @@ end
 --[[ Scans the backpack and generates a list of unique items ]]--
 function Postmaster:DiscoverUniqueItemsInBackpack()
     self.backpackUniqueItems = {}
-    local slotIndex, _
-    for slotIndex, _ in pairs(PLAYER_INVENTORY.inventories[INVENTORY_BACKPACK].slots) do
+    for slotIndex in ZO_IterateBagSlots(BAG_BACKPACK) do
         self:DiscoverUniqueBackpackItem(slotIndex)
     end
     return self.backpackUniqueItems
