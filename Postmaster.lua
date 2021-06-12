@@ -5,7 +5,7 @@
 Postmaster = {
     name = "Postmaster",
     title = GetString(SI_PM_NAME),
-    version = "3.14.1",
+    version = "3.14.2",
     author = "silvereyes, Garkin & Zierk",
     
     -- For development use only. Set to true to see a ridiculously verbose 
@@ -1557,6 +1557,13 @@ function Postmaster:PrehookSetup()
     ZO_PreHook("RequestReadMail", self.Prehook_RequestReadMail)
     ZO_PreHook("ZO_Dialogs_ShowDialog", self.Prehook_Dialogs_ShowDialog)
     ZO_PreHook("ZO_Dialogs_ShowGamepadDialog", self.Prehook_Dialogs_ShowGamepadDialog)
+    -- Okay, I know this isn't a prehook, but whatever.
+    -- Workaround for race condition with Take All keybind not appearing if all the takeable mails are from players.
+    SecurePostHook(MAIL_INBOX, "RefreshData",
+        function()
+            KEYBIND_STRIP:UpdateKeybindButtonGroup(MAIL_INBOX.selectionKeybindStripDescriptor)
+        end
+    )
 end
 
 
