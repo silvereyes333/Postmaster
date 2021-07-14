@@ -5,7 +5,7 @@
 Postmaster = {
     name = "Postmaster",
     title = GetString(SI_PM_NAME),
-    version = "3.14.2",
+    version = "3.14.3",
     author = "silvereyes, Garkin & Zierk",
     
     -- For development use only. Set to true to see a ridiculously verbose 
@@ -1040,7 +1040,8 @@ function Postmaster:KeybindSetupKeyboard()
         take = self.KeybindGetDescriptor(originalGroup, "UI_SHORTCUT_PRIMARY"),
         delete = self.KeybindGetDescriptor(originalGroup, "UI_SHORTCUT_NEGATIVE"),
         returnToSender = self.KeybindGetDescriptor(originalGroup, "UI_SHORTCUT_SECONDARY"),
-        reply = self.KeybindGetDescriptor(originalGroup, "MAIL_REPLY")
+        -- TODO: Remove after Update 31 is officially released
+        reply = self.KeybindGetDescriptor(originalGroup, "MAIL_REPLY") or self.KeybindGetDescriptor(originalGroup, "UI_SHORTCUT_TERTIARY")
     }
     
     --[[ Create the new primary, secondary and negative keybinds.
@@ -1073,7 +1074,8 @@ function Postmaster:KeybindSetupKeyboard()
     }
     
     -- Create a tertiary keybind for Reply, 
-    -- if MailR didn't already add a reply keybind
+    -- if not yet on Update 31 or MailR didn't already add a reply keybind
+    -- TODO: Remove after Update 31 is officially released
     if not self.originalDescriptors.reply then
         table.insert(keybindGroup, {
             name = GetString(SI_MAIL_READ_REPLY),
@@ -1212,6 +1214,7 @@ end
 --[[   
  
     Reply
+    TODO: Remove after Update 31 is officially released.
     
   ]]
 function Postmaster.Keybind_Reply_Callback()
