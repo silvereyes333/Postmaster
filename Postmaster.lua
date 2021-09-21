@@ -97,7 +97,11 @@ local PM_REMEMBER_RECEIVER = remember.PM_REMEMBER_RECEIVER
 local PM_REMEMBER_SUBJECT = remember.PM_REMEMBER_SUBJECT
 local PM_REMEMBER_BODY = remember.PM_REMEMBER_BODY
 local strsub = string.sub
-
+remember.contextMenusNameByIdx = {
+  [PM_REMEMBER_RECEIVER]  = Getstring(SI_PM_REMEMBER_MESSAGE_RECIPIENTS),
+  [PM_REMEMBER_SUBJECT]   = Getstring(SI_PM_REMEMBER_MESSAGE_SUBJECTS),
+  [PM_REMEMBER_BODY]      = Getstring(SI_PM_REMEMBER_MESSAGE_TEXT),
+}
 remember.contextMenusAnchorVars = {
   [PM_REMEMBER_RECEIVER]  = mailReceiverEdit,
   [PM_REMEMBER_SUBJECT]   = mailSubjectEdit,
@@ -1869,22 +1873,25 @@ end
 
 local function onMouseUpRememberContextMenuHandlerFunc(controlDoneMouseUpAt, mouseButton, upInside, altKey, shiftKey, ctrlKey, commandKey)
     if not upInside or mouseButton ~= MOUSE_BUTTON_INDEX_RIGHT then ClearMenu() return end
-d("onMouseUpRememberContextMenuHandlerFunc-ctrl: " ..tostring(controlDoneMouseUpAt:GetName()))
+--d("onMouseUpRememberContextMenuHandlerFunc-ctrl: " ..tostring(controlDoneMouseUpAt:GetName()))
     local contextMenuIdx = controlDoneMouseUpAt.PostMasterShowRememberContextMenuIdx
     if contextMenuIdx ~= nil then
-d(">Show context menu idx: " ..tostring(contextMenuIdx))
+        --d(">Show context menu idx: " ..tostring(contextMenuIdx))
         local contextMenuSVData = remember.contextMenuSVVariableNames
         local settings = Postmaster.settings
         local contextmenuEntriesFromSV = settings[contextMenuSVData[contextMenuIdx][2]]
         if contextmenuEntriesFromSV == nil or #contextmenuEntriesFromSV == 0 then return end
+        local contextMenusNameByIdx = remember.contextMenusNameByIdx
 
         ClearMenu()
+        AddCustomMenuItem(contextMenusNameByIdx[contextMenuIdx], function() end, MENU_ADD_OPTION_HEADER)
         for entryIdx, entryData in ipairs(contextmenuEntriesFromSV) do
             local entryText = entryData.text
             local textForCMEntry = (contextMenuIdx ~= PM_REMEMBER_BODY and entryText) or (strsub(entryText, 1, 100) .. "...")
             AddCustomMenuItem(textForCMEntry,
-                    function() onContextMenuRememberEntrySelected(controlDoneMouseUpAt, contextMenuIdx, contextmenuEntriesFromSV, entryIdx) end,
-                    MENU_ADD_OPTION_LABEL)
+                function() onContextMenuRememberEntrySelected(controlDoneMouseUpAt, contextMenuIdx, contextmenuEntriesFromSV, entryIdx) end,
+                MENU_ADD_OPTION_LABEL
+            )
         end
         ShowMenu(controlDoneMouseUpAt)
     end
