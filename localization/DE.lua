@@ -91,6 +91,15 @@ local strings = {
     ["SI_PM_TAKE_ATTACHMENTS_FAILED"]            = "Beim Entnehmen der Anhänge trat ein Fehler auf. Bitte versuche es erneut.",
     ["SI_PM_READ_FAILED"]                        = "Beim Öffnen der nächsten Nachricht trat ein Fehler auf. Bitte versuche es erneut.",
     ["SI_PM_MESSAGE"]                            = "Nachricht^f",
+
+    --Baertram - Remember message settings
+    ["SI_PM_REMEMBER_MESSAGE"]                   = "Gedächtnis: Nachricht",
+    ["SI_PM_REMEMBER_MESSAGE_RECIPIENTS"]        = GetString(SI_GAMEPAD_MAIL_SEND_RECIPIENT),   --Receiver
+    ["SI_PM_REMEMBER_MESSAGE_RECIPIENTS_TT"]     = "Sichere die Empfänger deiner manuell erstellten Mails. Du kannst die Liste der Gesicherten mit einem Rechtsklick auf das Empfänger Eingabefeld öffnen.",
+    ["SI_PM_REMEMBER_MESSAGE_SUBJECTS"]          = GetString(SI_MAIL_INBOX_SUBJECT_COLUMN),     --Subject
+    ["SI_PM_REMEMBER_MESSAGE_SUBJECTS_TT"]       = "Sichere die Betreffs deiner manuell erstellten Mails. Du kannst die Liste der Gesicherten mit einem Rechtsklick auf das Betreff Eingabefeld öffnen.",
+    ["SI_PM_REMEMBER_MESSAGE_TEXT"]              = "Message text",
+    ["SI_PM_REMEMBER_MESSAGE_TEXT_TT"]           = "Sichere den Mail Text deiner manuell erstellten Mails. Du kannst die Liste der Gesicherten mit einem Rechtsklick auf das Mail Text Eingabefeld öffnen.",
 }
 
 -- Overwrite English strings

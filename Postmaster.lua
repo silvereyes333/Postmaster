@@ -5,7 +5,7 @@
 Postmaster = {
     name = "Postmaster",
     title = GetString(SI_PM_NAME),
-    version = "3.14.4",
+    version = "3.15.0",
     author = "silvereyes, Garkin & Zierk",
     
     -- For development use only. Set to true to see a ridiculously verbose 
@@ -73,6 +73,47 @@ PM_BOUNCE_MAIL_PREFIXES = {
     "RETURN"
 }
 
+
+-- Baertram - Remember
+--Pointers to ZOs mail fields used
+local mailReceiverEdit  = ZO_MailSendToField
+local mailSubjectEdit   = ZO_MailSendSubjectField
+local mailBodyEdit      = ZO_MailSendBodyField
+--Subtable for the remember functions and values, tables etc.
+Postmaster.Remember = {
+    --Constants
+    PM_REMEMBER_RECEIVER = 1,
+    PM_REMEMBER_SUBJECT = 2,
+    PM_REMEMBER_BODY = 3,
+
+    --The generated context menu entries of LibCustomMenu
+    mailReceiverContextMenuEntries = {},
+    mailSubjectContextMenuEntries = {},
+    mailBodyContextMenuEntries = {},
+}
+--Local speed up variables
+local remember = Postmaster.Remember
+local PM_REMEMBER_RECEIVER = remember.PM_REMEMBER_RECEIVER
+local PM_REMEMBER_SUBJECT = remember.PM_REMEMBER_SUBJECT
+local PM_REMEMBER_BODY = remember.PM_REMEMBER_BODY
+
+remember.contextMenusAnchorVars = {
+  [PM_REMEMBER_RECEIVER]  = mailReceiverEdit,
+  [PM_REMEMBER_SUBJECT]   = mailSubjectEdit,
+  [PM_REMEMBER_BODY]      = mailBodyEdit,
+}
+remember.contextMenuHandlerWasAddedToControl = {
+  [PM_REMEMBER_RECEIVER]  = false, --receiver
+  [PM_REMEMBER_SUBJECT]   = false, --subjects
+  [PM_REMEMBER_BODY]      = false, --body
+}
+remember.contextMenuSVVariableNames = {
+  [PM_REMEMBER_RECEIVER]  = {"rememberRecipients",  "rememberSavedRecipients"},
+  [PM_REMEMBER_SUBJECT]   = {"rememberSubjects",    "rememberSavedSubjects"},
+  [PM_REMEMBER_BODY]      = {"rememberBodies",      "rememberSavedBodies"},
+}
+
+
 -- Initalizing the addon
 local function OnAddonLoaded(eventCode, addOnName)
 
@@ -98,7 +139,11 @@ local function OnAddonLoaded(eventCode, addOnName)
     
     -- Replace keybinds in the mouse/keyboard inbox UI
     self:KeybindSetupKeyboard()
-    
+
+    --Baertram - Remember
+    -- Add LibCustomMenu context menus to the mail recipient, subject, body fields
+    self:RememberSetup()
+
     -- TODO: add gamepad inbox UI keybind support
 end
 
@@ -398,7 +443,7 @@ end
 
 --[[ Places the cursor in the send mail body field. Used by the Reply action. ]]
 function Postmaster.FocusSendMailBody()
-    ZO_MailSendBodyField:TakeFocus()
+    mailBodyEdit:TakeFocus()
 end
 
 --[[ Searches self.codMails for the first mail id and C.O.D. mail data taht
@@ -538,6 +583,8 @@ end
 --[[ Similar to ZO_PreHook(), except runs the hook function after the existing
      function.  If the hook function returns a value, that value is returned
      instead of the existing function's return value.]]
+
+-- Baertram, 2021-09-21: Looks like ZO_PostHook? Why not using this instead
 function Postmaster.PostHook(objectTable, existingFunctionName, hookFunction)
     if(type(objectTable) == "string") then
         hookFunction = existingFunctionName
@@ -1704,4 +1751,143 @@ end
      keyboard mail fragments. Used to trigger automatic mail return. ]]
 function Postmaster.Posthook_InboxScrollList_RefreshData(scrollList)
     Postmaster:TryAutoReturnMail()
+end
+
+
+--[[
+    ===============================================================================
+          REMEMBER - by Baertram
+          Remember the receiver, subject, body text of manually created mails
+          and allow to select from previously saved values via a righ click
+          context menu at the ZO_MailSend fields
+    ===============================================================================
+  ]]
+
+function Postmaster:RememberSetup()
+    --LibCustomMenu is mandatory
+    if not LibCustomMenu then return end
+
+    --Check settings and if context menus need to added to the ZO_MailSend controls
+    self:RememberCheckAddContextMenu(-1)
+
+    --Add the handlers to the ZO_MailSend controls
+    self:RememberCheckAddOnMouseHandler(-1)
+end
+
+function Postmaster:RememberCheckAddContextMenu(whichContextMenu)
+    ------------------------------------------------------------------------------------------------------------------------
+    --TODO: Remove before go-live
+    --DEBUGGING HELP: Added some fixed entries in the SavedVariables which need to be removed before go-live
+    --self.settings.rememberRecipients = true
+    --self.settings.rememberSubjects = true
+    --self.settings.rememberBodies = true
+    self.settings.rememberSavedRecipients = {
+        [1] = {
+            timestamp = GetTimeStamp() - 100000,
+            text = "@test_user",
+        },
+        [2] = {
+            timestamp = GetTimeStamp() - 10000,
+            text = "@test_user2",
+        },
+        [3] = {
+            timestamp = GetTimeStamp() - 1000,
+            text = "@test_user3",
+        },
+    }
+    self.settings.rememberSavedSubjects = {
+        [1] = {
+            timestamp = GetTimeStamp() - 100000,
+            text = "Subject 1",
+        },
+        [2] = {
+            timestamp = GetTimeStamp() - 10000,
+            text = "Subject 2",
+        },
+        [3] = {
+            timestamp = GetTimeStamp() - 1000,
+            text = "Subject 3",
+        },
+    }
+    self.settings.rememberSavedBodies = {
+        [1] = {
+            timestamp = GetTimeStamp() - 100000,
+            text = "Text 1 line 1\nText 1 line 2",
+        },
+        [2] = {
+            timestamp = GetTimeStamp() - 10000,
+            text = "Text 2 line 1\nText 2 line 2",
+        },
+        [3] = {
+            timestamp = GetTimeStamp() - 1000,
+            text = "Text 3 line 1\nText 3 line 2",
+        },
+    }
+    ------------------------------------------------------------------------------------------------------------------------
+
+    local settings = self.settings
+    local svVariableNames = remember.contextMenuSVVariableNames
+    local contextMenuAnchorVars = remember.contextMenusAnchorVars
+
+    local function checkIfContextMenuShouldBeBuild(idx, contextMenuSVVarData)
+        --Set the flag to show and build a context menu at the ZO_SendMailcontrol directly
+        local anchorControl = contextMenuAnchorVars[idx]
+        if not anchorControl then return end
+        --Reset flag to add context menu to the control
+        anchorControl.PostMasterShowRememberContextMenu = nil
+
+        --Check SavedVAriables and entries
+        local contextMenuSVVarName = contextMenuSVVarData[1]
+        local contextMenuSVSavedVarName = contextMenuSVVarData[2]
+        --Settings enabled and data was saved before?
+        if (not idx or not contextMenuSVVarName or not contextMenuSVSavedVarName)
+                or not settings[contextMenuSVVarName] or settings[contextMenuSVSavedVarName] == nil then return end
+
+        --Set flag to add context menu to the control
+        anchorControl.PostMasterShowRememberContextMenu = true
+    end
+
+    --All context menus?
+    if whichContextMenu == -1 then
+        --Reset the variables of the context menus
+        for idx, contextMenuSVVarData in ipairs(svVariableNames) do
+            checkIfContextMenuShouldBeBuild(idx, contextMenuSVVarData)
+        end
+    else
+        local contextMenuSVVarData = svVariableNames[whichContextMenu]
+        checkIfContextMenuShouldBeBuild(whichContextMenu, contextMenuSVVarData)
+    end
+end
+
+local function onMouseUpRememberContextMenuHandlerFunc(controlDoneMouseUpAt, mouseButton, upInside, altKey, shiftKey, ctrlKey, commandKey)
+    if not upInside or not mouseButton == MOUSE_BUTTON_INDEX_RIGHT then return end
+d("onMouseUpRememberContextMenuHandlerFunc-ctrl: " ..tostring(controlDoneMouseUpAt:GetName()))
+    if controlDoneMouseUpAt.PostMasterShowRememberContextMenu == true then
+        d(">Show context menu now")
+        --local
+    end
+end
+
+function Postmaster:RememberCheckAddOnMouseHandler(whichContextMenu)
+    local contextMenusAnchorVars = remember.contextMenusAnchorVars
+    local function addContextMenuHandlerToControlOnce(idx, contextMenuAnchorControl)
+        --Add the context menu to the control, if not already done
+        if not remember.contextMenuHandlerWasAddedToControl[idx] then
+            contextMenuAnchorControl:SetHandler("OnMouseUp", onMouseUpRememberContextMenuHandlerFunc)
+            remember.contextMenuHandlerWasAddedToControl[idx] = true
+        end
+    end
+
+    --All context menus?
+    if whichContextMenu == -1 then
+        for idx, contextMenuAnchorControl in ipairs(contextMenusAnchorVars) do
+            if contextMenuAnchorControl then
+                addContextMenuHandlerToControlOnce(idx, contextMenuAnchorControl)
+            end
+        end
+    else
+        local contextMenuAnchorControl = contextMenusAnchorVars[whichContextMenu]
+        if not contextMenuAnchorControl then return end
+        addContextMenuHandlerToControlOnce(whichContextMenu, contextMenuAnchorControl)
+    end
 end

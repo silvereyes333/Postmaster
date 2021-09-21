@@ -64,6 +64,14 @@ function Postmaster:SettingsSetup()
         quickTakeSystemOther = true,
         quickTakeSystemPvp = true,
         quickTakeSystemUndaunted = true,
+
+        --Baertram - Remember settings variables
+        rememberRecipients = false,
+        rememberSavedRecipients = {},
+        rememberSubjects = false,
+        rememberSavedSubjects = {},
+        rememberBodies = false,
+        rememberSavedBodies = {},
     }
     
     -- Initialize saved variables
@@ -708,6 +716,53 @@ function Postmaster:SettingsSetup()
                 self.templateSummary:GenerateLam2LootOptions(self.title, self.chatContentsSummaryProxy, self.defaults.chatContentsSummary),
             },
         },
+
+        --[[ Baertram - Remember settings
+            only enabled if LibCustomMenu 7.11 or newer is given
+        ]]
+        --Remember: Messages
+        {
+            type     = "submenu",
+            name     = GetString(SI_PM_REMEMBER_MESSAGE),
+            controls = {
+                -- Remember message recipients
+                {
+                    type    = "checkbox",
+                    name    = GetString(SI_PM_REMEMBER_MESSAGE_RECIPIENTS),
+                    tooltip = GetString(SI_PM_REMEMBER_MESSAGE_RECIPIENTS_TT),
+                    getFunc = function() return self.settings.rememberRecipients end,
+                    setFunc = function(value)
+                        self.settings.rememberRecipients = value
+                    end,
+                    default = self.defaults.rememberRecipients,
+                    disabled = function() return LibCustomMenu == nil end
+                },
+                -- Remember message subjects
+                {
+                    type    = "checkbox",
+                    name    = GetString(SI_PM_REMEMBER_MESSAGE_SUBJECTS),
+                    tooltip = GetString(SI_PM_REMEMBER_MESSAGE_SUBJECTS_TT),
+                    getFunc = function() return self.settings.rememberSubjects end,
+                    setFunc = function(value)
+                        self.settings.rememberSubjects = value
+                    end,
+                    default = self.defaults.rememberSubjects,
+                    disabled = function() return LibCustomMenu == nil end
+                },
+                -- Remember message bodies
+                {
+                    type    = "checkbox",
+                    name    = GetString(SI_PM_REMEMBER_MESSAGE_TEXT),
+                    tooltip = GetString(SI_PM_REMEMBER_MESSAGE_TEXT_TT),
+                    getFunc = function() return self.settings.rememberBodies end,
+                    setFunc = function(value)
+                        self.settings.rememberBodies = value
+                    end,
+                    default = self.defaults.rememberBodies,
+                    disabled = function() return LibCustomMenu == nil end
+                },
+            } -- controls
+        },--submenu
         
         -- header
         {
@@ -753,6 +808,7 @@ function Postmaster:SettingsSetup()
                     end
                 end
         }
+
     }
         
     LibAddonMenu2:RegisterOptionControls(Postmaster.name .. "Options", optionsTable)

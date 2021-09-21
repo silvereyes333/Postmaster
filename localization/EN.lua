@@ -107,4 +107,13 @@ POSTMASTER_STRINGS = {
     ["SI_PM_TAKE_ATTACHMENTS_FAILED"]            = "There was a problem taking attachments. Please try again.",
     ["SI_PM_READ_FAILED"]                        = "There was a problem reading the next mail message. Please try again.",
     ["SI_PM_MESSAGE"]                            = "message",
+
+    --Baertram - Remember message settings
+    ["SI_PM_REMEMBER_MESSAGE"]                   = "Remember: Message",
+    ["SI_PM_REMEMBER_MESSAGE_RECIPIENTS"]        = GetString(SI_GAMEPAD_MAIL_SEND_RECIPIENT),   --Receiver
+    ["SI_PM_REMEMBER_MESSAGE_RECIPIENTS_TT"]     = "Save the receivers of your manually written emails. You are able to show and select from a list via a right mouse click on the mail receiver editbox.",
+    ["SI_PM_REMEMBER_MESSAGE_SUBJECTS"]          = GetString(SI_MAIL_INBOX_SUBJECT_COLUMN),     --Subject
+    ["SI_PM_REMEMBER_MESSAGE_SUBJECTS_TT"]       = "Save the subject of your manually written emails. You are able to show and select from a list via a right mouse click on the mail subject editbox.",
+    ["SI_PM_REMEMBER_MESSAGE_TEXT"]              = "Message text",
+    ["SI_PM_REMEMBER_MESSAGE_TEXT_TT"]           = "Save the message text of your manually written emails. You are able to show and select from a list via a right mouse click on the mail message body editbox.",
 }
