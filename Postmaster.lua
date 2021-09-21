@@ -96,6 +96,7 @@ local remember = Postmaster.Remember
 local PM_REMEMBER_RECEIVER = remember.PM_REMEMBER_RECEIVER
 local PM_REMEMBER_SUBJECT = remember.PM_REMEMBER_SUBJECT
 local PM_REMEMBER_BODY = remember.PM_REMEMBER_BODY
+local strsub = string.sub
 
 remember.contextMenusAnchorVars = {
   [PM_REMEMBER_RECEIVER]  = mailReceiverEdit,
@@ -741,7 +742,7 @@ function Postmaster.SplitLines(text, maxStringLength, wordBoundaries)
         if index + maxStringLength > textMax then
             splitAt = textMax - index
         else
-            local substring = string.sub(text, index, index + maxStringLength - 1)
+            local substring = strsub(text, index, index + maxStringLength - 1)
             for _,delimiter in ipairs(wordBoundaries) do
                 local pattern = ".*("..delimiter..")"
                 local _,matchIndex = string.find(substring, pattern)
@@ -751,7 +752,7 @@ function Postmaster.SplitLines(text, maxStringLength, wordBoundaries)
             end
             splitAt = splitAt or maxStringLength
         end
-        local line = string.sub(text, index, index + splitAt - 1 )
+        local line = strsub(text, index, index + splitAt - 1 )
         table.insert(lines, line)
         index = index + splitAt 
     end
@@ -1834,7 +1835,7 @@ function Postmaster:RememberCheckAddContextMenu(whichContextMenu)
         local anchorControl = contextMenuAnchorVars[idx]
         if not anchorControl then return end
         --Reset flag to add context menu to the control
-        anchorControl.PostMasterShowRememberContextMenu = nil
+        anchorControl.PostMasterShowRememberContextMenuIdx = nil
 
         --Check SavedVAriables and entries
         local contextMenuSVVarName = contextMenuSVVarData[1]
@@ -1844,7 +1845,7 @@ function Postmaster:RememberCheckAddContextMenu(whichContextMenu)
                 or not settings[contextMenuSVVarName] or settings[contextMenuSVSavedVarName] == nil then return end
 
         --Set flag to add context menu to the control
-        anchorControl.PostMasterShowRememberContextMenu = true
+        anchorControl.PostMasterShowRememberContextMenuIdx = idx
     end
 
     --All context menus?
@@ -1859,12 +1860,33 @@ function Postmaster:RememberCheckAddContextMenu(whichContextMenu)
     end
 end
 
+local function onContextMenuRememberEntrySelected(controlDoneMouseUpAt, contextMenuIdx, contextmenuEntriesFromSV, entryIdx)
+    d("onContextMenuRememberEntrySelected - contextMenuIdx: " .. tostring(contextMenuIdx) .. ", entryIdx: " ..tostring(entryIdx))
+    local selectedSVText = contextmenuEntriesFromSV[entryIdx]
+    d("Selected text: " .. selectedSVText)
+    if controlDoneMouseUpAt.SetText then controlDoneMouseUpAt:SetText(selectedSVText) end
+end
+
 local function onMouseUpRememberContextMenuHandlerFunc(controlDoneMouseUpAt, mouseButton, upInside, altKey, shiftKey, ctrlKey, commandKey)
-    if not upInside or not mouseButton == MOUSE_BUTTON_INDEX_RIGHT then return end
+    if not upInside or not mouseButton == MOUSE_BUTTON_INDEX_RIGHT then ClearMenu() return end
 d("onMouseUpRememberContextMenuHandlerFunc-ctrl: " ..tostring(controlDoneMouseUpAt:GetName()))
-    if controlDoneMouseUpAt.PostMasterShowRememberContextMenu == true then
-        d(">Show context menu now")
-        --local
+    local contextMenuIdx = controlDoneMouseUpAt.PostMasterShowRememberContextMenuIdx
+    if contextMenuIdx ~= nil then
+d(">Show context menu idx: " ..tostring(contextMenuIdx))
+        local contextMenuSVData = remember.contextMenuSVVariableNames
+        local settings = Postmaster.settings
+        local contextmenuEntriesFromSV = settings[contextMenuSVData[contextMenuIdx][2]]
+        if contextmenuEntriesFromSV == nil or #contextmenuEntriesFromSV == 0 then return end
+
+        ClearMenu()
+        for entryIdx, entryData in ipairs(contextmenuEntriesFromSV) do
+            local entryText = entryData.text
+            local textForCMEntry = (contextMenuIdx ~= PM_REMEMBER_BODY and entryText) or (strsub(entryText, 1, 100) .. "...")
+            AddCustomMenuItem(textForCMEntry,
+                    function() onContextMenuRememberEntrySelected(controlDoneMouseUpAt, contextMenuIdx, contextmenuEntriesFromSV, entryIdx) end,
+                    MENU_ADD_OPTION_LABEL)
+        end
+        ShowMenu(controlDoneMouseUpAt)
     end
 end
 

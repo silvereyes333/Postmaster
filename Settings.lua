@@ -92,6 +92,12 @@ function Postmaster:SettingsSetup()
     
     self.chatColor = ZO_ColorDef:New(unpack(self.settings.chatColor))
     refreshPrefix()
+
+    --Baertram - Remember local speed up variables
+    local remember = self.Remember
+    local PM_REMEMBER_RECEIVER = remember.PM_REMEMBER_RECEIVER
+    local PM_REMEMBER_SUBJECT = remember.PM_REMEMBER_SUBJECT
+    local PM_REMEMBER_BODY = remember.PM_REMEMBER_BODY
     
     local panelData = {
         type = "panel",
@@ -733,6 +739,7 @@ function Postmaster:SettingsSetup()
                     getFunc = function() return self.settings.rememberRecipients end,
                     setFunc = function(value)
                         self.settings.rememberRecipients = value
+                        self:RememberCheckAddContextMenu(PM_REMEMBER_RECEIVER)
                     end,
                     default = self.defaults.rememberRecipients,
                     disabled = function() return LibCustomMenu == nil end
@@ -745,6 +752,7 @@ function Postmaster:SettingsSetup()
                     getFunc = function() return self.settings.rememberSubjects end,
                     setFunc = function(value)
                         self.settings.rememberSubjects = value
+                        self:RememberCheckAddContextMenu(PM_REMEMBER_SUBJECT)
                     end,
                     default = self.defaults.rememberSubjects,
                     disabled = function() return LibCustomMenu == nil end
@@ -757,6 +765,7 @@ function Postmaster:SettingsSetup()
                     getFunc = function() return self.settings.rememberBodies end,
                     setFunc = function(value)
                         self.settings.rememberBodies = value
+                        self:RememberCheckAddContextMenu(PM_REMEMBER_BODY)
                     end,
                     default = self.defaults.rememberBodies,
                     disabled = function() return LibCustomMenu == nil end
