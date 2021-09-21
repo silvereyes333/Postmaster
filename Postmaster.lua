@@ -1841,12 +1841,32 @@ function Postmaster:RememberCheckAddContextMenu(whichContextMenu)
         --Reset flag to add context menu to the control
         anchorControl.PostMasterShowRememberContextMenuIdx = nil
 
-        --Check SavedVAriables and entries
+        --Check SavedVariables and entries
         local contextMenuSVVarName = contextMenuSVVarData[1]
         local contextMenuSVSavedVarName = contextMenuSVVarData[2]
         --Settings enabled and data was saved before?
         if (not idx or not contextMenuSVVarName or not contextMenuSVSavedVarName)
                 or not settings[contextMenuSVVarName] or settings[contextMenuSVSavedVarName] == nil then return end
+
+        --Check if the entries in the context menu needs to be trimmed
+        local maxSavedEntries = settings.rememberSavedEntries
+d(">maxSavedEntries: " ..tostring(maxSavedEntries) .. ", currentEntries: " ..tostring(#settings[contextMenuSVSavedVarName]))
+        if #settings[contextMenuSVSavedVarName] > maxSavedEntries then
+d(">>sorting by timestamp NEWEST first")
+            --Sort the SV table by timestamp: Newest first, oldest last
+            table.sort(self.settings[contextMenuSVSavedVarName], function(a, b)
+                return a.timestamp > b.timestamp
+            end)
+
+            --Delete all entries > max entries to keep
+            local countOld = #self.settings[contextMenuSVSavedVarName]
+            for i=maxSavedEntries+1, countOld, 1 do
+d(">>delete check for entry: " .. self.settings[contextMenuSVSavedVarName][i].text)
+                if self.settings[contextMenuSVSavedVarName][i] ~= nil then
+                    self.settings[contextMenuSVSavedVarName][i] = nil
+                end
+            end
+        end
 
         --Set flag to add context menu to the control
         anchorControl.PostMasterShowRememberContextMenuIdx = idx
