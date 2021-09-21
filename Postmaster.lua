@@ -1862,13 +1862,13 @@ end
 
 local function onContextMenuRememberEntrySelected(controlDoneMouseUpAt, contextMenuIdx, contextmenuEntriesFromSV, entryIdx)
     d("onContextMenuRememberEntrySelected - contextMenuIdx: " .. tostring(contextMenuIdx) .. ", entryIdx: " ..tostring(entryIdx))
-    local selectedSVText = contextmenuEntriesFromSV[entryIdx]
+    local selectedSVText = contextmenuEntriesFromSV[entryIdx].text
     d("Selected text: " .. selectedSVText)
     if controlDoneMouseUpAt.SetText then controlDoneMouseUpAt:SetText(selectedSVText) end
 end
 
 local function onMouseUpRememberContextMenuHandlerFunc(controlDoneMouseUpAt, mouseButton, upInside, altKey, shiftKey, ctrlKey, commandKey)
-    if not upInside or not mouseButton == MOUSE_BUTTON_INDEX_RIGHT then ClearMenu() return end
+    if not upInside or mouseButton ~= MOUSE_BUTTON_INDEX_RIGHT then ClearMenu() return end
 d("onMouseUpRememberContextMenuHandlerFunc-ctrl: " ..tostring(controlDoneMouseUpAt:GetName()))
     local contextMenuIdx = controlDoneMouseUpAt.PostMasterShowRememberContextMenuIdx
     if contextMenuIdx ~= nil then
