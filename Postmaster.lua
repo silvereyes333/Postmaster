@@ -1817,15 +1817,15 @@ function Postmaster:RememberCheckAddContextMenu(whichContextMenu)
     self.settings.rememberSavedBodies = {
         [1] = {
             timestamp = GetTimeStamp() - 100000,
-            text = "Text 1 line 1\nText 1 line 2",
+            text = "Text 1 line 1\nText 1 line 2\nLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtext",
         },
         [2] = {
             timestamp = GetTimeStamp() - 10000,
-            text = "Text 2 line 1\nText 2 line 2",
+            text = "LongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtext",
         },
         [3] = {
             timestamp = GetTimeStamp() - 1000,
-            text = "Text 3 line 1\nText 3 line 2",
+            text = "Text 3 line 1",
         },
     }
     ------------------------------------------------------------------------------------------------------------------------
@@ -1882,12 +1882,13 @@ local function onMouseUpRememberContextMenuHandlerFunc(controlDoneMouseUpAt, mou
         local contextmenuEntriesFromSV = settings[contextMenuSVData[contextMenuIdx][2]]
         if contextmenuEntriesFromSV == nil or #contextmenuEntriesFromSV == 0 then return end
         local contextMenusNameByIdx = remember.contextMenusNameByIdx
+        local countPreviewChars = settings.rememberBodiesPreviewChars
 
         ClearMenu()
         AddCustomMenuItem(contextMenusNameByIdx[contextMenuIdx], function() end, MENU_ADD_OPTION_HEADER)
         for entryIdx, entryData in ipairs(contextmenuEntriesFromSV) do
             local entryText = entryData.text
-            local textForCMEntry = (contextMenuIdx ~= PM_REMEMBER_BODY and entryText) or (strsub(entryText, 1, 100) .. "...")
+            local textForCMEntry = (contextMenuIdx ~= PM_REMEMBER_BODY and entryText) or (strsub(entryText, 1, countPreviewChars) .. "...")
             AddCustomMenuItem(textForCMEntry,
                 function() onContextMenuRememberEntrySelected(controlDoneMouseUpAt, contextMenuIdx, contextmenuEntriesFromSV, entryIdx) end,
                 MENU_ADD_OPTION_LABEL

@@ -114,6 +114,8 @@ POSTMASTER_STRINGS = {
     ["SI_PM_REMEMBER_MESSAGE_RECIPIENTS_TT"]     = "Save the receivers of your manually written emails. You are able to show and select from a list via a right mouse click on the mail receiver editbox.",
     ["SI_PM_REMEMBER_MESSAGE_SUBJECTS"]          = GetString(SI_MAIL_INBOX_SUBJECT_COLUMN),     --Subject
     ["SI_PM_REMEMBER_MESSAGE_SUBJECTS_TT"]       = "Save the subject of your manually written emails. You are able to show and select from a list via a right mouse click on the mail subject editbox.",
-    ["SI_PM_REMEMBER_MESSAGE_TEXT"]              = "Message text",
+    ["SI_PM_REMEMBER_MESSAGE_TEXT"]              = "Body-text",
     ["SI_PM_REMEMBER_MESSAGE_TEXT_TT"]           = "Save the message text of your manually written emails. You are able to show and select from a list via a right mouse click on the mail message body editbox.",
+    ["SI_PM_REMEMBER_AMOUNT"]                    = "Saved amount of entries",
+    ["SI_PM_REMEMBER_PREVIEW_CHARS"]             = "Count of chars at contextmenu (preview)",
 }

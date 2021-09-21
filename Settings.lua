@@ -72,6 +72,8 @@ function Postmaster:SettingsSetup()
         rememberSavedSubjects = {},
         rememberBodies = false,
         rememberSavedBodies = {},
+        rememberBodiesPreviewChars = 100,
+        rememberSavedEntries = 10,
     }
     
     -- Initialize saved variables
@@ -769,6 +771,29 @@ function Postmaster:SettingsSetup()
                     end,
                     default = self.defaults.rememberBodies,
                     disabled = function() return LibCustomMenu == nil end
+                },
+                {
+                    type = "slider",
+                    name = GetString(SI_PM_REMEMBER_PREVIEW_CHARS),
+                    getFunc = function() return self.settings.rememberBodiesPreviewChars end,
+                    setFunc = function(value) self.settings.rememberBodiesPreviewChars = value end,
+                    min = 10,
+                    max = 250,
+                    width = "full",
+                    disabled = function() return not self.settings.rememberBodies end,
+                    default = self.defaults.rememberBodiesPreviewChars,
+                },
+                {
+                    type = "slider",
+                    name = GetString(SI_PM_REMEMBER_AMOUNT),
+                    getFunc = function() return self.settings.rememberSavedEntries end,
+                    setFunc = function(value) self.settings.rememberSavedEntries = value end,
+                    min = 1,
+                    max = 20,
+                    width = "full",
+                    clampInput = false,
+                    disabled = function() return not self.settings.rememberRecipients and not self.settings.rememberSubjects and not self.settings.rememberBodies end,
+                    default = self.defaults.rememberSavedEntries,
                 },
             } -- controls
         },--submenu
