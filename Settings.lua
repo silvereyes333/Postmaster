@@ -72,7 +72,7 @@ function Postmaster:SettingsSetup()
         rememberSavedSubjects = {},
         rememberBodies = false,
         rememberSavedBodies = {},
-        rememberBodiesPreviewChars = 100,
+        rememberBodiesPreviewChars = 75,
         rememberSavedEntries = 10,
     }
     

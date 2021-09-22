@@ -86,17 +86,22 @@ Postmaster.Remember = {
     PM_REMEMBER_SUBJECT = 2,
     PM_REMEMBER_BODY = 3,
 
+    isSettingEnabledAndDoWeNeedToRunPreHooks = false,
+
     --The generated context menu entries of LibCustomMenu
     mailReceiverContextMenuEntries = {},
     mailSubjectContextMenuEntries = {},
     mailBodyContextMenuEntries = {},
 }
+
 --Local speed up variables
+local EM = EVENT_MANAGER
+local strsub = string.sub
 local remember = Postmaster.Remember
 local PM_REMEMBER_RECEIVER = remember.PM_REMEMBER_RECEIVER
 local PM_REMEMBER_SUBJECT = remember.PM_REMEMBER_SUBJECT
 local PM_REMEMBER_BODY = remember.PM_REMEMBER_BODY
-local strsub = string.sub
+
 remember.contextMenusNameByIdx = {
   [PM_REMEMBER_RECEIVER]  = GetString(SI_PM_REMEMBER_MESSAGE_RECIPIENTS),
   [PM_REMEMBER_SUBJECT]   = GetString(SI_PM_REMEMBER_MESSAGE_SUBJECTS),
@@ -118,14 +123,13 @@ remember.contextMenuSVVariableNames = {
   [PM_REMEMBER_BODY]      = {"rememberBodies",      "rememberSavedBodies"},
 }
 
-
 -- Initalizing the addon
 local function OnAddonLoaded(eventCode, addOnName)
 
     local self = Postmaster
     
     if ( addOnName ~= self.name ) then return end
-    EVENT_MANAGER:UnregisterForEvent(self.name, eventCode)
+    EM:UnregisterForEvent(self.name, eventCode)
     
     -- Initialize settings menu, saved vars, and slash commands to open settings
     self:SettingsSetup()
@@ -354,7 +358,7 @@ function MailDelete(mailId, retries)
     if not retries then
         retries = PM_DELETE_MAIL_MAX_RETRIES
     end
-    EVENT_MANAGER:RegisterForUpdate(self.name .. "Delete", PM_DELETE_MAIL_TIMEOUT_MS, GetMailDeleteCallback(mailId, retries))
+    EM:RegisterForUpdate(self.name .. "Delete", PM_DELETE_MAIL_TIMEOUT_MS, GetMailDeleteCallback(mailId, retries))
     
     DeleteMail(mailId, false)
 end
@@ -379,7 +383,7 @@ function MailRead(retries)
     if not retries then
         retries = PM_MAIL_READ_MAX_RETRIES
     end
-    EVENT_MANAGER:RegisterForUpdate(self.name .. "Read", PM_MAIL_READ_TIMEOUT_MS, GetMailReadCallback(retries) )
+    EM:RegisterForUpdate(self.name .. "Read", PM_MAIL_READ_TIMEOUT_MS, GetMailReadCallback(retries) )
     
     -- If there exists another message in the inbox that has attachments, select it. otherwise, clear the selection.
     local nextMailData = self:TakeAllGetNext()
@@ -409,11 +413,11 @@ function TakeTimeout(mailId, retries)
     if not retries then
         retries = PM_TAKE_ATTACHMENTS_MAX_RETRIES
     end
-    EVENT_MANAGER:RegisterForUpdate(self.name .. "Take", PM_TAKE_TIMEOUT_MS, GetTakeCallback(mailId, retries) )
+    EM:RegisterForUpdate(self.name .. "Take", PM_TAKE_TIMEOUT_MS, GetTakeCallback(mailId, retries) )
 end
 
 -- Register events
-EVENT_MANAGER:RegisterForEvent(Postmaster.name, EVENT_ADD_ON_LOADED, OnAddonLoaded)
+EM:RegisterForEvent(Postmaster.name, EVENT_ADD_ON_LOADED, OnAddonLoaded)
 
 
 --[[ Outputs formatted message to chat window if debugging is turned on ]]
@@ -718,9 +722,9 @@ end
 --[[ Sets state variables back to defaults and ensures a consistent inbox state ]]
 function Postmaster:Reset()
     -- Unwire timeout callbacks
-    EVENT_MANAGER:UnregisterForUpdate(self.name .. "Delete")
-    EVENT_MANAGER:UnregisterForUpdate(self.name .. "Read")
-    EVENT_MANAGER:UnregisterForUpdate(self.name .. "Take")
+    EM:UnregisterForUpdate(self.name .. "Delete")
+    EM:UnregisterForUpdate(self.name .. "Read")
+    EM:UnregisterForUpdate(self.name .. "Take")
     KEYBIND_STRIP:UpdateKeybindButtonGroup(MAIL_INBOX.selectionKeybindStripDescriptor)
     MAIL_INBOX.isFirstTimeOpening = true
     self.Debug("Reset")
@@ -1386,17 +1390,17 @@ end
   ]]
 
 function Postmaster:EventSetup()
-    EVENT_MANAGER:RegisterForEvent(self.name, EVENT_INVENTORY_IS_FULL, self.Event_InventoryIsFull)
-    EVENT_MANAGER:RegisterForEvent(self.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, self.Event_InventorySingleSlotUpdate)
-    EVENT_MANAGER:RegisterForEvent(self.name, EVENT_MAIL_INBOX_UPDATE, self.Event_MailInboxUpdate)
-    EVENT_MANAGER:RegisterForEvent(self.name, EVENT_MAIL_READABLE,     self.Event_MailReadable)
-    EVENT_MANAGER:RegisterForEvent(self.name, EVENT_MAIL_REMOVED,      self.Event_MailRemoved)
-    EVENT_MANAGER:RegisterForEvent(self.name, EVENT_MAIL_SEND_SUCCESS, self.Event_MailSendSuccess)
-    EVENT_MANAGER:RegisterForEvent(self.name, EVENT_MAIL_TAKE_ATTACHED_ITEM_SUCCESS, 
+    EM:RegisterForEvent(self.name, EVENT_INVENTORY_IS_FULL, self.Event_InventoryIsFull)
+    EM:RegisterForEvent(self.name, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, self.Event_InventorySingleSlotUpdate)
+    EM:RegisterForEvent(self.name, EVENT_MAIL_INBOX_UPDATE, self.Event_MailInboxUpdate)
+    EM:RegisterForEvent(self.name, EVENT_MAIL_READABLE,     self.Event_MailReadable)
+    EM:RegisterForEvent(self.name, EVENT_MAIL_REMOVED,      self.Event_MailRemoved)
+    EM:RegisterForEvent(self.name, EVENT_MAIL_SEND_SUCCESS, self.Event_MailSendSuccess)
+    EM:RegisterForEvent(self.name, EVENT_MAIL_TAKE_ATTACHED_ITEM_SUCCESS, 
         self.Event_MailTakeAttachedItemSuccess)
-    EVENT_MANAGER:RegisterForEvent(self.name, EVENT_MAIL_TAKE_ATTACHED_MONEY_SUCCESS,  
+    EM:RegisterForEvent(self.name, EVENT_MAIL_TAKE_ATTACHED_MONEY_SUCCESS,  
         self.Event_MailTakeAttachedMoneySuccess)
-    EVENT_MANAGER:RegisterForEvent(self.name, EVENT_MONEY_UPDATE,      self.Event_MoneyUpdate)
+    EM:RegisterForEvent(self.name, EVENT_MONEY_UPDATE,      self.Event_MoneyUpdate)
     
     -- Fix for Wykkyd Mailbox keybind conflicts
     if type(WYK_MailBox) == "table" then
@@ -1443,7 +1447,7 @@ function Postmaster.Event_MailReadable(eventCode, mailId)
     if IsInGamepadPreferredMode() then return end
     local self = Postmaster
     self.Debug("Event_MailReadable("..tostring(mailId)..")")
-    EVENT_MANAGER:UnregisterForUpdate(self.name .. "Read")
+    EM:UnregisterForUpdate(self.name .. "Read")
         
     -- If taking all, then go ahead and start the next Take loop, since the
     -- mail and attachments are readable now.
@@ -1474,7 +1478,7 @@ function Postmaster.Event_MailRemoved(eventCode, mailId)
     if eventCode then
         
         -- Unwire timeout callback
-        EVENT_MANAGER:UnregisterForUpdate(self.name .. "Delete")
+        EM:UnregisterForUpdate(self.name .. "Delete")
         PlaySound(SOUNDS.MAIL_ITEM_DELETED)
         self.Debug("deleted mail id "..tostring(mailId))
     end
@@ -1538,7 +1542,7 @@ function Postmaster.Event_MailTakeAttachedItemSuccess(eventCode, mailId)
         self.Debug("still waiting for money or COD. exiting.")
     else
         -- Stop take attachments retries
-        EVENT_MANAGER:UnregisterForUpdate(self.name .. "Take")
+        EM:UnregisterForUpdate(self.name .. "Take")
         self:RequestMailDelete(mailId)
     end
 end
@@ -1555,7 +1559,7 @@ function Postmaster.Event_MailTakeAttachedMoneySuccess(eventCode, mailId)
         self.Debug("still waiting for items. exiting.")
     else
         -- Stop take attachments retries
-        EVENT_MANAGER:UnregisterForUpdate(self.name .. "Take")
+        EM:UnregisterForUpdate(self.name .. "Take")
         self:RequestMailDelete(mailId)
     end
 end
@@ -1586,7 +1590,7 @@ function Postmaster.Event_MoneyUpdate(eventCode, newMoney, oldMoney, reason)
     end
     
     -- Stop take attachments retries
-    EVENT_MANAGER:UnregisterForUpdate(self.name .. "Take")
+    EM:UnregisterForUpdate(self.name .. "Take")
     
     -- This is a C.O.D. payment, so trigger a mail delete if all items have been
     -- removed from the mail already.
@@ -1779,6 +1783,75 @@ function Postmaster:RememberSetup()
     self:RememberCheckAddOnMouseHandler(-1)
 end
 
+local function trimTableEntries(tableVar, maxSavedEntries)
+    --Sort the SV table by timestamp: Newest first, oldest last
+    table.sort(tableVar, function(a, b)
+        return a.timestamp > b.timestamp
+    end)
+
+    --Delete all entries > max entries to keep
+    local countOld = #tableVar
+    for i=maxSavedEntries+1, countOld, 1 do
+        if tableVar[i] ~= nil then
+            tableVar[i] = nil
+        end
+    end
+    return tableVar
+end
+
+local function addAndTrimRememberedEntry(idx, textToAdd)
+    local timeStamp = GetTimeStamp()
+    local svVariableNames = remember.contextMenuSVVariableNames
+    local contextMenuSVSavedVarName = svVariableNames[idx][2]
+    local settings = Postmaster.settings
+    local maxSavedEntries = settings.rememberSavedEntries
+
+    --Prepare the new entry
+    local newEntry = {
+        timestamp = timeStamp,
+        text = textToAdd,
+    }
+    --Add it to the SavedVariables table
+    table.insert(Postmaster.settings[contextMenuSVSavedVarName], newEntry)
+
+    --Check if the entries in the context menu needs to be trimmed
+    if #Postmaster.settings[contextMenuSVSavedVarName] > maxSavedEntries then
+        Postmaster.settings[contextMenuSVSavedVarName] = ZO_ShallowTableCopy(trimTableEntries(Postmaster.settings[contextMenuSVSavedVarName], maxSavedEntries))
+    end
+end
+
+local function rememberSaveMailData()
+    local toText =  mailReceiverEdit:GetText()
+    local subjectText = mailSubjectEdit:GetText()
+    local bodyText = mailBodyEdit:GetText()
+d("[Postmaster]Mail was (tried) to send to \'" .. toText .. "\' with subject \'" .. subjectText .. "\' with text \'" .. bodyText .. "\'")
+
+    local settings = Postmaster.settings
+    local svVariableNames = remember.contextMenuSVVariableNames
+    --Save the receiver
+    if settings[svVariableNames[PM_REMEMBER_RECEIVER][1]] == true and toText ~= nil and toText ~= "" then
+        addAndTrimRememberedEntry(PM_REMEMBER_RECEIVER, toText)
+    end
+    --Save the subject
+    if settings[svVariableNames[PM_REMEMBER_SUBJECT][1]] == true and subjectText ~= nil and subjectText ~= "" then
+        addAndTrimRememberedEntry(PM_REMEMBER_SUBJECT, subjectText)
+    end
+    --Save the body text
+    if settings[svVariableNames[PM_REMEMBER_BODY][1]] == true and bodyText ~= nil and bodyText ~= "" then
+        addAndTrimRememberedEntry(PM_REMEMBER_BODY, bodyText)
+    end
+
+end
+
+function Postmaster:RememberCheckAddPreHooksForMailSend()
+    ZO_PreHook(MAIL_SEND, "Send", function()
+--d("[Postmaster]PreHook MAIL_SEND")
+        if remember.isSettingEnabledAndDoWeNeedToRunPreHooks == true then
+            rememberSaveMailData()
+        end
+    end)
+end
+
 function Postmaster:RememberCheckAddContextMenu(whichContextMenu)
     ------------------------------------------------------------------------------------------------------------------------
     --TODO: Remove before go-live
@@ -1830,6 +1903,7 @@ function Postmaster:RememberCheckAddContextMenu(whichContextMenu)
     }
     ------------------------------------------------------------------------------------------------------------------------
 
+    local atLeastOneSettingIsEnabled = false
     local settings = self.settings
     local svVariableNames = remember.contextMenuSVVariableNames
     local contextMenuAnchorVars = remember.contextMenusAnchorVars
@@ -1837,7 +1911,7 @@ function Postmaster:RememberCheckAddContextMenu(whichContextMenu)
     local function checkIfContextMenuShouldBeBuild(idx, contextMenuSVVarData)
         --Set the flag to show and build a context menu at the ZO_SendMailcontrol directly
         local anchorControl = contextMenuAnchorVars[idx]
-        if not anchorControl then return end
+        if not anchorControl then return false end
         --Reset flag to add context menu to the control
         anchorControl.PostMasterShowRememberContextMenuIdx = nil
 
@@ -1846,42 +1920,36 @@ function Postmaster:RememberCheckAddContextMenu(whichContextMenu)
         local contextMenuSVSavedVarName = contextMenuSVVarData[2]
         --Settings enabled and data was saved before?
         if (not idx or not contextMenuSVVarName or not contextMenuSVSavedVarName)
-                or not settings[contextMenuSVVarName] or settings[contextMenuSVSavedVarName] == nil then return end
+                or not settings[contextMenuSVVarName] or settings[contextMenuSVSavedVarName] == nil then return false end
 
         --Check if the entries in the context menu needs to be trimmed
         local maxSavedEntries = settings.rememberSavedEntries
-d(">maxSavedEntries: " ..tostring(maxSavedEntries) .. ", currentEntries: " ..tostring(#settings[contextMenuSVSavedVarName]))
         if #settings[contextMenuSVSavedVarName] > maxSavedEntries then
-d(">>sorting by timestamp NEWEST first")
-            --Sort the SV table by timestamp: Newest first, oldest last
-            table.sort(self.settings[contextMenuSVSavedVarName], function(a, b)
-                return a.timestamp > b.timestamp
-            end)
-
-            --Delete all entries > max entries to keep
-            local countOld = #self.settings[contextMenuSVSavedVarName]
-            for i=maxSavedEntries+1, countOld, 1 do
-d(">>delete check for entry: " .. self.settings[contextMenuSVSavedVarName][i].text)
-                if self.settings[contextMenuSVSavedVarName][i] ~= nil then
-                    self.settings[contextMenuSVSavedVarName][i] = nil
-                end
-            end
+            self.settings[contextMenuSVSavedVarName] = ZO_ShallowTableCopy(trimTableEntries(self.settings[contextMenuSVSavedVarName], maxSavedEntries))
         end
 
         --Set flag to add context menu to the control
         anchorControl.PostMasterShowRememberContextMenuIdx = idx
+        return true
     end
 
     --All context menus?
     if whichContextMenu == -1 then
         --Reset the variables of the context menus
         for idx, contextMenuSVVarData in ipairs(svVariableNames) do
-            checkIfContextMenuShouldBeBuild(idx, contextMenuSVVarData)
+            local atLeastOneSettingIsEnabledInLoop = checkIfContextMenuShouldBeBuild(idx, contextMenuSVVarData)
+            if atLeastOneSettingIsEnabledInLoop == true then
+                atLeastOneSettingIsEnabled = true
+            end
         end
     else
         local contextMenuSVVarData = svVariableNames[whichContextMenu]
-        checkIfContextMenuShouldBeBuild(whichContextMenu, contextMenuSVVarData)
+        atLeastOneSettingIsEnabled = checkIfContextMenuShouldBeBuild(whichContextMenu, contextMenuSVVarData)
     end
+
+    --Add the PreHooks for MAIL SEND to save the last used recipient, subject and body text
+    remember.isSettingEnabledAndDoWeNeedToRunPreHooks = atLeastOneSettingIsEnabled
+    self:RememberCheckAddPreHooksForMailSend()
 end
 
 local function onContextMenuRememberEntrySelected(controlDoneMouseUpAt, contextMenuIdx, contextmenuEntriesFromSV, entryIdx)
