@@ -1811,7 +1811,10 @@ local function addAndTrimRememberedEntry(idx, textToAdd)
         timestamp = timeStamp,
         text = textToAdd,
     }
-    --Add it to the SavedVariables table
+    --Add it to the SavedVariables table, if not already in there
+    for oldEntryIdx, oldEntryData in ipairs(settings[contextMenuSVSavedVarName]) do
+        if oldEntryData.text == textToAdd then return end
+    end
     table.insert(Postmaster.settings[contextMenuSVSavedVarName], newEntry)
 
     --Check if the entries in the context menu needs to be trimmed
@@ -1824,7 +1827,7 @@ local function rememberSaveMailData()
     local toText =  mailReceiverEdit:GetText()
     local subjectText = mailSubjectEdit:GetText()
     local bodyText = mailBodyEdit:GetText()
-d("[Postmaster]Mail was (tried) to send to \'" .. toText .. "\' with subject \'" .. subjectText .. "\' with text \'" .. bodyText .. "\'")
+--d("[Postmaster]Mail was (tried) to send to \'" .. toText .. "\' with subject \'" .. subjectText .. "\' with text \'" .. bodyText .. "\'")
 
     local settings = Postmaster.settings
     local svVariableNames = remember.contextMenuSVVariableNames
@@ -1848,61 +1851,15 @@ function Postmaster:RememberCheckAddPreHooksForMailSend()
 --d("[Postmaster]PreHook MAIL_SEND")
         if remember.isSettingEnabledAndDoWeNeedToRunPreHooks == true then
             rememberSaveMailData()
+------------------------------------------------------------------------------------------------------------------------
+            --TODO DEBUGGING Remove before go-live
+            --return true
+------------------------------------------------------------------------------------------------------------------------
         end
     end)
 end
 
 function Postmaster:RememberCheckAddContextMenu(whichContextMenu)
-    ------------------------------------------------------------------------------------------------------------------------
-    --TODO: Remove before go-live
-    --DEBUGGING HELP: Added some fixed entries in the SavedVariables which need to be removed before go-live
-    --self.settings.rememberRecipients = true
-    --self.settings.rememberSubjects = true
-    --self.settings.rememberBodies = true
-    self.settings.rememberSavedRecipients = {
-        [1] = {
-            timestamp = GetTimeStamp() - 100000,
-            text = "@test_user",
-        },
-        [2] = {
-            timestamp = GetTimeStamp() - 10000,
-            text = "@test_user2",
-        },
-        [3] = {
-            timestamp = GetTimeStamp() - 1000,
-            text = "@test_user3",
-        },
-    }
-    self.settings.rememberSavedSubjects = {
-        [1] = {
-            timestamp = GetTimeStamp() - 100000,
-            text = "Subject 1",
-        },
-        [2] = {
-            timestamp = GetTimeStamp() - 10000,
-            text = "Subject 2",
-        },
-        [3] = {
-            timestamp = GetTimeStamp() - 1000,
-            text = "Subject 3",
-        },
-    }
-    self.settings.rememberSavedBodies = {
-        [1] = {
-            timestamp = GetTimeStamp() - 100000,
-            text = "Text 1 line 1\nText 1 line 2\nLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtext",
-        },
-        [2] = {
-            timestamp = GetTimeStamp() - 10000,
-            text = "LongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtextLongtext",
-        },
-        [3] = {
-            timestamp = GetTimeStamp() - 1000,
-            text = "Text 3 line 1",
-        },
-    }
-    ------------------------------------------------------------------------------------------------------------------------
-
     local atLeastOneSettingIsEnabled = false
     local settings = self.settings
     local svVariableNames = remember.contextMenuSVVariableNames
@@ -1953,9 +1910,9 @@ function Postmaster:RememberCheckAddContextMenu(whichContextMenu)
 end
 
 local function onContextMenuRememberEntrySelected(controlDoneMouseUpAt, contextMenuIdx, contextmenuEntriesFromSV, entryIdx)
-    d("onContextMenuRememberEntrySelected - contextMenuIdx: " .. tostring(contextMenuIdx) .. ", entryIdx: " ..tostring(entryIdx))
+    --d("onContextMenuRememberEntrySelected - contextMenuIdx: " .. tostring(contextMenuIdx) .. ", entryIdx: " ..tostring(entryIdx))
     local selectedSVText = contextmenuEntriesFromSV[entryIdx].text
-    d("Selected text: " .. selectedSVText)
+    --d("Selected text: " .. selectedSVText)
     if controlDoneMouseUpAt.SetText then controlDoneMouseUpAt:SetText(selectedSVText) end
 end
 
