@@ -90,6 +90,9 @@ local strings = {
     ["SI_PM_UNDAUNTED_NPC_TRIAL_2"]              = "斧のカイルスティグ",
     ["SI_PM_UNDAUNTED_NPC_TRIAL_3"]              = "強きモルドラ",
     ["SI_PM_MESSAGE"]                            = "メッセージ",
+    ["SI_PM_TAKE_ALL_BY_SUBJECT"]                = "件名で取る",
+    ["SI_PM_TAKE_ALL_BY_SENDER"]                 = "差出人で取る",
+    ["SI_PM_KEYBIND_ENABLE_TOOLTIP"]             = { "Postmasterショートカットをアクティブにします：<<1>>および<<2", SI_LOOT_TAKE, SI_LOOT_TAKE_ALL },
 }
 
 -- Overwrite English strings

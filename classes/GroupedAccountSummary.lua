@@ -1,4 +1,3 @@
-
 local addon = Postmaster
 local class = addon.classes
 local debug = false

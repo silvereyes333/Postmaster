@@ -91,6 +91,9 @@ local strings = {
     ["SI_PM_UNDAUNTED_NPC_TRIAL_3"]              = "Mordra la puissante",
     ["SI_PM_BATTLEGROUNDS_NPC"]                  = "Maître de guerre Rivyn",
     ["SI_PM_MESSAGE"]                            = "courrier",
+    ["SI_PM_TAKE_ALL_BY_SUBJECT"]                = "Prendre par sujet",
+    ["SI_PM_TAKE_ALL_BY_SENDER"]                 = "Prendre par expéditeur",
+    ["SI_PM_KEYBIND_ENABLE_TOOLTIP"]             = { "Active les raccourcis Postmaster: <<1>> et <<2>>", SI_LOOT_TAKE, SI_LOOT_TAKE_ALL },
 }
 
 -- Overwrite English strings

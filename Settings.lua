@@ -3,7 +3,7 @@
                 SETTINGS
     ===================================
   ]]
-local createChatProxy, refreshPrefix, version6, version7
+local createChatProxy, refreshPrefix, setReasonableLazyWritCrafterDefaults, version6, version7
 
 function Postmaster:SettingsSetup()
 
@@ -64,6 +64,10 @@ function Postmaster:SettingsSetup()
         quickTakeSystemOther = true,
         quickTakeSystemPvp = true,
         quickTakeSystemUndaunted = true,
+        keybinds = {
+            enable = true,
+            quaternary = "",
+        },
     }
     
     -- Initialize saved variables
@@ -124,6 +128,42 @@ function Postmaster:SettingsSetup()
         },
         
 		
+    --[[ KEYBINDINGS ]]--
+        { type = "submenu", name = GetString(SI_KEYBINDINGS_BINDINGS), controls = {
+        
+        
+        -- Enable Keyind Overrides
+        {
+            type = "checkbox",
+            name = GetString(SI_ADDON_MANAGER_ENABLED),
+            tooltip = GetString(SI_PM_KEYBIND_ENABLE_TOOLTIP),
+            getFunc = function() return self.settings.keybinds.enable end,
+            setFunc =
+                function(value)
+                    self.settings.keybinds.enable = value
+                    self.KeyboardKeybinds:Update()
+                end,
+            width = "full",
+            default = self.defaults.keybinds.enable,
+        },
+        
+        -- Quaternary Action
+        {
+            type = "dropdown",
+            name = GetString(SI_BINDING_NAME_UI_SHORTCUT_QUATERNARY),
+            width = "full",
+            choices = self.quaternaryChoices,
+            choicesValues = self.quaternaryChoicesValues,
+            getFunc = function() return self.settings.keybinds.quaternary end,
+            setFunc =
+                function(value)
+                    self.settings.keybinds.quaternary = value
+                    self.KeyboardKeybinds:Update()
+                end,
+            default = self.defaults.keybinds.quaternary,
+        }
+        
+      }},
 		
 		
 		--[[ TAKE (QUICK) ]]--
@@ -357,7 +397,10 @@ function Postmaster:SettingsSetup()
             type = "checkbox",
             name = GetString(SI_PM_SYSTEM_TAKE_CRAFTING),
             getFunc = function() return self.settings.takeAllSystemHireling end,
-            setFunc = function(value) self.settings.takeAllSystemHireling = value end,
+            setFunc = function(value)
+                    self.settings.takeAllSystemHireling = value
+                    setReasonableLazyWritCrafterDefaults()
+                end,
             width = "full",
             disabled = function() return not self.settings.takeAllSystemAttached end,
             default = self.defaults.takeAllSystemHireling,
@@ -759,8 +802,10 @@ function Postmaster:SettingsSetup()
     
     self.summary = self.classes.GroupedAccountSummary:New(self.templateSummary)
     
-    SLASH_COMMANDS["/postmaster"] = self.OpenSettingsPanel
-    SLASH_COMMANDS["/pm"] = self.OpenSettingsPanel
+    SLASH_COMMANDS["/postmaster"] = self.Utility.OpenSettingsPanel
+    SLASH_COMMANDS["/pm"] = self.Utility.OpenSettingsPanel
+    
+    setReasonableLazyWritCrafterDefaults()
 end
 
 ----------------------------------------------------------------------------
@@ -787,6 +832,21 @@ function refreshPrefix()
     self.suffix = self.settings.chatUseSystemColor and "" or "|r"
     self.templateSummary:SetPrefix(self.prefix)
     self.templateSummary:SetSuffix(self.suffix)
+end
+
+function setReasonableLazyWritCrafterDefaults()
+    local self = Postmaster
+    if not WritCreater or not self.settings.takeAllSystemHireling then
+        return
+    end
+    -- If Postmaster is configured to harvest hireling mails with Take All,
+    -- disable the auto-loot and delete settings for hireling mails in Lazy Writ Crafter
+    local lazyWritCrafterSettings = WritCreater:GetSettings()
+    if not lazyWritCrafterSettings.mail then
+        lazyWritCrafterSettings.mail = {}
+    end
+    lazyWritCrafterSettings.mail.loot = false
+    lazyWritCrafterSettings.mail.delete = false
 end
 
 function version6(sv)

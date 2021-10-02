@@ -107,4 +107,7 @@ POSTMASTER_STRINGS = {
     ["SI_PM_TAKE_ATTACHMENTS_FAILED"]            = "There was a problem taking attachments. Please try again.",
     ["SI_PM_READ_FAILED"]                        = "There was a problem reading the next mail message. Please try again.",
     ["SI_PM_MESSAGE"]                            = "message",
+    ["SI_PM_TAKE_ALL_BY_SUBJECT"]                = "Take by Subject",
+    ["SI_PM_TAKE_ALL_BY_SENDER"]                 = "Take by Sender",
+    ["SI_PM_KEYBIND_ENABLE_TOOLTIP"]             = { "Enables the custom Postmaster keybindings: <<1>> and <<2>>", SI_LOOT_TAKE, SI_LOOT_TAKE_ALL },
 }
