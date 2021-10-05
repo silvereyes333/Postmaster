@@ -94,6 +94,17 @@ local strings = {
     ["SI_PM_TAKE_ALL_BY_SUBJECT"]                = "Nach Betreff nehmen",
     ["SI_PM_TAKE_ALL_BY_SENDER"]                 = "Nach Absender nehmen",
     ["SI_PM_KEYBIND_ENABLE_TOOLTIP"]             = { "Aktiviert die Postmaster-Tastenbelegung: <<1>> und <<2>>", SI_LOOT_TAKE, SI_LOOT_TAKE_ALL },
+
+    --Baertram - Remember message settings
+    ["SI_PM_REMEMBER_MESSAGE"]                   = "Gedächtnis: Nachricht",
+    ["SI_PM_REMEMBER_MESSAGE_RECIPIENTS"]        = GetString(SI_GAMEPAD_MAIL_SEND_RECIPIENT),   --Receiver
+    ["SI_PM_REMEMBER_MESSAGE_RECIPIENTS_TT"]     = "Sichere die Empfänger deiner manuell erstellten Mails. Du kannst die Liste der Gesicherten mit einem Rechtsklick auf das Empfänger Eingabefeld öffnen.",
+    ["SI_PM_REMEMBER_MESSAGE_SUBJECTS"]          = GetString(SI_MAIL_INBOX_SUBJECT_COLUMN),     --Subject
+    ["SI_PM_REMEMBER_MESSAGE_SUBJECTS_TT"]       = "Sichere die Betreffs deiner manuell erstellten Mails. Du kannst die Liste der Gesicherten mit einem Rechtsklick auf das Betreff Eingabefeld öffnen.",
+    ["SI_PM_REMEMBER_MESSAGE_TEXT"]              = "Nachrichten-Text",
+    ["SI_PM_REMEMBER_MESSAGE_TEXT_TT"]           = "Sichere den Mail Text deiner manuell erstellten Mails. Du kannst die Liste der Gesicherten mit einem Rechtsklick auf das Mail Text Eingabefeld öffnen.",
+    ["SI_PM_REMEMBER_AMOUNT"]                    = "Anzahl gespeicherter Einträge",
+    ["SI_PM_REMEMBER_PREVIEW_CHARS"]             = "Anzahl Zeichen in Kontext Menü (Vorschau)",
 }
 
 -- Overwrite English strings

@@ -4,8 +4,8 @@
 ## Version: 4.0.0
 ## APIVersion: 101031 101032
 ## AddOnVersion: 40000
-## DependsOn: LibSavedVars>=50000 LibAddonMenu-2.0>=28 LibLootSummary>=30100 LibChatMessage
-## OptionalDependsOn: MailR wykkydsMailBox DolgubonsLazyWritCreator
+## DependsOn: LibSavedVars>=50000 LibAddonMenu-2.0>=32 LibLootSummary>=30100 LibChatMessage
+## OptionalDependsOn: MailR wykkydsMailBox DolgubonsLazyWritCreator LibCustomMenu>=711
 ## SavedVariables: Postmaster_Account
 ## SavedVariables: Postmaster_Character
 

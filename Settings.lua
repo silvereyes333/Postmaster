@@ -64,6 +64,17 @@ function Postmaster:SettingsSetup()
         quickTakeSystemOther = true,
         quickTakeSystemPvp = true,
         quickTakeSystemUndaunted = true,
+
+        --Baertram - Remember settings variables
+        rememberRecipients = false,
+        rememberSavedRecipients = {},
+        rememberSubjects = false,
+        rememberSavedSubjects = {},
+        rememberBodies = false,
+        rememberSavedBodies = {},
+        rememberBodiesPreviewChars = 75,
+        rememberSavedEntries = 10,
+	
         keybinds = {
             enable = true,
             quaternary = "",
@@ -88,6 +99,12 @@ function Postmaster:SettingsSetup()
     
     self.chatColor = ZO_ColorDef:New(unpack(self.settings.chatColor))
     refreshPrefix()
+
+    --Baertram - Remember local speed up variables
+    local remember = self.Remember
+    local PM_REMEMBER_RECEIVER = remember.PM_REMEMBER_RECEIVER
+    local PM_REMEMBER_SUBJECT = remember.PM_REMEMBER_SUBJECT
+    local PM_REMEMBER_BODY = remember.PM_REMEMBER_BODY
     
     local panelData = {
         type = "panel",
@@ -751,6 +768,79 @@ function Postmaster:SettingsSetup()
                 self.templateSummary:GenerateLam2LootOptions(self.title, self.chatContentsSummaryProxy, self.defaults.chatContentsSummary),
             },
         },
+
+        --[[ Baertram - Remember settings
+            only enabled if LibCustomMenu 7.11 or newer is given
+        ]]
+        --Remember: Messages
+        {
+            type     = "submenu",
+            name     = GetString(SI_PM_REMEMBER_MESSAGE),
+            controls = {
+                -- Remember message recipients
+                {
+                    type    = "checkbox",
+                    name    = GetString(SI_PM_REMEMBER_MESSAGE_RECIPIENTS),
+                    tooltip = GetString(SI_PM_REMEMBER_MESSAGE_RECIPIENTS_TT),
+                    getFunc = function() return self.settings.rememberRecipients end,
+                    setFunc = function(value)
+                        self.settings.rememberRecipients = value
+                        self:RememberCheckAddContextMenu(PM_REMEMBER_RECEIVER)
+                    end,
+                    default = self.defaults.rememberRecipients,
+                    disabled = function() return LibCustomMenu == nil end
+                },
+                -- Remember message subjects
+                {
+                    type    = "checkbox",
+                    name    = GetString(SI_PM_REMEMBER_MESSAGE_SUBJECTS),
+                    tooltip = GetString(SI_PM_REMEMBER_MESSAGE_SUBJECTS_TT),
+                    getFunc = function() return self.settings.rememberSubjects end,
+                    setFunc = function(value)
+                        self.settings.rememberSubjects = value
+                        self:RememberCheckAddContextMenu(PM_REMEMBER_SUBJECT)
+                    end,
+                    default = self.defaults.rememberSubjects,
+                    disabled = function() return LibCustomMenu == nil end
+                },
+                -- Remember message bodies
+                {
+                    type    = "checkbox",
+                    name    = GetString(SI_PM_REMEMBER_MESSAGE_TEXT),
+                    tooltip = GetString(SI_PM_REMEMBER_MESSAGE_TEXT_TT),
+                    getFunc = function() return self.settings.rememberBodies end,
+                    setFunc = function(value)
+                        self.settings.rememberBodies = value
+                        self:RememberCheckAddContextMenu(PM_REMEMBER_BODY)
+                    end,
+                    default = self.defaults.rememberBodies,
+                    disabled = function() return LibCustomMenu == nil end
+                },
+                {
+                    type = "slider",
+                    name = GetString(SI_PM_REMEMBER_PREVIEW_CHARS),
+                    getFunc = function() return self.settings.rememberBodiesPreviewChars end,
+                    setFunc = function(value) self.settings.rememberBodiesPreviewChars = value end,
+                    min = 10,
+                    max = 250,
+                    width = "full",
+                    disabled = function() return not self.settings.rememberBodies end,
+                    default = self.defaults.rememberBodiesPreviewChars,
+                },
+                {
+                    type = "slider",
+                    name = GetString(SI_PM_REMEMBER_AMOUNT),
+                    getFunc = function() return self.settings.rememberSavedEntries end,
+                    setFunc = function(value) self.settings.rememberSavedEntries = value end,
+                    min = 1,
+                    max = 20,
+                    width = "full",
+                    clampInput = false,
+                    disabled = function() return not self.settings.rememberRecipients and not self.settings.rememberSubjects and not self.settings.rememberBodies end,
+                    default = self.defaults.rememberSavedEntries,
+                },
+            } -- controls
+        },--submenu
         
         -- header
         {
