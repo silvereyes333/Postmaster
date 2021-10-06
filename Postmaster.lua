@@ -124,17 +124,17 @@ PM_BOUNCE_MAIL_PREFIXES = {
     "RETURN"
 }
 
--- Baertram - Remember
+-- Baertram - Send Mail save
 --Pointers to ZOs mail fields used
 local mailReceiverEdit  = ZO_MailSendToField
 local mailSubjectEdit   = ZO_MailSendSubjectField
 local mailBodyEdit      = ZO_MailSendBodyField
 --Subtable for the remember functions and values, tables etc.
-Postmaster.Remember = {
+Postmaster.SendMail = {
     --Constants
-    PM_REMEMBER_RECEIVER = 1,
-    PM_REMEMBER_SUBJECT = 2,
-    PM_REMEMBER_BODY = 3,
+    PM_SENDMAIL_RECIPIENT = 1,
+    PM_SENDMAIL_SUBJECT = 2,
+    PM_SENDMAIL_MESSAGE = 3,
 
     isSettingEnabledAndDoWeNeedToRunPreHooks = false,
 
@@ -147,30 +147,30 @@ Postmaster.Remember = {
 --Local speed up variables
 local EM = EVENT_MANAGER
 local strsub = string.sub
-local remember = Postmaster.Remember
-local PM_REMEMBER_RECEIVER = remember.PM_REMEMBER_RECEIVER
-local PM_REMEMBER_SUBJECT = remember.PM_REMEMBER_SUBJECT
-local PM_REMEMBER_BODY = remember.PM_REMEMBER_BODY
+local sendmail = Postmaster.SendMail
+local PM_SENDMAIL_RECIPIENT = sendmail.PM_SENDMAIL_RECIPIENT
+local PM_SENDMAIL_SUBJECT = sendmail.PM_SENDMAIL_SUBJECT
+local PM_SENDMAIL_MESSAGE = sendmail.PM_SENDMAIL_MESSAGE
 
-remember.contextMenusNameByIdx = {
-  [PM_REMEMBER_RECEIVER]  = GetString(SI_PM_REMEMBER_MESSAGE_RECIPIENTS),
-  [PM_REMEMBER_SUBJECT]   = GetString(SI_PM_REMEMBER_MESSAGE_SUBJECTS),
-  [PM_REMEMBER_BODY]      = GetString(SI_PM_REMEMBER_MESSAGE_TEXT),
+sendmail.contextMenusNameByIdx = {
+  [PM_SENDMAIL_RECIPIENT] = GetString(SI_GAMEPAD_MAIL_SEND_RECENT_CONTACTS),
+  [PM_SENDMAIL_SUBJECT]   = GetString(SI_PM_SENDMAIL_MESSAGE_RECENT_SUBJECTS),
+  [PM_SENDMAIL_MESSAGE]   = GetString(SI_PM_SENDMAIL_MESSAGE_RECENT_TEXT),
 }
-remember.contextMenusAnchorVars = {
-  [PM_REMEMBER_RECEIVER]  = mailReceiverEdit,
-  [PM_REMEMBER_SUBJECT]   = mailSubjectEdit,
-  [PM_REMEMBER_BODY]      = mailBodyEdit,
+sendmail.contextMenusAnchorVars = {
+  [PM_SENDMAIL_RECIPIENT] = mailReceiverEdit,
+  [PM_SENDMAIL_SUBJECT]   = mailSubjectEdit,
+  [PM_SENDMAIL_MESSAGE]   = mailBodyEdit,
 }
-remember.contextMenuHandlerWasAddedToControl = {
-  [PM_REMEMBER_RECEIVER]  = false, --receiver
-  [PM_REMEMBER_SUBJECT]   = false, --subjects
-  [PM_REMEMBER_BODY]      = false, --body
+sendmail.contextMenuHandlerWasAddedToControl = {
+  [PM_SENDMAIL_RECIPIENT] = false, --recipient
+  [PM_SENDMAIL_SUBJECT]   = false, --subject
+  [PM_SENDMAIL_MESSAGE]   = false, --message
 }
-remember.contextMenuSVVariableNames = {
-  [PM_REMEMBER_RECEIVER]  = {"rememberRecipients",  "rememberSavedRecipients"},
-  [PM_REMEMBER_SUBJECT]   = {"rememberSubjects",    "rememberSavedSubjects"},
-  [PM_REMEMBER_BODY]      = {"rememberBodies",      "rememberSavedBodies"},
+sendmail.contextMenuSVVariableNames = {
+  [PM_SENDMAIL_RECIPIENT] = {"sendmailSaveRecipients",  "sendmailRecipients"},
+  [PM_SENDMAIL_SUBJECT]   = {"sendmailSaveSubjects",    "sendmailSubjects"},
+  [PM_SENDMAIL_MESSAGE]   = {"sendmailSaveMessages",    "sendmailMessages"},
 }
 
 
@@ -200,7 +200,7 @@ local function OnAddonLoaded(eventCode, addOnName)
     local self = Postmaster
     
     if ( addOnName ~= self.name ) then return end
-    EVENT_MANAGER:UnregisterForEvent(self.name, eventCode)
+    EM:UnregisterForEvent(self.name, eventCode)
     
     -- Initialize settings menu, saved vars, and slash commands to open settings
     self:SettingsSetup()
@@ -220,9 +220,9 @@ local function OnAddonLoaded(eventCode, addOnName)
     -- Replace keybinds in the mouse/keyboard inbox UI
     self.KeyboardKeybinds:Initialize()
 
-    --Baertram - Remember
+    --Baertram - Send Mail save
     -- Add LibCustomMenu context menus to the mail recipient, subject, body fields
-    self:RememberSetup()
+    self:SendMailSetup()
 
     
     -- TODO: add gamepad inbox UI keybind support
@@ -234,22 +234,22 @@ EM:RegisterForEvent(Postmaster.name, EVENT_ADD_ON_LOADED, OnAddonLoaded)
 
 --[[
     ===============================================================================
-          REMEMBER - by Baertram
-          Remember the receiver, subject, body text of manually created mails
-          and allow to select from previously saved values via a righ click
+          SEND MAIL SAVE - by Baertram
+          Save the receiver, subject, body text of manually created mails
+          and allow to select from previously saved values via a right click
           context menu at the ZO_MailSend fields
     ===============================================================================
   ]]
 
-function Postmaster:RememberSetup()
+function Postmaster:SendMailSetup()
     --LibCustomMenu is mandatory
     if not LibCustomMenu then return end
 
     --Check settings and if context menus need to added to the ZO_MailSend controls
-    self:RememberCheckAddContextMenu(-1)
+    self:SendMailCheckAddContextMenu(-1)
 
     --Add the handlers to the ZO_MailSend controls
-    self:RememberCheckAddOnMouseHandler(-1)
+    self:SendMailCheckAddOnMouseHandler(-1)
 end
 
 local function trimTableEntries(tableVar, maxSavedEntries)
@@ -268,12 +268,12 @@ local function trimTableEntries(tableVar, maxSavedEntries)
     return tableVar
 end
 
-local function addAndTrimRememberedEntry(idx, textToAdd)
+local function addAndTrimSendMailSavedEntry(idx, textToAdd)
     local timeStamp = GetTimeStamp()
-    local svVariableNames = remember.contextMenuSVVariableNames
+    local svVariableNames = sendmail.contextMenuSVVariableNames
     local contextMenuSVSavedVarName = svVariableNames[idx][2]
     local settings = Postmaster.settings
-    local maxSavedEntries = settings.rememberSavedEntries
+    local maxSavedEntries = settings.sendmailSavedEntryCount
 
     --Prepare the new entry
     local newEntry = {
@@ -292,34 +292,34 @@ local function addAndTrimRememberedEntry(idx, textToAdd)
     end
 end
 
-local function rememberSaveMailData()
+local function sendmailSaveData()
     local toText =  mailReceiverEdit:GetText()
     local subjectText = mailSubjectEdit:GetText()
     local bodyText = mailBodyEdit:GetText()
 --d("[Postmaster]Mail was (tried) to send to \'" .. toText .. "\' with subject \'" .. subjectText .. "\' with text \'" .. bodyText .. "\'")
 
     local settings = Postmaster.settings
-    local svVariableNames = remember.contextMenuSVVariableNames
+    local svVariableNames = sendmail.contextMenuSVVariableNames
     --Save the receiver
-    if settings[svVariableNames[PM_REMEMBER_RECEIVER][1]] == true and toText ~= nil and toText ~= "" then
-        addAndTrimRememberedEntry(PM_REMEMBER_RECEIVER, toText)
+    if settings[svVariableNames[PM_SENDMAIL_RECIPIENT][1]] == true and toText ~= nil and toText ~= "" then
+        addAndTrimSendMailSavedEntry(PM_SENDMAIL_RECIPIENT, toText)
     end
     --Save the subject
-    if settings[svVariableNames[PM_REMEMBER_SUBJECT][1]] == true and subjectText ~= nil and subjectText ~= "" then
-        addAndTrimRememberedEntry(PM_REMEMBER_SUBJECT, subjectText)
+    if settings[svVariableNames[PM_SENDMAIL_SUBJECT][1]] == true and subjectText ~= nil and subjectText ~= "" then
+        addAndTrimSendMailSavedEntry(PM_SENDMAIL_SUBJECT, subjectText)
     end
     --Save the body text
-    if settings[svVariableNames[PM_REMEMBER_BODY][1]] == true and bodyText ~= nil and bodyText ~= "" then
-        addAndTrimRememberedEntry(PM_REMEMBER_BODY, bodyText)
+    if settings[svVariableNames[PM_SENDMAIL_MESSAGE][1]] == true and bodyText ~= nil and bodyText ~= "" then
+        addAndTrimSendMailSavedEntry(PM_SENDMAIL_MESSAGE, bodyText)
     end
 
 end
 
-function Postmaster:RememberCheckAddPreHooksForMailSend()
+function Postmaster:SendMailCheckAddPreHooks()
     ZO_PreHook(MAIL_SEND, "Send", function()
 --d("[Postmaster]PreHook MAIL_SEND")
-        if remember.isSettingEnabledAndDoWeNeedToRunPreHooks == true then
-            rememberSaveMailData()
+        if sendmail.isSettingEnabledAndDoWeNeedToRunPreHooks == true then
+            sendmailSaveData()
 ------------------------------------------------------------------------------------------------------------------------
             --TODO DEBUGGING Remove before go-live
             --return true
@@ -328,18 +328,18 @@ function Postmaster:RememberCheckAddPreHooksForMailSend()
     end)
 end
 
-function Postmaster:RememberCheckAddContextMenu(whichContextMenu)
+function Postmaster:SendMailCheckAddContextMenu(whichContextMenu)
     local atLeastOneSettingIsEnabled = false
     local settings = self.settings
-    local svVariableNames = remember.contextMenuSVVariableNames
-    local contextMenuAnchorVars = remember.contextMenusAnchorVars
+    local svVariableNames = sendmail.contextMenuSVVariableNames
+    local contextMenuAnchorVars = sendmail.contextMenusAnchorVars
 
     local function checkIfContextMenuShouldBeBuild(idx, contextMenuSVVarData)
         --Set the flag to show and build a context menu at the ZO_SendMailcontrol directly
         local anchorControl = contextMenuAnchorVars[idx]
         if not anchorControl then return false end
         --Reset flag to add context menu to the control
-        anchorControl.PostMasterShowRememberContextMenuIdx = nil
+        anchorControl.postmasterShowSendMailContextMenuIdx = nil
 
         --Check SavedVariables and entries
         local contextMenuSVVarName = contextMenuSVVarData[1]
@@ -349,13 +349,13 @@ function Postmaster:RememberCheckAddContextMenu(whichContextMenu)
                 or not settings[contextMenuSVVarName] or settings[contextMenuSVSavedVarName] == nil then return false end
 
         --Check if the entries in the context menu needs to be trimmed
-        local maxSavedEntries = settings.rememberSavedEntries
+        local maxSavedEntries = settings.sendmailSavedEntryCount
         if #settings[contextMenuSVSavedVarName] > maxSavedEntries then
             self.settings[contextMenuSVSavedVarName] = ZO_ShallowTableCopy(trimTableEntries(self.settings[contextMenuSVSavedVarName], maxSavedEntries))
         end
 
         --Set flag to add context menu to the control
-        anchorControl.PostMasterShowRememberContextMenuIdx = idx
+        anchorControl.postmasterShowSendMailContextMenuIdx = idx
         return true
     end
 
@@ -374,12 +374,12 @@ function Postmaster:RememberCheckAddContextMenu(whichContextMenu)
     end
 
     --Add the PreHooks for MAIL SEND to save the last used recipient, subject and body text
-    remember.isSettingEnabledAndDoWeNeedToRunPreHooks = atLeastOneSettingIsEnabled
-    self:RememberCheckAddPreHooksForMailSend()
+    sendmail.isSettingEnabledAndDoWeNeedToRunPreHooks = atLeastOneSettingIsEnabled
+    self:SendMailCheckAddPreHooks()
 end
 
-local function onContextMenuRememberEntrySelected(controlDoneMouseUpAt, contextMenuIdx, contextmenuEntriesFromSV, entryIdx)
-    --d("onContextMenuRememberEntrySelected - contextMenuIdx: " .. tostring(contextMenuIdx) .. ", entryIdx: " ..tostring(entryIdx))
+local function onSendMailContextMenuEntrySelected(controlDoneMouseUpAt, contextMenuIdx, contextmenuEntriesFromSV, entryIdx)
+    --d("onSendMailContextMenuEntrySelected - contextMenuIdx: " .. tostring(contextMenuIdx) .. ", entryIdx: " ..tostring(entryIdx))
     local selectedSVText = contextmenuEntriesFromSV[entryIdx].text
     --d("Selected text: " .. selectedSVText)
     if controlDoneMouseUpAt.SetText then controlDoneMouseUpAt:SetText(selectedSVText) end
@@ -388,23 +388,23 @@ end
 local function onMouseUpRememberContextMenuHandlerFunc(controlDoneMouseUpAt, mouseButton, upInside, altKey, shiftKey, ctrlKey, commandKey)
     if not upInside or mouseButton ~= MOUSE_BUTTON_INDEX_RIGHT then ClearMenu() return end
 --d("onMouseUpRememberContextMenuHandlerFunc-ctrl: " ..tostring(controlDoneMouseUpAt:GetName()))
-    local contextMenuIdx = controlDoneMouseUpAt.PostMasterShowRememberContextMenuIdx
+    local contextMenuIdx = controlDoneMouseUpAt.postmasterShowSendMailContextMenuIdx
     if contextMenuIdx ~= nil then
         --d(">Show context menu idx: " ..tostring(contextMenuIdx))
-        local contextMenuSVData = remember.contextMenuSVVariableNames
+        local contextMenuSVData = sendmail.contextMenuSVVariableNames
         local settings = Postmaster.settings
         local contextmenuEntriesFromSV = settings[contextMenuSVData[contextMenuIdx][2]]
         if contextmenuEntriesFromSV == nil or #contextmenuEntriesFromSV == 0 then return end
-        local contextMenusNameByIdx = remember.contextMenusNameByIdx
-        local countPreviewChars = settings.rememberBodiesPreviewChars
+        local contextMenusNameByIdx = sendmail.contextMenusNameByIdx
+        local countPreviewChars = settings.sendmailMessagesPreviewChars
 
         ClearMenu()
         AddCustomMenuItem(contextMenusNameByIdx[contextMenuIdx], function() end, MENU_ADD_OPTION_HEADER)
         for entryIdx, entryData in ipairs(contextmenuEntriesFromSV) do
             local entryText = entryData.text
-            local textForCMEntry = (contextMenuIdx ~= PM_REMEMBER_BODY and entryText) or (strsub(entryText, 1, countPreviewChars) .. "...")
+            local textForCMEntry = (contextMenuIdx ~= PM_SENDMAIL_MESSAGE and entryText) or (strsub(entryText, 1, countPreviewChars) .. "...")
             AddCustomMenuItem(textForCMEntry,
-                function() onContextMenuRememberEntrySelected(controlDoneMouseUpAt, contextMenuIdx, contextmenuEntriesFromSV, entryIdx) end,
+                function() onSendMailContextMenuEntrySelected(controlDoneMouseUpAt, contextMenuIdx, contextmenuEntriesFromSV, entryIdx) end,
                 MENU_ADD_OPTION_LABEL
             )
         end
@@ -412,13 +412,13 @@ local function onMouseUpRememberContextMenuHandlerFunc(controlDoneMouseUpAt, mou
     end
 end
 
-function Postmaster:RememberCheckAddOnMouseHandler(whichContextMenu)
-    local contextMenusAnchorVars = remember.contextMenusAnchorVars
+function Postmaster:SendMailCheckAddOnMouseHandler(whichContextMenu)
+    local contextMenusAnchorVars = sendmail.contextMenusAnchorVars
     local function addContextMenuHandlerToControlOnce(idx, contextMenuAnchorControl)
         --Add the context menu to the control, if not already done
-        if not remember.contextMenuHandlerWasAddedToControl[idx] then
+        if not sendmail.contextMenuHandlerWasAddedToControl[idx] then
             contextMenuAnchorControl:SetHandler("OnMouseUp", onMouseUpRememberContextMenuHandlerFunc)
-            remember.contextMenuHandlerWasAddedToControl[idx] = true
+            sendmail.contextMenuHandlerWasAddedToControl[idx] = true
         end
     end
 

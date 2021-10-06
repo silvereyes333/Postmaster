@@ -96,15 +96,16 @@ local strings = {
     ["SI_PM_KEYBIND_ENABLE_TOOLTIP"]             = { "Aktiviert die Postmaster-Tastenbelegung: <<1>> und <<2>>", SI_LOOT_TAKE, SI_LOOT_TAKE_ALL },
 
     --Baertram - Remember message settings
-    ["SI_PM_REMEMBER_MESSAGE"]                   = "Gedächtnis: Nachricht",
-    ["SI_PM_REMEMBER_MESSAGE_RECIPIENTS"]        = GetString(SI_GAMEPAD_MAIL_SEND_RECIPIENT),   --Receiver
-    ["SI_PM_REMEMBER_MESSAGE_RECIPIENTS_TT"]     = "Sichere die Empfänger deiner manuell erstellten Mails. Du kannst die Liste der Gesicherten mit einem Rechtsklick auf das Empfänger Eingabefeld öffnen.",
-    ["SI_PM_REMEMBER_MESSAGE_SUBJECTS"]          = GetString(SI_MAIL_INBOX_SUBJECT_COLUMN),     --Subject
-    ["SI_PM_REMEMBER_MESSAGE_SUBJECTS_TT"]       = "Sichere die Betreffs deiner manuell erstellten Mails. Du kannst die Liste der Gesicherten mit einem Rechtsklick auf das Betreff Eingabefeld öffnen.",
-    ["SI_PM_REMEMBER_MESSAGE_TEXT"]              = "Nachrichten-Text",
-    ["SI_PM_REMEMBER_MESSAGE_TEXT_TT"]           = "Sichere den Mail Text deiner manuell erstellten Mails. Du kannst die Liste der Gesicherten mit einem Rechtsklick auf das Mail Text Eingabefeld öffnen.",
-    ["SI_PM_REMEMBER_AMOUNT"]                    = "Anzahl gespeicherter Einträge",
-    ["SI_PM_REMEMBER_PREVIEW_CHARS"]             = "Anzahl Zeichen in Kontext Menü (Vorschau)",
+    ["SI_PM_SENDMAIL_MESSAGE_RECIPIENTS"]        = "Empfänger speichern",   -- Save recipient
+    ["SI_PM_SENDMAIL_MESSAGE_RECIPIENTS_TT"]     = "Sichere die Empfänger deiner manuell erstellten Mails. Du kannst die Liste der Gesicherten mit einem Rechtsklick auf das Empfänger Eingabefeld öffnen.",
+    ["SI_PM_SENDMAIL_MESSAGE_SUBJECTS"]          = "Betreff speichern",     -- Save subject
+    ["SI_PM_SENDMAIL_MESSAGE_SUBJECTS_TT"]       = "Sichere die Betreffs deiner manuell erstellten Mails. Du kannst die Liste der Gesicherten mit einem Rechtsklick auf das Betreff Eingabefeld öffnen.",
+    ["SI_PM_SENDMAIL_MESSAGE_TEXT"]              = "Nachrichten-Text speichern", -- Save message body
+    ["SI_PM_SENDMAIL_MESSAGE_TEXT_TT"]           = "Sichere den Mail Text deiner manuell erstellten Mails. Du kannst die Liste der Gesicherten mit einem Rechtsklick auf das Mail Text Eingabefeld öffnen.",
+    ["SI_PM_SENDMAIL_MESSAGE_RECENT_SUBJECTS"]   = "Neueste Betreffs",
+    ["SI_PM_SENDMAIL_MESSAGE_RECENT_TEXTS"]      = "Neueste Nachrichten",
+    ["SI_PM_SENDMAIL_AMOUNT"]                    = "Anzahl gespeicherter Einträge",
+    ["SI_PM_SENDMAIL_PREVIEW_CHARS"]             = "Anzahl Zeichen in Kontext Menü (Vorschau)",
 }
 
 -- Overwrite English strings

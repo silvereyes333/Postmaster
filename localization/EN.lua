@@ -112,13 +112,14 @@ POSTMASTER_STRINGS = {
     ["SI_PM_KEYBIND_ENABLE_TOOLTIP"]             = { "Enables the custom Postmaster keybindings: <<1>> and <<2>>", SI_LOOT_TAKE, SI_LOOT_TAKE_ALL },
 
     --Baertram - Remember message settings
-    ["SI_PM_REMEMBER_MESSAGE"]                   = "Remember: Message",
-    ["SI_PM_REMEMBER_MESSAGE_RECIPIENTS"]        = GetString(SI_GAMEPAD_MAIL_SEND_RECIPIENT),   --Receiver
-    ["SI_PM_REMEMBER_MESSAGE_RECIPIENTS_TT"]     = "Save the receivers of your manually written emails. You are able to show and select from a list via a right mouse click on the mail receiver editbox.",
-    ["SI_PM_REMEMBER_MESSAGE_SUBJECTS"]          = GetString(SI_MAIL_INBOX_SUBJECT_COLUMN),     --Subject
-    ["SI_PM_REMEMBER_MESSAGE_SUBJECTS_TT"]       = "Save the subject of your manually written emails. You are able to show and select from a list via a right mouse click on the mail subject editbox.",
-    ["SI_PM_REMEMBER_MESSAGE_TEXT"]              = "Body-text",
-    ["SI_PM_REMEMBER_MESSAGE_TEXT_TT"]           = "Save the message text of your manually written emails. You are able to show and select from a list via a right mouse click on the mail message body editbox.",
-    ["SI_PM_REMEMBER_AMOUNT"]                    = "Saved amount of entries",
-    ["SI_PM_REMEMBER_PREVIEW_CHARS"]             = "Count of chars at contextmenu (preview)",
+    ["SI_PM_SENDMAIL_MESSAGE_RECIPIENTS"]        = "Save Recipient",
+    ["SI_PM_SENDMAIL_MESSAGE_RECIPIENTS_TT"]     = "Automatically save a list of recently sent email recipients after they are sent. You are able to show and select from a list via a right mouse click on the mail recipient text box.",
+    ["SI_PM_SENDMAIL_MESSAGE_SUBJECTS"]          = "Save Subject",
+    ["SI_PM_SENDMAIL_MESSAGE_SUBJECTS_TT"]       = "Automatically save a list of recently sent email subjects after they are sent. You are able to show and select from a list via a right mouse click on the mail subject text box.",
+    ["SI_PM_SENDMAIL_MESSAGE_TEXT"]              = "Save Messages",
+    ["SI_PM_SENDMAIL_MESSAGE_TEXT_TT"]           = "Automatically save a list of recently sent email messages after they are sent. You are able to show and select from a list via a right mouse click on the mail message body text box.",
+    ["SI_PM_SENDMAIL_MESSAGE_RECENT_SUBJECTS"]   = "Recent Subjects",
+    ["SI_PM_SENDMAIL_MESSAGE_RECENT_TEXT"]       = "Recent Messages",
+    ["SI_PM_SENDMAIL_AMOUNT"]                    = "Number of Recent Entries to Save",
+    ["SI_PM_SENDMAIL_PREVIEW_CHARS"]             = "Recent Messages Menu Character Width",
 }
