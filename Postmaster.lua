@@ -1763,6 +1763,7 @@ function Postmaster.Posthook_InboxScrollList_RefreshData(scrollList)
 end
 
 
+
 --[[
     ===============================================================================
           REMEMBER - by Baertram
@@ -1783,76 +1784,88 @@ function Postmaster:RememberSetup()
     self:RememberCheckAddOnMouseHandler(-1)
 end
 
-local function trimTableEntries(tableVar, maxSavedEntries)
+local function trimTableEntries(tableNameInSettings)
+    local settings = Postmaster.settings
+    if not settings[tableNameInSettings] then return end
+
+    local tabCopy
+    local maxSavedEntries = settings.rememberSavedEntries
+    maxSavedEntries = (maxSavedEntries ~= nil and maxSavedEntries > 0 and maxSavedEntries) or Postmaster.defaults.rememberSavedEntries --fallback: 10 entries
+    if #settings[tableNameInSettings] > maxSavedEntries then
+        tabCopy = ZO_ShallowTableCopy(settings[tableNameInSettings])
+    else
+        return Postmaster.settings[tableNameInSettings]
+    end
+
     --Sort the SV table by timestamp: Newest first, oldest last
-    table.sort(tableVar, function(a, b)
+    table.sort(tabCopy, function(a, b)
         return a.timestamp > b.timestamp
     end)
 
-    --Delete all entries > max entries to keep
-    local countOld = #tableVar
-    for i=maxSavedEntries+1, countOld, 1 do
-        if tableVar[i] ~= nil then
-            tableVar[i] = nil
+    --Delete all entries which are > maxSavedEntries
+    for i=maxSavedEntries+1, #tabCopy, 1 do
+        if tabCopy[i] ~= nil then
+            tabCopy[i] = nil
         end
     end
-    return tableVar
+    return tabCopy
 end
 
-local function addAndTrimRememberedEntry(idx, textToAdd)
+local function addAndTrimRememberedEntry(idx)
+    local anchorVars = remember.contextMenusAnchorVars
+    local controlToGetTextFrom = anchorVars[idx]
+    if not controlToGetTextFrom or controlToGetTextFrom and not controlToGetTextFrom.GetText then return end
+    local textToAdd = controlToGetTextFrom:GetText()
+    if textToAdd == nil or textToAdd == "" then return end
+
     local timeStamp = GetTimeStamp()
+
     local svVariableNames = remember.contextMenuSVVariableNames
     local contextMenuSVSavedVarName = svVariableNames[idx][2]
     local settings = Postmaster.settings
     local maxSavedEntries = settings.rememberSavedEntries
+
+    --Add it to the SavedVariables table, if not already in there
+    for _, oldEntryData in ipairs(settings[contextMenuSVSavedVarName]) do
+        if oldEntryData.text == textToAdd then return end
+    end
 
     --Prepare the new entry
     local newEntry = {
         timestamp = timeStamp,
         text = textToAdd,
     }
-    --Add it to the SavedVariables table, if not already in there
-    for oldEntryIdx, oldEntryData in ipairs(settings[contextMenuSVSavedVarName]) do
-        if oldEntryData.text == textToAdd then return end
-    end
     table.insert(Postmaster.settings[contextMenuSVSavedVarName], newEntry)
 
     --Check if the entries in the context menu needs to be trimmed
-    if #Postmaster.settings[contextMenuSVSavedVarName] > maxSavedEntries then
-        Postmaster.settings[contextMenuSVSavedVarName] = ZO_ShallowTableCopy(trimTableEntries(Postmaster.settings[contextMenuSVSavedVarName], maxSavedEntries))
-    end
+    Postmaster.settings[contextMenuSVSavedVarName] = trimTableEntries(contextMenuSVSavedVarName)
 end
 
 local function rememberSaveMailData()
-    local toText =  mailReceiverEdit:GetText()
-    local subjectText = mailSubjectEdit:GetText()
-    local bodyText = mailBodyEdit:GetText()
---d("[Postmaster]Mail was (tried) to send to \'" .. toText .. "\' with subject \'" .. subjectText .. "\' with text \'" .. bodyText .. "\'")
-
     local settings = Postmaster.settings
     local svVariableNames = remember.contextMenuSVVariableNames
+
     --Save the receiver
-    if settings[svVariableNames[PM_REMEMBER_RECEIVER][1]] == true and toText ~= nil and toText ~= "" then
-        addAndTrimRememberedEntry(PM_REMEMBER_RECEIVER, toText)
+    if settings[svVariableNames[PM_REMEMBER_RECEIVER][1]] == true then
+        addAndTrimRememberedEntry(PM_REMEMBER_RECEIVER)
     end
     --Save the subject
-    if settings[svVariableNames[PM_REMEMBER_SUBJECT][1]] == true and subjectText ~= nil and subjectText ~= "" then
-        addAndTrimRememberedEntry(PM_REMEMBER_SUBJECT, subjectText)
+    if settings[svVariableNames[PM_REMEMBER_SUBJECT][1]] == true then
+        addAndTrimRememberedEntry(PM_REMEMBER_SUBJECT)
     end
     --Save the body text
-    if settings[svVariableNames[PM_REMEMBER_BODY][1]] == true and bodyText ~= nil and bodyText ~= "" then
-        addAndTrimRememberedEntry(PM_REMEMBER_BODY, bodyText)
+    if settings[svVariableNames[PM_REMEMBER_BODY][1]] == true then
+       addAndTrimRememberedEntry(PM_REMEMBER_BODY)
     end
-
 end
 
 function Postmaster:RememberCheckAddPreHooksForMailSend()
     ZO_PreHook(MAIL_SEND, "Send", function()
---d("[Postmaster]PreHook MAIL_SEND")
         if remember.isSettingEnabledAndDoWeNeedToRunPreHooks == true then
             rememberSaveMailData()
 ------------------------------------------------------------------------------------------------------------------------
-            --TODO DEBUGGING Remove before go-live
+            --TODO DEBUGGING -> Do not send the mail -> do local checks.
+            --TODO !!!Remove before go-live!!!
             --return true
 ------------------------------------------------------------------------------------------------------------------------
         end
@@ -1880,10 +1893,7 @@ function Postmaster:RememberCheckAddContextMenu(whichContextMenu)
                 or not settings[contextMenuSVVarName] or settings[contextMenuSVSavedVarName] == nil then return false end
 
         --Check if the entries in the context menu needs to be trimmed
-        local maxSavedEntries = settings.rememberSavedEntries
-        if #settings[contextMenuSVSavedVarName] > maxSavedEntries then
-            self.settings[contextMenuSVSavedVarName] = ZO_ShallowTableCopy(trimTableEntries(self.settings[contextMenuSVSavedVarName], maxSavedEntries))
-        end
+       self.settings[contextMenuSVSavedVarName] = trimTableEntries(contextMenuSVSavedVarName)
 
         --Set flag to add context menu to the control
         anchorControl.PostMasterShowRememberContextMenuIdx = idx
@@ -1948,7 +1958,8 @@ function Postmaster:RememberCheckAddOnMouseHandler(whichContextMenu)
     local function addContextMenuHandlerToControlOnce(idx, contextMenuAnchorControl)
         --Add the context menu to the control, if not already done
         if not remember.contextMenuHandlerWasAddedToControl[idx] then
-            contextMenuAnchorControl:SetHandler("OnMouseUp", onMouseUpRememberContextMenuHandlerFunc)
+            local ctrlName = contextMenuAnchorControl:GetName()
+            contextMenuAnchorControl:SetHandler("OnMouseUp", onMouseUpRememberContextMenuHandlerFunc, self.name .. "_" .. ctrlName .. "_OnMouseUpHandler", CONTROL_HANDLER_ORDER_NONE, nil)
             remember.contextMenuHandlerWasAddedToControl[idx] = true
         end
     end
