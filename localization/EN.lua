@@ -111,7 +111,7 @@ POSTMASTER_STRINGS = {
     ["SI_PM_TAKE_ALL_BY_SENDER"]                 = "Take by Sender",
     ["SI_PM_KEYBIND_ENABLE_TOOLTIP"]             = { "Enables the custom Postmaster keybindings: <<1>> and <<2>>", SI_LOOT_TAKE, SI_LOOT_TAKE_ALL },
 
-    --Baertram - Remember message settings
+    --Baertram - Mail Send save message settings
     ["SI_PM_SENDMAIL_MESSAGE_RECIPIENTS"]        = "Save Recipient",
     ["SI_PM_SENDMAIL_MESSAGE_RECIPIENTS_TT"]     = "Automatically save a list of recently sent email recipients after they are sent. You are able to show and select from a list via a right mouse click on the mail recipient text box.",
     ["SI_PM_SENDMAIL_MESSAGE_SUBJECTS"]          = "Save Subject",

@@ -94,6 +94,18 @@ local strings = {
     ["SI_PM_TAKE_ALL_BY_SUBJECT"]                = "Prendre par sujet",
     ["SI_PM_TAKE_ALL_BY_SENDER"]                 = "Prendre par expéditeur",
     ["SI_PM_KEYBIND_ENABLE_TOOLTIP"]             = { "Active les raccourcis Postmaster: <<1>> et <<2>>", SI_LOOT_TAKE, SI_LOOT_TAKE_ALL },
+
+    --Baertram - Mail Send save message settings
+    ["SI_PM_SENDMAIL_MESSAGE_RECIPIENTS"]        = "Sauvegarder le destinataire",
+    ["SI_PM_SENDMAIL_MESSAGE_RECIPIENTS_TT"]     = "Sauvegarde automatiquement une liste des destinataires d'e-mails récemment envoyés après leur envoi. Vous pouvez afficher et sélectionner dans une liste en cliquant avec le bouton droit sur la zone de texte du destinataire.",
+    ["SI_PM_SENDMAIL_MESSAGE_SUBJECTS"]          = "Sauvegarder le sujet",
+    ["SI_PM_SENDMAIL_MESSAGE_SUBJECTS_TT"]       = "Sauvegarde automatiquement une liste des sujets d'e-mails récemment envoyés après leur envoi. Vous pouvez afficher et sélectionner dans une liste en cliquant avec le bouton droit sur la zone de texte du sujet.",
+    ["SI_PM_SENDMAIL_MESSAGE_TEXT"]              = "Sauvegarder les messages",
+    ["SI_PM_SENDMAIL_MESSAGE_TEXT_TT"]           = "Sauvegarde automatiquement une liste du contenu des e-mails récemment envoyés après l'envoi. Vous pouvez afficher et sélectionner dans une liste en cliquant avec le bouton droit sur la zone de texte du corps du message.",
+    ["SI_PM_SENDMAIL_MESSAGE_RECENT_SUBJECTS"]   = "Sujets récents",
+    ["SI_PM_SENDMAIL_MESSAGE_RECENT_TEXT"]       = "Messages récents",
+    ["SI_PM_SENDMAIL_AMOUNT"]                    = "Nombre d'entrées récentes à sauvegarder",
+    ["SI_PM_SENDMAIL_PREVIEW_CHARS"]             = "Nombre maximal de caractères d'entrée de menu",
 }
 
 -- Overwrite English strings
