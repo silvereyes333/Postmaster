@@ -252,67 +252,79 @@ function Postmaster:SendMailSetup()
     self:SendMailCheckAddOnMouseHandler(-1)
 end
 
-local function trimTableEntries(tableVar, maxSavedEntries)
+local function trimTableEntries(tableNameInSettings)
+    local settings = Postmaster.settings
+    if not settings[tableNameInSettings] then return end
+
+    local tabCopy
+    local maxSavedEntries = settings.sendmailSavedEntryCount
+    maxSavedEntries = (maxSavedEntries ~= nil and maxSavedEntries > 0 and maxSavedEntries) or Postmaster.defaults.sendmailSavedEntryCount --fallback: 10 entries
+    if #settings[tableNameInSettings] > maxSavedEntries then
+        tabCopy = ZO_ShallowTableCopy(settings[tableNameInSettings])
+    else
+        return Postmaster.settings[tableNameInSettings]
+    end
+
     --Sort the SV table by timestamp: Newest first, oldest last
-    table.sort(tableVar, function(a, b)
+    table.sort(tabCopy, function(a, b)
         return a.timestamp > b.timestamp
     end)
 
-    --Delete all entries > max entries to keep
-    local countOld = #tableVar
-    for i=maxSavedEntries+1, countOld, 1 do
-        if tableVar[i] ~= nil then
-            tableVar[i] = nil
+    --Delete all entries which are > maxSavedEntries
+    for i=maxSavedEntries+1, #tabCopy, 1 do
+        if tabCopy[i] ~= nil then
+            tabCopy[i] = nil
         end
     end
-    return tableVar
+    return tabCopy
 end
 
-local function addAndTrimSendMailSavedEntry(idx, textToAdd)
+local function addAndTrimSendMailSavedEntry(idx)
+    local anchorVars = sendmail.contextMenusAnchorVars
+    local controlToGetTextFrom = anchorVars[idx]
+    if not controlToGetTextFrom or controlToGetTextFrom and not controlToGetTextFrom.GetText then return end
+    local textToAdd = controlToGetTextFrom:GetText()
+    if textToAdd == nil or textToAdd == "" then return end
+
     local timeStamp = GetTimeStamp()
-    local svVariableNames = sendmail.contextMenuSVVariableNames
+
+    local svVariableNames = remember.contextMenuSVVariableNames
     local contextMenuSVSavedVarName = svVariableNames[idx][2]
     local settings = Postmaster.settings
     local maxSavedEntries = settings.sendmailSavedEntryCount
+
+    --Add it to the SavedVariables table, if not already in there
+    for _, oldEntryData in ipairs(settings[contextMenuSVSavedVarName]) do
+        if oldEntryData.text == textToAdd then return end
+    end
 
     --Prepare the new entry
     local newEntry = {
         timestamp = timeStamp,
         text = textToAdd,
     }
-    --Add it to the SavedVariables table, if not already in there
-    for oldEntryIdx, oldEntryData in ipairs(settings[contextMenuSVSavedVarName]) do
-        if oldEntryData.text == textToAdd then return end
-    end
     table.insert(Postmaster.settings[contextMenuSVSavedVarName], newEntry)
 
     --Check if the entries in the context menu needs to be trimmed
-    if #Postmaster.settings[contextMenuSVSavedVarName] > maxSavedEntries then
-        Postmaster.settings[contextMenuSVSavedVarName] = ZO_ShallowTableCopy(trimTableEntries(Postmaster.settings[contextMenuSVSavedVarName], maxSavedEntries))
-    end
+    Postmaster.settings[contextMenuSVSavedVarName] = trimTableEntries(contextMenuSVSavedVarName)
 end
 
 local function sendmailSaveData()
-    local toText =  mailReceiverEdit:GetText()
-    local subjectText = mailSubjectEdit:GetText()
-    local bodyText = mailBodyEdit:GetText()
---d("[Postmaster]Mail was (tried) to send to \'" .. toText .. "\' with subject \'" .. subjectText .. "\' with text \'" .. bodyText .. "\'")
-
     local settings = Postmaster.settings
     local svVariableNames = sendmail.contextMenuSVVariableNames
+
     --Save the receiver
-    if settings[svVariableNames[PM_SENDMAIL_RECIPIENT][1]] == true and toText ~= nil and toText ~= "" then
-        addAndTrimSendMailSavedEntry(PM_SENDMAIL_RECIPIENT, toText)
+    if settings[svVariableNames[PM_SENDMAIL_RECIPIENT][1]] == true then
+        addAndTrimSendMailSavedEntry(PM_SENDMAIL_RECIPIENT)
     end
     --Save the subject
-    if settings[svVariableNames[PM_SENDMAIL_SUBJECT][1]] == true and subjectText ~= nil and subjectText ~= "" then
-        addAndTrimSendMailSavedEntry(PM_SENDMAIL_SUBJECT, subjectText)
+    if settings[svVariableNames[PM_SENDMAIL_SUBJECT][1]] == true then
+        addAndTrimSendMailSavedEntry(PM_SENDMAIL_SUBJECT)
     end
     --Save the body text
-    if settings[svVariableNames[PM_SENDMAIL_MESSAGE][1]] == true and bodyText ~= nil and bodyText ~= "" then
-        addAndTrimSendMailSavedEntry(PM_SENDMAIL_MESSAGE, bodyText)
+    if settings[svVariableNames[PM_SENDMAIL_MESSAGE][1]] == true then
+       addAndTrimSendMailSavedEntry(PM_SENDMAIL_MESSAGE)
     end
-
 end
 
 function Postmaster:SendMailCheckAddPreHooks()
@@ -321,7 +333,8 @@ function Postmaster:SendMailCheckAddPreHooks()
         if sendmail.isSettingEnabledAndDoWeNeedToRunPreHooks == true then
             sendmailSaveData()
 ------------------------------------------------------------------------------------------------------------------------
-            --TODO DEBUGGING Remove before go-live
+            --TODO DEBUGGING -> Do not send the mail -> do local checks.
+            --TODO !!!Remove before go-live!!!
             --return true
 ------------------------------------------------------------------------------------------------------------------------
         end
@@ -349,10 +362,7 @@ function Postmaster:SendMailCheckAddContextMenu(whichContextMenu)
                 or not settings[contextMenuSVVarName] or settings[contextMenuSVSavedVarName] == nil then return false end
 
         --Check if the entries in the context menu needs to be trimmed
-        local maxSavedEntries = settings.sendmailSavedEntryCount
-        if #settings[contextMenuSVSavedVarName] > maxSavedEntries then
-            self.settings[contextMenuSVSavedVarName] = ZO_ShallowTableCopy(trimTableEntries(self.settings[contextMenuSVSavedVarName], maxSavedEntries))
-        end
+       self.settings[contextMenuSVSavedVarName] = trimTableEntries(contextMenuSVSavedVarName)
 
         --Set flag to add context menu to the control
         anchorControl.postmasterShowSendMailContextMenuIdx = idx
@@ -417,7 +427,8 @@ function Postmaster:SendMailCheckAddOnMouseHandler(whichContextMenu)
     local function addContextMenuHandlerToControlOnce(idx, contextMenuAnchorControl)
         --Add the context menu to the control, if not already done
         if not sendmail.contextMenuHandlerWasAddedToControl[idx] then
-            contextMenuAnchorControl:SetHandler("OnMouseUp", onMouseUpRememberContextMenuHandlerFunc)
+            local ctrlName = contextMenuAnchorControl:GetName()
+            contextMenuAnchorControl:SetHandler("OnMouseUp", onMouseUpRememberContextMenuHandlerFunc, self.name .. "_" .. ctrlName .. "_OnMouseUpHandler", CONTROL_HANDLER_ORDER_NONE, nil)
             sendmail.contextMenuHandlerWasAddedToControl[idx] = true
         end
     end
