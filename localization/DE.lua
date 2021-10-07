@@ -55,6 +55,7 @@ local strings = {
     ["SI_PM_COD_MM_DEAL_3"]                      = "gut",
     ["SI_PM_COD_MM_DEAL_4"]                      = "sehr gut",
     ["SI_PM_COD_MM_DEAL_5"]                      = "kauf es!",
+    
     ["SI_PM_COD_MM_MIN_DEAL_TOOLTIP"]            = { "Analysiert die Anhänge einer <<1>> mit dem Wert von Master Merchant und bezahlt diese nur, wenn alle Anhänge einen mindest genau so guten Deal haben wie diese Einstellung. (ohne Limit = 'überteuert')", SI_MAIL_SEND_COD },
     ["SI_PM_COD_MM_NO_DATA"]                     = { "<<1>> ohne Master Merchant", SI_MAIL_SEND_COD },
     ["SI_PM_COD_MM_NO_DATA_TOOLTIP"]             = { "<<1>> entnimmt <<2>> Anhänge auch ohne Master Merchant Preise", SI_PM_TAKE_ALL, SI_MAIL_SEND_COD }, 
@@ -74,15 +75,15 @@ local strings = {
     ["SI_PM_GUILD_STORE_SOLD"]                   = "Gegenstand verkauft",
     ["SI_PM_PVP_FOR_THE_WORTHY"]                 = "Gerechter Lohn!",
     ["SI_PM_PVP_THANKS"]                         = "Wir danken Euch, Krieger",
-    ["SI_PM_PVP_FOR_THE_ALLIANCE_1"]             = "Für das Bündnis!",
-    ["SI_PM_PVP_FOR_THE_ALLIANCE_2"]             = "",
-    ["SI_PM_PVP_FOR_THE_ALLIANCE_3"]             = "",
-    ["SI_PM_PVP_THE_ALLIANCE_THANKS_1"]          = "Das Bündnis dankt Euch",
-    ["SI_PM_PVP_THE_ALLIANCE_THANKS_2"]          = "",
-    ["SI_PM_PVP_THE_ALLIANCE_THANKS_3"]          = "",
+    ["SI_PM_PVP_FOR_THE_ALLIANCE_1"]             = "Für das Dominion!",
+    ["SI_PM_PVP_FOR_THE_ALLIANCE_2"]             = "Für den Pakt!",
+    ["SI_PM_PVP_FOR_THE_ALLIANCE_3"]             = "Für das Bündnis!",
+    ["SI_PM_PVP_THE_ALLIANCE_THANKS_1"]          = "Das Dominion dankt Euch",
+    ["SI_PM_PVP_THE_ALLIANCE_THANKS_2"]          = "Der Pakt dankt Euch",
+    ["SI_PM_PVP_THE_ALLIANCE_THANKS_3"]          = "Das Bündnis dankt Euch",
     ["SI_PM_PVP_LOYALTY"]                        = "Für Eure Kampagnentreue",
-    ["SI_PM_PVP_UNDAUNTED_INVITE"]               = "Einladung in die Unerschrockenen-Enklave",
-    ["SI_PM_PVP_UNDAUNTED_NPC2"]                 = "Glirion der Rotbart",
+    ["SI_PM_UNDAUNTED_NPC_NORMAL"]               = "Maj al-Ragath",
+    ["SI_PM_UNDAUNTED_NPC_VET"]                  = "Glirion der Rotbart", 
     ["SI_PM_UNDAUNTED_NPC_TRIAL_1"]              = "Turuk Rotkrollen",
     ["SI_PM_UNDAUNTED_NPC_TRIAL_2"]              = "Kailstig der Axt",
     ["SI_PM_UNDAUNTED_NPC_TRIAL_3"]              = "Mächtige Mordra",
@@ -95,7 +96,7 @@ local strings = {
     ["SI_PM_TAKE_ALL_BY_SENDER"]                 = "Nach Absender nehmen",
     ["SI_PM_KEYBIND_ENABLE_TOOLTIP"]             = { "Aktiviert die Postmaster-Tastenbelegung: <<1>> und <<2>>", SI_LOOT_TAKE, SI_LOOT_TAKE_ALL },
 
-    --Baertram - Remember message settings
+    --Baertram - Mail Send save message settings
     ["SI_PM_SENDMAIL_MESSAGE_RECIPIENTS"]        = "Empfänger speichern",   -- Save recipient
     ["SI_PM_SENDMAIL_MESSAGE_RECIPIENTS_TT"]     = "Sichere die Empfänger deiner manuell erstellten Mails. Du kannst die Liste der Gesicherten mit einem Rechtsklick auf das Empfänger Eingabefeld öffnen.",
     ["SI_PM_SENDMAIL_MESSAGE_SUBJECTS"]          = "Betreff speichern",     -- Save subject

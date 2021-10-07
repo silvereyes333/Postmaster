@@ -77,6 +77,7 @@ local strings = {
     ["SI_PM_GUILD_STORE_PURCHASED"]              = "アイテム購入",
     ["SI_PM_GUILD_STORE_SOLD"]                   = "アイテム売却",
     ["SI_PM_PVP_FOR_THE_WORTHY"]                 = "貢献に見合った報酬です！",
+    ["SI_PM_PVP_THANKS"]                         = "戦士よ、貴殿に感謝を",
     ["SI_PM_PVP_FOR_THE_ALLIANCE_1"]             = "ドミニオンの為に！",
     ["SI_PM_PVP_FOR_THE_ALLIANCE_2"]             = "パクトの為に！",
     ["SI_PM_PVP_FOR_THE_ALLIANCE_3"]             = "カバナントの為に！",
@@ -89,10 +90,26 @@ local strings = {
     ["SI_PM_UNDAUNTED_NPC_TRIAL_1"]              = "赤爪トゥルク",
     ["SI_PM_UNDAUNTED_NPC_TRIAL_2"]              = "斧のカイルスティグ",
     ["SI_PM_UNDAUNTED_NPC_TRIAL_3"]              = "強きモルドラ",
+    ["SI_PM_BATTLEGROUNDS_NPC"]                  = "バトルマスター・リヴィン",
+    ["SI_PM_DELETE_FAILED"]                      = "There was a problem deleting mail. Please try again.",
+    ["SI_PM_TAKE_ATTACHMENTS_FAILED"]            = "There was a problem taking attachments. Please try again.",
+    ["SI_PM_READ_FAILED"]                        = "There was a problem reading the next mail message. Please try again.",
     ["SI_PM_MESSAGE"]                            = "メッセージ",
     ["SI_PM_TAKE_ALL_BY_SUBJECT"]                = "件名で取る",
     ["SI_PM_TAKE_ALL_BY_SENDER"]                 = "差出人で取る",
     ["SI_PM_KEYBIND_ENABLE_TOOLTIP"]             = { "Postmasterショートカットをアクティブにします：<<1>>および<<2>>", SI_LOOT_TAKE, SI_LOOT_TAKE_ALL },
+
+    --Baertram - Mail Send save message settings
+    ["SI_PM_SENDMAIL_MESSAGE_RECIPIENTS"]        = "Save Recipient",
+    ["SI_PM_SENDMAIL_MESSAGE_RECIPIENTS_TT"]     = "Automatically save a list of recently sent email recipients after they are sent. You are able to show and select from a list via a right mouse click on the mail recipient text box.",
+    ["SI_PM_SENDMAIL_MESSAGE_SUBJECTS"]          = "Save Subject",
+    ["SI_PM_SENDMAIL_MESSAGE_SUBJECTS_TT"]       = "Automatically save a list of recently sent email subjects after they are sent. You are able to show and select from a list via a right mouse click on the mail subject text box.",
+    ["SI_PM_SENDMAIL_MESSAGE_TEXT"]              = "Save Messages",
+    ["SI_PM_SENDMAIL_MESSAGE_TEXT_TT"]           = "Automatically save a list of recently sent email messages after they are sent. You are able to show and select from a list via a right mouse click on the mail message body text box.",
+    ["SI_PM_SENDMAIL_MESSAGE_RECENT_SUBJECTS"]   = "Recent Subjects",
+    ["SI_PM_SENDMAIL_MESSAGE_RECENT_TEXT"]       = "Recent Messages",
+    ["SI_PM_SENDMAIL_AMOUNT"]                    = "Number of Recent Entries to Save",
+    ["SI_PM_SENDMAIL_PREVIEW_CHARS"]             = "Recent Messages Menu Character Width",
 }
 
 -- Overwrite English strings

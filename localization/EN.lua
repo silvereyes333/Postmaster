@@ -96,7 +96,6 @@ POSTMASTER_STRINGS = {
     ["SI_PM_PVP_THE_ALLIANCE_THANKS_2"]          = "The Pact Thanks You",
     ["SI_PM_PVP_THE_ALLIANCE_THANKS_3"]          = "The Covenant Thanks You",
     ["SI_PM_PVP_LOYALTY"]                        = "Campaign Loyalty Reward",
-    ["SI_PM_UNDAUNTED_INVITE"]                   = "Undaunted Enclave Invite",
     ["SI_PM_UNDAUNTED_NPC_NORMAL"]               = "Maj al-Ragath",
     ["SI_PM_UNDAUNTED_NPC_VET"]                  = "Glirion the Redbeard",
     ["SI_PM_UNDAUNTED_NPC_TRIAL_1"]              = "Turuk Redclaws",
