@@ -68,7 +68,9 @@ end
 -- [[ Prevents auto returned mails from progressing the selected mail index. ]]
 function Prehooks:InboxOnMailRemoved(inbox, mailId)
     addon.Utility.Debug("MAIL_INBOX:OnMailRemoved(" .. tostring(inbox) .. ", " .. tostring(mailId) .. ")", debug)
-    return addon.AutoReturn:ClearPendingMailId(mailId)
+    if addon.AutoReturn:IsMailIdQueued(mailId) then
+        return true
+    end
 end
 
 --[[ Runs before a mail's attachments are taken, recording attachment information

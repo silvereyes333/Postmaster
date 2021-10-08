@@ -29,14 +29,14 @@ end
 --[[ Runs after the keyboard inbox scroll list's data refreshes. Used to trigger automatic mail return. ]]
 function SecurePostHooks:KeyboardInboxScrollListRefreshData(scrollList)
     addon.Utility.Debug("SecurePostHooks:KeyboardInboxScrollListRefreshData()", debug)
-    addon.AutoReturn:Run()
+    addon.AutoReturn:QueueAndReturn()
     KEYBIND_STRIP:UpdateKeybindButtonGroup(MAIL_INBOX.selectionKeybindStripDescriptor)
 end
 
 --[[ Runs after the gamepad inbox scroll list's data refreshes. Used to trigger automatic mail return. ]]
 function SecurePostHooks:GamepadInboxScrollListRefreshData(scrollList)
     addon.Utility.Debug("SecurePostHooks:GamepadInboxScrollListRefreshData()", debug)
-    addon.AutoReturn:Run()
+    addon.AutoReturn:QueueAndReturn()
 end
 
 addon.SecurePostHooks = SecurePostHooks:New()

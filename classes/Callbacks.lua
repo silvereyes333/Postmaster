@@ -29,6 +29,8 @@ end
 function Callbacks:MailInboxStateChange(oldState, newState)
     if IsInGamepadPreferredMode() then return end
     
+    addon.Utility.Debug("Callbacks:MailInboxStateChange(" .. tostring(oldState) .. ", " .. tostring(newState) .. ")", debug)
+    
     -- Inbox shown
     if newState == SCENE_SHOWN then
         -- Request mail from the server that was originally requested while
@@ -41,7 +43,7 @@ function Callbacks:MailInboxStateChange(oldState, newState)
         -- finished, automatically delete it.
         if not addon.Delete:ByMailIdIfPending(MAIL_INBOX.mailId) then
             -- If not deleting mail, then try auto returning mail
-            addon.AutoReturn:Run()
+            addon.AutoReturn:QueueAndReturn()
         end
     
     -- Inbox hidden

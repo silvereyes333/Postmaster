@@ -93,6 +93,9 @@ function Events:MailInboxUpdate(eventCode)
     
     addon.Utility.Debug("Setting addon.Events.inboxUpdated to true", debug)
     self.inboxUpdated = true
+    
+    -- Try auto-returning any new mail that's arrived
+    addon.AutoReturn:QueueAndReturn()
 end
 
 --[[ Raised in response to a successful RequestReadMail() call. Indicates that
@@ -113,11 +116,8 @@ function Events:MailReadable(eventCode, mailId)
         
     -- If a mail is selected that was previously marked for deletion but never
     -- finished, automatically delete it.
-    elseif not addon.Delete:ByMailIdIfPending(MAIL_INBOX.mailId) then
-    
-        -- Otherwise, try auto-returning any new mail that's arrived
-        addon.AutoReturn:Run()
-    
+    else
+        addon.Delete:ByMailIdIfPending(MAIL_INBOX.mailId)
     end
 end
 
@@ -128,14 +128,20 @@ function Events:MailRemoved(eventCode, mailId)
 
     addon.Utility.Debug("EVENT_MAIL_REMOVED(" .. tostring(eventCode) .. "," .. tostring(mailId) .. ")", debug)
     
-    if not addon.taking then return end
-    
     -- If the mail id was pending deletion, it isn't anymore
     addon.Delete:ClearPending(mailId)
     
+    -- If a mail id was queued for return, dequeue it and try to return the next one queued.
+    if addon.AutoReturn:DequeueMailId(mailId) then
+        addon.AutoReturn:ReturnNext()
+        return
+    end
+    
+    if not addon.taking then return end
+    
     if IsInGamepadPreferredMode() then return end
     
-    -- In the middle of auto-return
+    -- In the middle of auto-return, but the current mail removed event isn't for a returned mail.
     if addon.AutoReturn:IsRunning() then return end
     
     if eventCode then
@@ -172,7 +178,7 @@ function Events:MailRemoved(eventCode, mailId)
         MAIL_INBOX.mailId = nil
         
         -- if the inbox is open, try auto returning mail now
-        addon.AutoReturn:Run()
+        addon.AutoReturn:QueueAndReturn()
     end
 end
 
