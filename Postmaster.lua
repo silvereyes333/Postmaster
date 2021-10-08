@@ -129,7 +129,7 @@ PM_BOUNCE_MAIL_PREFIXES = {
 local mailReceiverEdit  = ZO_MailSendToField
 local mailSubjectEdit   = ZO_MailSendSubjectField
 local mailBodyEdit      = ZO_MailSendBodyField
---Subtable for the remember functions and values, tables etc.
+--Subtable for the send mail save field functions and values, tables etc.
 Postmaster.SendMail = {
     --Constants
     PM_SENDMAIL_RECIPIENT = 1,
@@ -288,7 +288,7 @@ local function addAndTrimSendMailSavedEntry(idx)
 
     local timeStamp = GetTimeStamp()
 
-    local svVariableNames = remember.contextMenuSVVariableNames
+    local svVariableNames = sendmail.contextMenuSVVariableNames
     local contextMenuSVSavedVarName = svVariableNames[idx][2]
     local settings = Postmaster.settings
     local maxSavedEntries = settings.sendmailSavedEntryCount
