@@ -94,6 +94,11 @@ function Events:MailInboxUpdate(eventCode)
     addon.Utility.Debug("Setting addon.Events.inboxUpdated to true", debug)
     self.inboxUpdated = true
     
+    -- Try deleting any messages queued for deletion
+    if addon.Delete:DeleteQueued() then
+        return
+    end
+    
     -- Try auto-returning any new mail that's arrived
     addon.AutoReturn:QueueAndReturn()
 end
@@ -113,11 +118,6 @@ function Events:MailReadable(eventCode, mailId)
     -- mail and attachments are readable now.
     if addon.takingAll then 
         addon.keybinds.TakeAll:TakeOrDeleteSelected()
-        
-    -- If a mail is selected that was previously marked for deletion but never
-    -- finished, automatically delete it.
-    else
-        addon.Delete:ByMailIdIfPending(MAIL_INBOX.mailId)
     end
 end
 
@@ -128,8 +128,11 @@ function Events:MailRemoved(eventCode, mailId)
 
     addon.Utility.Debug("EVENT_MAIL_REMOVED(" .. tostring(eventCode) .. "," .. tostring(mailId) .. ")", debug)
     
-    -- If the mail id was pending deletion, it isn't anymore
-    addon.Delete:ClearPending(mailId)
+    -- If a mail id was queued for deletion, dequeue it and try to delete the next one queued.
+    if addon.Delete:DequeueMailId(mailId) then
+        addon.Delete:DeleteNext()
+        return
+    end
     
     -- If a mail id was queued for return, dequeue it and try to return the next one queued.
     if addon.AutoReturn:DequeueMailId(mailId) then
@@ -170,15 +173,6 @@ function Events:MailRemoved(eventCode, mailId)
     -- keybind strip.
     if isInboxOpen then
         KEYBIND_STRIP:UpdateKeybindButtonGroup(MAIL_INBOX.selectionKeybindStripDescriptor)
-        
-    -- If the inbox was closed when the actual delete came through from the
-    -- server, it leaves the inbox list in an inconsistent (dirty) state.
-    else
-        addon.Utility.Debug("Setting inbox mail id to nil", debug)
-        MAIL_INBOX.mailId = nil
-        
-        -- if the inbox is open, try auto returning mail now
-        addon.AutoReturn:QueueAndReturn()
     end
 end
 

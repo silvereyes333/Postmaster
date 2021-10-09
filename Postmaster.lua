@@ -176,7 +176,7 @@ sendmail.contextMenuSVVariableNames = {
 
 --[[ True if Postmaster is doing any operations on the inbox. ]]
 function Postmaster:IsBusy()
-    return self.taking or self.takingAll or self.AutoReturn:IsRunning()
+    return self.taking or self.takingAll or self.Delete:IsRunning() or self.AutoReturn:IsRunning()
 end
 
 --[[ Sets state variables back to defaults and ensures a consistent inbox state ]]

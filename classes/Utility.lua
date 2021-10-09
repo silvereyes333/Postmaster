@@ -23,13 +23,8 @@ function addon.Utility.CanTake(mailData, settings)
         return false
     end
     
-    -- Item was meant to be deleted, but the inbox closed, so include it in 
-    -- the take all list
-    if addon.Delete:IsPending(mailData.mailId) then
-        return true
-    
     -- Handle C.O.D. mail
-    elseif mailData.codAmount and mailData.codAmount > 0 then
+    if mailData.codAmount and mailData.codAmount > 0 then
     
         -- Skip C.O.D. mails, if so configured
         if not settings.codTake then return false

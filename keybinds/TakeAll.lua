@@ -55,12 +55,6 @@ function TakeAll:CanDelete(mailData, attachmentData)
         addon.Utility.Debug("Cannot delete because this mail already failed deletion", debug)
         return false
     end
-    
-    -- Item was meant to be deleted, but the inbox closed, so include it in 
-    -- the take all list
-    if addon.Delete:IsPending(mailData.mailId) then
-        return true
-    end
   
     -- Quaternary custom take all filter
     if addon.settings.keybinds.quaternary and addon.settings.keybinds.quaternary ~= "" and addon.filterFieldValue then

@@ -135,17 +135,11 @@ function Prehooks:RegisterTakeAttachmentsTimeout(mailId, retries)
 end
 
 --[[ Listen for mail read requests when the inbox is closed and deny them.
-     The server won't raise the EVENT_MAIL_READABLE event anyways, and it
-     will filter out any subsequent requests for the same mail id until after
-     a different mailId is requested.  Record the mail id as addon.mailIdLastOpened
-     so that we can request the mail again immediately when the inbox is opened. ]]
+     The server won't raise the EVENT_MAIL_READABLE event anyways ]]
 function Prehooks:RequestReadMail(mailId)
     if IsInGamepadPreferredMode() then return end
     addon.Utility.Debug("RequestReadMail(" .. tostring(mailId) .. ")", debug)
-    addon.mailIdLastOpened = mailId
-    local inboxState = MAIL_INBOX_SCENE.state
-    -- Avoid a double read request on inbox open
-    local deny = inboxState == SCENE_HIDDEN or inboxState == SCENE_HIDING
+    local deny = not SCENE_MANAGER:IsShowing("mailInbox")
     if deny then
         addon.Utility.Debug("Inbox isn't open. Request denied.", debug)
     end

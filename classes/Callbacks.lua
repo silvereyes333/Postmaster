@@ -33,17 +33,16 @@ function Callbacks:MailInboxStateChange(oldState, newState)
     
     -- Inbox shown
     if newState == SCENE_SHOWN then
-        -- Request mail from the server that was originally requested while
-        -- the inbox was closed
-        if(MAIL_INBOX.requestMailId) then
-            MAIL_INBOX:RequestReadMessage(MAIL_INBOX.requestMailId)
-            MAIL_INBOX.requestMailId = nil
+      
+        -- Delete any mail that was requested to be deleted, but failed because the inbox hid before.
+        -- Note, if this is true, AutoReturn:QueueAndReturn() will be run after it finishes.
+        if addon.Delete:DeleteQueued() then
+            return
         end
-        -- If a mail is selected that was previously marked for deletion but never
-        -- finished, automatically delete it.
-        if not addon.Delete:ByMailIdIfPending(MAIL_INBOX.mailId) then
-            -- If not deleting mail, then try auto returning mail
-            addon.AutoReturn:QueueAndReturn()
+        
+        -- If not deleting mail, then try auto returning mail
+        if addon.AutoReturn:QueueAndReturn() then
+            return
         end
     
     -- Inbox hidden

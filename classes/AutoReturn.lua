@@ -40,7 +40,12 @@ end
 
 function AutoReturn:QueueAndReturn()
     addon.Utility.Debug("AutoReturn:QueueAndReturn()", debug)
-    if self:IsRunning() or not addon.settings.bounce or not addon.Events:IsInboxUpdated() or addon.taking or addon.takingAll or not SCENE_MANAGER:IsShowing("mailInbox") then
+    
+    if not addon.settings.bounce
+       or not addon.Events:IsInboxUpdated()
+       or not SCENE_MANAGER:IsShowing("mailInbox")
+       or addon:IsBusy()
+    then
         return
     end
     
@@ -58,7 +63,7 @@ function AutoReturn:QueueAndReturn()
             self.queuedMailIds[mailId64] = mailData.senderDisplayName
         end
     end
-    self:ReturnNext(true)
+    return self:ReturnNext(true)
 end
 
 function AutoReturn:ReturnNext(doNotRefresh)
@@ -68,6 +73,7 @@ function AutoReturn:ReturnNext(doNotRefresh)
         local mailId = StringToId64(returnMailIdStr)
         addon.Utility.Debug("Calling ReturnMail(" .. tostring(mailId) .. ")", debug)
         ReturnMail(mailId)
+        return true
     else
         addon.Events:SetInboxUpdated(false)
         self.running = false
@@ -81,6 +87,8 @@ function AutoReturn:ReturnNext(doNotRefresh)
         else
             MAIL_INBOX:RefreshData()
         end
+        addon.Utility.Debug("Refreshing keybinds.", debug)
+        KEYBIND_STRIP:UpdateKeybindButtonGroup(MAIL_INBOX.selectionKeybindStripDescriptor)
     end
 end
 
