@@ -128,24 +128,40 @@ function Events:MailRemoved(eventCode, mailId)
 
     addon.Utility.Debug("EVENT_MAIL_REMOVED(" .. tostring(eventCode) .. "," .. tostring(mailId) .. ")", debug)
     
-    -- If a mail id was queued for deletion, dequeue it and try to delete the next one queued.
-    if addon.Delete:DequeueMailId(mailId) then
+    -- If a mail id was queued for deletion, dequeue it
+    local deleteQueuedRunning = addon.Delete:IsRunning()
+    if addon.Delete:DequeueMailId(mailId) and deleteQueuedRunning then
+        -- If addon.Delete is running through a DeleteQueued() operation, then
+        -- proceed to the next in the queue.
         addon.Delete:DeleteNext()
         return
     end
     
-    -- If a mail id was queued for return, dequeue it and try to return the next one queued.
-    if addon.AutoReturn:DequeueMailId(mailId) then
+    -- If a mail id was queued for return, dequeue it
+    local autoReturnQueueRunning = addon.AutoReturn:IsRunning()
+    if addon.AutoReturn:DequeueMailId(mailId) and autoReturnQueueRunning then
+        -- If addon.AutoReturn is running through a QueueAndDelete() operation, then
+        -- proceed to the next in the queue.
         addon.AutoReturn:ReturnNext()
         return
     end
     
-    if not addon.taking then return end
+    -- Just a quick sanity check.  If a mail was removed while a queue was running,
+    -- possibly by another addon, but which wasn't in one of the two queues above,
+    -- stop processing.
+    if deleteQueuedRunning or autoReturnQueueRunning then
+        return
+    end
     
-    if IsInGamepadPreferredMode() then return end
+    -- Everything below this point relates to Take, Take All and Take All by Subject/Author operations
+    if not addon.taking then
+        return
+    end
     
-    -- In the middle of auto-return, but the current mail removed event isn't for a returned mail.
-    if addon.AutoReturn:IsRunning() then return end
+    -- Everything below this point is specific to mouse/keyboard keybinds and callbacks
+    if IsInGamepadPreferredMode() then
+        return
+    end
     
     if eventCode then
         
@@ -162,7 +178,9 @@ function Events:MailRemoved(eventCode, mailId)
     -- EVENT_MAIL_READABLE event comes back from the server.
     if isInboxOpen and addon.takingAll then
         addon.Utility.Debug("Selecting next mail with attachments", debug)
-        if addon.keybinds.TakeAll:SelectNext() then return end
+        if addon.keybinds.TakeAll:SelectNext() then
+              return
+        end
     end
     
     -- This was either a normal take, or there are no more valid mails
