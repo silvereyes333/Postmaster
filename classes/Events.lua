@@ -15,8 +15,6 @@ function Events:New()
 end
 
 function Events:Initialize()
-    
-    self.inboxUpdated = false
   
     self.handlerNames = {
         [EVENT_INVENTORY_IS_FULL]                = "InventoryIsFull",
@@ -60,10 +58,6 @@ function Events:CreateHandler(eventCode, handlerName)
     end
 end
 
-function Events:IsInboxUpdated()
-    return self.inboxUpdated
-end
-
 --[[ Raised when an attempted item transfer to the backpack fails due to not 
      enough slots being available.  When this happens, we should abort any 
      pending operations and reset controller state. ]]
@@ -91,8 +85,16 @@ function Events:MailInboxUpdate(eventCode)
     addon.Utility.Debug("EVENT_MAIL_INBOX_UPDATE(" .. tostring(eventCode) .. ")", debug)
     if not addon.settings.bounce then return end
     
-    addon.Utility.Debug("Setting addon.Events.inboxUpdated to true", debug)
-    self.inboxUpdated = true
+    -- DeleteQueued will not run until the mailbox is updated the first time.
+    -- Unlock it now.
+    addon.Utility.Debug("Unlocking Delete:DeleteQueued().", debug)
+    addon.Delete:Unlock()
+    
+    -- Auto return only runs a single time every time the inbox updates.
+    -- Unlock it now.  It will automatically re-lock itself after it runs, until
+    -- the next time the inbox updates.
+    addon.Utility.Debug("Unlocking AutoReturn:QueueAndReturn().", debug)
+    addon.AutoReturn:Unlock()
     
     -- Try deleting any messages queued for deletion
     if addon.Delete:DeleteQueued() then
@@ -304,10 +306,6 @@ end
 function Events:RegisterForUpdate(eventCode, timeout, callback)
     local updateKey = self.updateKeys[eventCode] or self.handlerNames[eventCode]
     EVENT_MANAGER:RegisterForUpdate(addon.name .. ".Events." .. updateKey, timeout, callback)
-end
-
-function Events:SetInboxUpdated(inboxUpdated)
-    self.inboxUpdated = inboxUpdated
 end
 
 function Events:UnregisterAllForUpdate(eventCode)

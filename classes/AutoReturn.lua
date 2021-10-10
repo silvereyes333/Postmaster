@@ -10,6 +10,7 @@ local AutoReturn = ZO_InitializingObject:Subclass()
 
 function AutoReturn:Initialize()
     self.running = false
+    self.locked = true
     
     -- Mail ids that have been auto-returned, but not yet removed
     self.queuedMailIds = {}
@@ -42,7 +43,7 @@ function AutoReturn:QueueAndReturn()
     addon.Utility.Debug("AutoReturn:QueueAndReturn()", debug)
     
     if not addon.settings.bounce
-       or not addon.Events:IsInboxUpdated()
+       or self.locked -- Will unlock only once the inbox is updated
        or not SCENE_MANAGER:IsShowing("mailInbox")
        or addon:IsBusy()
     then
@@ -75,7 +76,7 @@ function AutoReturn:ReturnNext(doNotRefresh)
         ReturnMail(mailId)
         return true
     else
-        addon.Events:SetInboxUpdated(false)
+        self.locked = true
         self.running = false
         addon.Utility.Debug("AutoReturn is no longer running.", debug)
         if doNotRefresh then
@@ -90,6 +91,12 @@ function AutoReturn:ReturnNext(doNotRefresh)
         addon.Utility.Debug("Refreshing keybinds.", debug)
         KEYBIND_STRIP:UpdateKeybindButtonGroup(MAIL_INBOX.selectionKeybindStripDescriptor)
     end
+end
+
+--[[ AutoRun is locked by default, and only unlocks once the inbox is updated.
+     It will automatically lock itself again after all bounce mail is returned ]]
+function AutoReturn:Unlock()
+    self.locked = false
 end
 
 addon.AutoReturn = AutoReturn:New()

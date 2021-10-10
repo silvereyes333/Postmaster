@@ -13,6 +13,9 @@ end
 
 function Delete:Initialize()
     
+    self.running = false
+    self.locked = true
+    
     -- Remembers mail removal requests that don't receive a mail removed event from the server
     -- or which have the event come in while the inbox is closed
     -- so that the removals can be processed once the inbox opens again.
@@ -85,9 +88,10 @@ function Delete:DeleteQueued()
     addon.Utility.Debug("Delete:QueueAndReturn()", debug)
     
     if not addon.settings.bounce
-       or not addon.Events:IsInboxUpdated()
+       or not self.locked
        or not SCENE_MANAGER:IsShowing("mailInbox")
        or addon:IsBusy()
+       or not next(self.queuedMailIds)
     then
         return
     end
@@ -115,7 +119,6 @@ function Delete:DeleteNext(doNotRefresh)
         DeleteMail(mailId, false)
         return true
     else
-        addon.Events:SetInboxUpdated(false)
         self.running = false
         addon.Utility.Debug("Delete is no longer running.", debug)
         if doNotRefresh then
@@ -175,6 +178,13 @@ function Delete:RegisterTimeout(mailId, retries)
         retries = PM_DELETE_MAIL_MAX_RETRIES
     end
     addon.Events:RegisterForUpdate(EVENT_MAIL_REMOVED, PM_DELETE_MAIL_TIMEOUT_MS, self:GetTimeout(mailId, retries))
+end
+
+--[[ DeleteQueued is locked by default, and only unlocks once the inbox is updated.
+     In contrast to AutoReturn, however, it will not re-lock after that point. 
+     It and will run as many times as it is called. ]]
+function Delete:Unlock()
+    self.locked = false
 end
 
 addon.Delete = Delete:New()
