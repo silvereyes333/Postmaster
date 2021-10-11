@@ -158,16 +158,17 @@ function Postmaster:SettingsSetup()
             setFunc =
                 function(value)
                     self.settings.keybinds.enable = value
+                    self.GamepadKeybinds:Update()
                     self.KeyboardKeybinds:Update()
                 end,
             width = "full",
             default = self.defaults.keybinds.enable,
         },
         
-        -- Quaternary Action
+        -- Keyboard Quaternary Action
         {
             type = "dropdown",
-            name = GetString(SI_BINDING_NAME_UI_SHORTCUT_QUATERNARY),
+            name = GetString(SI_BINDING_NAME_UI_SHORTCUT_QUATERNARY), -- TODO: Prefix name with "Keyboard ".
             width = "full",
             choices = self.quaternaryChoices,
             choicesValues = self.quaternaryChoicesValues,

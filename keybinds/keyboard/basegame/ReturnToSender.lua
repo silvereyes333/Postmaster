@@ -21,4 +21,4 @@ function ReturnToSender:Initialize(...)
     addon.classes.OriginalKeybind.Initialize(self, ...)
 end
 
-addon.keybinds.basegame.ReturnToSender = ReturnToSender:New()
+addon.keybinds.keyboard.basegame.ReturnToSender = ReturnToSender:New()

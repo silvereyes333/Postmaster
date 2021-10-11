@@ -70,4 +70,4 @@ function Negative:Visible()
     end
 end
 
-addon.keybinds.Negative = Negative:New()
+addon.keybinds.keyboard.Negative = Negative:New()

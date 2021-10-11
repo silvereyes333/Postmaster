@@ -58,7 +58,7 @@ function TakeAll:CanDelete(mailData, attachmentData)
   
     -- Quaternary custom take all filter
     if addon.settings.keybinds.quaternary and addon.settings.keybinds.quaternary ~= "" and addon.filterFieldValue then
-        local mailDataFieldValue = addon.keybinds.Quaternary:GetFilterFieldValue(mailData)
+        local mailDataFieldValue = addon.keybinds.keyboard.Quaternary:GetFilterFieldValue(mailData)
         return mailDataFieldValue and mailDataFieldValue == addon.filterFieldValue
     end
     
@@ -176,7 +176,7 @@ function TakeAll:CanTake(mailData)
   
     -- Quaternary custom take all filter
     if addon.settings.keybinds.quaternary and addon.settings.keybinds.quaternary ~= "" and addon.filterFieldValue then
-        local mailDataFieldValue = addon.keybinds.Quaternary:GetFilterFieldValue(mailData)
+        local mailDataFieldValue = addon.keybinds.keyboard.Quaternary:GetFilterFieldValue(mailData)
         return mailDataFieldValue and mailDataFieldValue == addon.filterFieldValue
     end
   
@@ -212,28 +212,19 @@ function TakeAll:CanTakeSelectedMail()
     end
 end
 
-function TakeAll:GamepadGetNext()
-    local data, index = addon.Utility.GetMailData()
-    for _, item in ipairs(data) do
-        item = item[index]
-        if self:CanTake(item) then
-            addon.Utility.Debug("TakeAll:GamepadGetNext() returning mail id " .. tostring(item.mailId), debug)
-            return item
-        end
-    end
-    addon.Utility.Debug("TakeAll:GamepadGetNext() returning nil", debug)
-end
-
 function TakeAll:GetName()
     return GetString(SI_LOOT_TAKE_ALL)
 end
 
 --[[ Gets the next highest-priority mail data instance that Take All can take ]]
 function TakeAll:GetNext()
-    if IsInGamepadPreferredMode() then
-        return self:GamepadGetNext()
+    local iterator = addon.classes.InboxTreeIterator:New(self.iterationFilter)
+    local nextMailData = iterator.next(MAIL_INBOX.navigationTree:GetSelectedNode())
+    if nextMailData then
+        addon.Utility.Debug("TakeAll:KeyboardGetNext() returning mail id " .. tostring(nextMailData.mailId), debug)
+        return nextMailData
     end
-    return self:KeyboardGetNext()
+    addon.Utility.Debug("TakeAll:KeyboardGetNext() returning nil", debug)
 end
 
 function TakeAll:KeyboardGetMailReadCallback(retries)
@@ -249,26 +240,18 @@ function TakeAll:KeyboardGetMailReadCallback(retries)
     end
 end
 
-function TakeAll:KeyboardGetNext()
-    local iterator = addon.classes.InboxTreeIterator:New(self.iterationFilter)
-    local nextMailData = iterator.next(MAIL_INBOX.navigationTree:GetSelectedNode())
-    if nextMailData then
-        addon.Utility.Debug("TakeAll:KeyboardGetNext() returning mail id " .. tostring(nextMailData.mailId), debug)
-        return nextMailData
-    end
-    addon.Utility.Debug("TakeAll:KeyboardGetNext() returning nil", debug)
-end
-
 function TakeAll:KeyboardMailRead(retries)
     
     if not retries then
         retries = PM_MAIL_READ_MAX_RETRIES
     end
-    addon.Events:RegisterForUpdate(EVENT_MAIL_READABLE, PM_MAIL_READ_TIMEOUT_MS, self:KeyboardGetMailReadCallback(retries) )
     
     -- If there exists another message in the inbox that has attachments, select it. otherwise, clear the selection.
     local nextMailData = self:GetNext()
-    MAIL_INBOX.navigationTree:Commit(nextMailData and nextMailData.node, false)
+    if nextMailData then
+        addon.Events:RegisterForUpdate(EVENT_MAIL_READABLE, PM_MAIL_READ_TIMEOUT_MS, self:KeyboardGetMailReadCallback(retries) )
+        MAIL_INBOX.navigationTree:Commit(nextMailData and nextMailData.node, false)
+    end
     return nextMailData
 end
 
@@ -309,9 +292,9 @@ function TakeAll:TryCodMail()
     local mailData = addon.Utility.KeyboardGetSelectedMailData()
     if mailData.codAmount and mailData.codAmount > 0 then
         addon.taking = true
-        MAIL_INBOX.pendingAcceptCOD = true
+        addon.pendingAcceptCOD = true
         ZO_MailInboxShared_TakeAll(mailData.mailId)
-        MAIL_INBOX.pendingAcceptCOD = false
+        addon.pendingAcceptCOD = false
         return true
     end
 end
@@ -323,4 +306,4 @@ function TakeAll:Visible()
     return true
 end
 
-addon.keybinds.TakeAll = TakeAll:New()
+addon.keybinds.keyboard.TakeAll = TakeAll:New()

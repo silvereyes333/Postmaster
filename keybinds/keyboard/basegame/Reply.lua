@@ -22,4 +22,4 @@ function Reply:Initialize(...)
     addon.classes.OriginalKeybind.Initialize(self, ...)
 end
 
-addon.keybinds.basegame.Reply = Reply:New()
+addon.keybinds.keyboard.basegame.Reply = Reply:New()

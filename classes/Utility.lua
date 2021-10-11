@@ -134,6 +134,19 @@ function addon.Utility.Debug(input, force)
     d("[PM-DEBUG] " .. input)
 end
 
+function addon.Utility.GamepadGetSelectedMailData()
+    return MAIL_MANAGER_GAMEPAD.inbox.mailList:GetSelectedData()
+end
+
+function addon.Utility.GamepadIsInboxShown()
+    return SCENE_MANAGER:IsShowing("mailManagerGamepad") and MAIL_MANAGER_GAMEPAD.activeFragment == GAMEPAD_MAIL_INBOX_FRAGMENT
+end
+
+function addon.Utility.GetActiveKeybinds()
+    local keybindScope = IsInGamepadPreferredMode() and "gamepad" or "keyboard"
+    return addon.keybinds[keybindScope]
+end
+
 --[[ Searches addon.codMails for the first mail id and C.O.D. mail data taht
      match the given expected amount. ]]
 function addon.Utility.GetCodMailByGoldChangeAmount(goldChanged)
@@ -174,6 +187,14 @@ function addon.Utility.GetMailData()
     return data, index
 end
 
+function addon.Utility.GetMailDataById(mailId)
+    if IsInGamepadPreferredMode() then
+        return MAIL_MANAGER_GAMEPAD.inbox.mailDataById[zo_getSafeId64Key(mailId)]
+    else
+        return MAIL_INBOX:GetMailData(mailId)
+    end
+end
+
 --[[ Returns a safe string representation of the given mail ID. Useful as an 
      associative array key for lookups. ]]
 function addon.Utility.GetMailIdString(mailId)
@@ -184,6 +205,14 @@ function addon.Utility.GetMailIdString(mailId)
         return zo_getSafeId64Key(mailId) 
     else return 
         tostring(mailId) 
+    end
+end
+
+function addon.Utility.IsInboxShown()
+    if IsInGamepadPreferredMode() then
+        return addon.Utility.GamepadIsInboxShown()
+    else
+        return addon.Utility.KeyboardIsInboxShown()
     end
 end
 
@@ -212,6 +241,10 @@ function addon.Utility.KeyboardGetSelectedMailData()
     local selectedNode = MAIL_INBOX.navigationTree:GetSelectedNode()
     local selectedMailData = selectedNode and selectedNode.data
     return selectedMailData
+end
+
+function addon.Utility.KeyboardIsInboxShown()
+    return SCENE_MANAGER:IsShowing("mailInbox")
 end
 
 --[[ Checks the given field of a mail message for a given list of
@@ -253,6 +286,14 @@ function addon.Utility.Print(input)
     local self = Postmaster
     local output = addon.prefix .. input .. addon.suffix
     addon.chat:Print(output)
+end
+
+function addon.Utility.RefreshMailList()
+    if IsInGamepadPreferredMode() then
+        MAIL_MANAGER_GAMEPAD.inbox:RefreshMailList()
+    else
+        MAIL_INBOX:RefreshData()
+    end
 end
 
 --[[ Checks the given string for a given list of
@@ -302,5 +343,13 @@ function addon.Utility.StringMatchFirstPrefix(s, prefixes)
                 end
             end
         end
+    end
+end
+
+function addon.Utility.UpdateKeybindButtonGroup()
+    if IsInGamepadPreferredMode() then
+        KEYBIND_STRIP:UpdateKeybindButtonGroup(self.mainKeybindDescriptor)
+    else
+        KEYBIND_STRIP:UpdateKeybindButtonGroup(MAIL_INBOX.selectionKeybindStripDescriptor)
     end
 end

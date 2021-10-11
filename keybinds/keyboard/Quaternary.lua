@@ -33,7 +33,7 @@ function Quaternary:Callback()
     
     addon.filterFieldValue = filterFieldValue
     
-    addon.keybinds.TakeAll:Callback(true)
+    addon.keybinds.keyboard.TakeAll:Callback(true)
 end
 
 function Quaternary:GetFilterFieldValue(mailData)
@@ -85,9 +85,9 @@ function Quaternary:Visible()
         return false
     end
     addon.filterFieldValue = filterFieldValue
-    local visible = addon.keybinds.TakeAll:GetNext() ~= nil
+    local visible = addon.keybinds.keyboard.TakeAll:GetNext() ~= nil
     addon.filterFieldValue = nil
     return visible
 end
 
-addon.keybinds.Quaternary = Quaternary:New()
+addon.keybinds.keyboard.Quaternary = Quaternary:New()

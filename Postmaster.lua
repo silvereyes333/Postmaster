@@ -188,7 +188,7 @@ function Postmaster:Reset()
     self.takingAll = false
     self.mailIdsFailedDeletion = {}
     self.filterFieldValue = nil
-    KEYBIND_STRIP:UpdateKeybindButtonGroup(MAIL_INBOX.selectionKeybindStripDescriptor)
+    self.Utility.UpdateKeybindButtonGroup()
     
     -- Print attachment summary
     self.summary:Print()

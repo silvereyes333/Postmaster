@@ -43,7 +43,7 @@ function Delete:ByMailId(mailId)
     -- Do this here, immediately after all attachments are collected and C.O.D. are paid, 
     -- Don't wait until the mail removed event, because it may or may not go 
     -- through if the user closes the inbox.
-    local mailData = MAIL_INBOX:GetMailData(mailId)
+    local mailData = addon.Utility.GetMailDataById(mailId)
     addon.Utility.CollectAttachments(mailData.fromSystem and "@SYSTEM" or mailData.senderDisplayName, addon.attachmentData[mailIdString])
     
     -- Clean up tracking arrays
@@ -61,7 +61,7 @@ function Delete:ByMailId(mailId)
     
     -- Check that the current type of mail should be deleted
     if addon.takingAll and (not addon.settings.keybinds.quaternary or addon.settings.keybinds.quaternary == "" or not addon.filterFieldValue) then
-        if not addon.keybinds.TakeAll:CanDelete(mailData, attachmentData) then
+        if not addon.keybinds.keyboard.TakeAll:CanDelete(mailData, attachmentData) then
             addon.Utility.Debug("Not deleting mail id "..mailIdString.." because of configured options")
             -- Skip actual mail removal and go directly to the postprocessing logic
             addon.mailIdsFailedDeletion[mailIdString] = true
@@ -75,7 +75,7 @@ function Delete:ByMailId(mailId)
     self.queuedMailIds[mailIdString] = true
     
     -- If inbox is open...
-    if SCENE_MANAGER:IsShowing("mailInbox") then
+    if addon.Utility.IsInboxShown() then
         -- If all attachments are gone, remove the message
         addon.Utility.Debug("Deleting "..tostring(mailId))
         
@@ -89,7 +89,7 @@ function Delete:DeleteQueued()
     
     if not addon.settings.bounce
        or not self.locked
-       or not SCENE_MANAGER:IsShowing("mailInbox")
+       or not addon.Utility.IsInboxShown()
        or addon:IsBusy()
        or not next(self.queuedMailIds)
     then
@@ -124,14 +124,12 @@ function Delete:DeleteNext(doNotRefresh)
         if doNotRefresh then
             return
         end
+        
         addon.Utility.Debug("Refreshing mail list.", debug)
-        if IsInGamepadPreferredMode() then
-            MAIL_MANAGER_GAMEPAD.inbox:RefreshMailList()
-        else
-            MAIL_INBOX:RefreshData()
-        end
+        addon.Utility.RefreshMailList()
+        
         addon.Utility.Debug("Refreshing keybinds.", debug)
-        KEYBIND_STRIP:UpdateKeybindButtonGroup(MAIL_INBOX.selectionKeybindStripDescriptor)
+        addon.Utility:UpdateKeybindButtonGroup()
         
         -- Proceed to auto-return mail, now that we are done deleting queued messages
         addon.AutoReturn:QueueAndReturn()

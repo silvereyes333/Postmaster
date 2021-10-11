@@ -40,15 +40,15 @@ function KeyboardKeybinds:Update()
     -- Take / Take All are enabled
     if addon.settings.keybinds.enable then
         keybinds = { 
-            addon.keybinds.TakeAndDelete,
-            addon.keybinds.TakeAll
+            addon.keybinds.keyboard.TakeAndDelete,
+            addon.keybinds.keyboard.TakeAll
         }
     
     -- Base game keybinds, when Take / Take All are disabled
     else
         keybinds = { 
-            addon.keybinds.basegame.ReturnToSender,
-            addon.keybinds.basegame.Reply
+            addon.keybinds.keyboard.basegame.ReturnToSender,
+            addon.keybinds.keyboard.basegame.Reply
         }
     end
     
@@ -57,11 +57,11 @@ function KeyboardKeybinds:Update()
     -- Take All by Subject / Sender is enabled, both of which need Cancel.
     -- Appear as Delete when Take / Take All are disabled and Return to Sender when
     -- Take / Take All are enabled.
-    table.insert(keybinds, addon.keybinds.Negative)
+    table.insert(keybinds, addon.keybinds.keyboard.Negative)
     
     -- Add the Take All by Subject / Take All by Sender keybind, if enabled.
     if addon.settings.keybinds.quaternary and addon.settings.keybinds.quaternary ~= "" then
-        table.insert(keybinds, addon.keybinds.Quaternary)
+        table.insert(keybinds, addon.keybinds.keyboard.Quaternary)
     end
     
     -- Keybind descriptors that will override the original keybinds

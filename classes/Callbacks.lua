@@ -16,18 +16,19 @@ end
   
 --[[ Wire up all callback handlers ]]
 function Callbacks:Initialize()
-    MAIL_INBOX_SCENE:RegisterCallback("StateChange", self:CreateCallback("MailInboxStateChange"))
+    local stateChangeCallback = self:CreateCallback(self.MailInboxStateChange)
+    MAIL_INBOX_SCENE:RegisterCallback("StateChange", stateChangeCallback)
+    GAMEPAD_MAIL_INBOX_FRAGMENT:RegisterCallback("StateChange", stateChangeCallback)
 end
 
-function Callbacks:CreateCallback(callbackName)
+function Callbacks:CreateCallback(callback)
     return function(...)
-        self[callbackName](self, ...)
+        callback(self, ...)
     end
 end
 
 --[[ Raised whenever the inbox is shown or hidden. ]]
 function Callbacks:MailInboxStateChange(oldState, newState)
-    if IsInGamepadPreferredMode() then return end
     
     addon.Utility.Debug("Callbacks:MailInboxStateChange(" .. tostring(oldState) .. ", " .. tostring(newState) .. ")", debug)
     

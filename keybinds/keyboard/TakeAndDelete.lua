@@ -80,4 +80,4 @@ function TakeAndDelete:Visible()
     return delete.visible()
 end
 
-addon.keybinds.TakeAndDelete = TakeAndDelete:New()
+addon.keybinds.keyboard.TakeAndDelete = TakeAndDelete:New()

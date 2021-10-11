@@ -18,9 +18,11 @@ function classes.OriginalKeybind:New(originalDescriptor)
 end
 
 function classes.OriginalKeybind:Initialize(originalDescriptor)
-    self.originalDescriptor = originalDescriptor
-    self.keybind = self.originalDescriptor.keybind
-    addon.classes.Keybind.Initialize(self)
+    if originalDescriptor then
+        self.originalDescriptor = originalDescriptor
+        self.keybind = self.originalDescriptor.keybind
+        addon.classes.Keybind.Initialize(self)
+    end
 end
 
 function classes.OriginalKeybind:Callback()
@@ -40,6 +42,20 @@ function classes.OriginalKeybind:GetName()
         return
     end
     return self.originalDescriptor.name
+end
+
+function classes.OriginalKeybind:GetOrder()
+    if not self.originalDescriptor then
+        return
+    end
+    return self.originalDescriptor.order
+end
+
+function classes.OriginalKeybind:GetSound()
+    if not self.originalDescriptor then
+        return
+    end
+    return self.originalDescriptor.sound
 end
 
 function classes.OriginalKeybind:Visible() 

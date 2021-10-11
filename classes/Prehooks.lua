@@ -84,7 +84,7 @@ function Prehooks:MailInboxSharedTakeAll(mailId)
     if codAmount > 0 then
         if addon.takingAll then
             if not addon.settings.takeAllCodTake then return end
-        elseif not MAIL_INBOX.pendingAcceptCOD then return end
+        elseif not addon.pendingAcceptCOD then return end
     end 
     addon.awaitingAttachments[addon.Utility.GetMailIdString(mailId)] = {}
     local attachmentData = { items = {}, money = attachedMoney, cod = codAmount }
@@ -137,9 +137,8 @@ end
 --[[ Listen for mail read requests when the inbox is closed and deny them.
      The server won't raise the EVENT_MAIL_READABLE event anyways ]]
 function Prehooks:RequestReadMail(mailId)
-    if IsInGamepadPreferredMode() then return end
     addon.Utility.Debug("RequestReadMail(" .. tostring(mailId) .. ")", debug)
-    local deny = not SCENE_MANAGER:IsShowing("mailInbox")
+    local deny = not addon.Utility.IsInboxShown()
     if deny then
         addon.Utility.Debug("Inbox isn't open. Request denied.", debug)
     end

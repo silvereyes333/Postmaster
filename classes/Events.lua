@@ -64,9 +64,8 @@ end
 function Events:InventoryIsFull(eventCode, numSlotsRequested, numSlotsFree)
 
     addon.Utility.Debug("EVENT_INVENTORY_IS_FULL(" .. tostring(eventCode) .. ", "..tostring(numSlotsRequested) .. "," .. tostring(numSlotsFree) .. ")", debug)
-    if IsInGamepadPreferredMode() then return end
     addon:Reset()
-    KEYBIND_STRIP:UpdateKeybindButtonGroup(MAIL_INBOX.selectionKeybindStripDescriptor)
+    addon.Utility.UpdateKeybindButtonGroup()
 end
 
 --[[ Raised when a backpack inventory slot is updated. ]]
@@ -113,13 +112,12 @@ end
 function Events:MailReadable(eventCode, mailId)
 
     addon.Utility.Debug("EVENT_MAIL_READABLE(" .. tostring(eventCode) .. "," .. tostring(mailId) .. ")", debug)
-    if IsInGamepadPreferredMode() then return end
     self:UnregisterForUpdate(EVENT_MAIL_READABLE)
         
     -- If taking all, then go ahead and start the next Take loop, since the
     -- mail and attachments are readable now.
-    if addon.takingAll then 
-        addon.keybinds.TakeAll:TakeOrDeleteSelected()
+    if addon.takingAll then
+        addon.Utility.GetActiveKeybinds().TakeAll:TakeOrDeleteSelected()
     end
 end
 
@@ -160,11 +158,6 @@ function Events:MailRemoved(eventCode, mailId)
         return
     end
     
-    -- Everything below this point is specific to mouse/keyboard keybinds and callbacks
-    if IsInGamepadPreferredMode() then
-        return
-    end
-    
     if eventCode then
         
         -- Unwire timeout callback
@@ -173,14 +166,14 @@ function Events:MailRemoved(eventCode, mailId)
         addon.Utility.Debug("deleted mail id "..tostring(mailId))
     end
     
-    local isInboxOpen = SCENE_MANAGER:IsShowing("mailInbox")
+    local isInboxOpen = addon.Utility.IsInboxShown()
     
     -- For non-canceled take all requests, select the next mail for taking.
     -- It will be taken automatically by Event_MailReadable() once the 
     -- EVENT_MAIL_READABLE event comes back from the server.
     if isInboxOpen and addon.takingAll then
         addon.Utility.Debug("Selecting next mail with attachments", debug)
-        if addon.keybinds.TakeAll:SelectNext() then
+        if addon.Utility.GetActiveKeybinds().TakeAll:SelectNext() then
               return
         end
     end
@@ -192,15 +185,13 @@ function Events:MailRemoved(eventCode, mailId)
     -- If the inbox is still open when the delete comes through, refresh the
     -- keybind strip.
     if isInboxOpen then
-        KEYBIND_STRIP:UpdateKeybindButtonGroup(MAIL_INBOX.selectionKeybindStripDescriptor)
+        addon.Utility.UpdateKeybindButtonGroup()
     end
 end
 
 --[[ Raised after a sent mail message is received by the server. We only care
      about this event because C.O.D. mail cannot be deleted until it is raised. ]]
-function Events:MailSendSuccess(eventCode) 
-    if IsInGamepadPreferredMode() then return end
-
+function Events:MailSendSuccess(eventCode)
     if not addon.taking then return end
     addon.Utility.Debug("Event_MailSendSuccess()", debug)
     local mailIdString,codMail = addon.Utility.GetFirstCompleteCodMail()
@@ -213,8 +204,6 @@ end
 --[[ Raised when attached items are all received into inventory from a mail.
      Used to automatically trigger mail deletion. ]]
 function Events:MailTakeAttachedItemSuccess(eventCode, mailId)
-    if IsInGamepadPreferredMode() then return end
-
     if not addon.taking then return end
     addon.Utility.Debug("attached items taken "..tostring(mailId))
     local waitingForMoney
@@ -234,8 +223,6 @@ end
 --[[ Raised when attached gold is all received into inventory from a mail.
      Used to automatically trigger mail deletion. ]]
 function Events:MailTakeAttachedMoneySuccess(eventCode, mailId)
-    if IsInGamepadPreferredMode() then return end
-
     if not addon.taking then return end
     addon.Utility.Debug("attached money taken "..tostring(mailId), debug)
     local waitingForItems
@@ -256,7 +243,6 @@ end
      about money leaving inventory due to a mail event, indicating a C.O.D. payment.
      Used to automatically trigger mail deletion. ]]
 function Events:MoneyUpdate(eventCode, newMoney, oldMoney, reason)
-    if IsInGamepadPreferredMode() then return end
 
     if not addon.taking then return end
     

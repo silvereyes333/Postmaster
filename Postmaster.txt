@@ -29,6 +29,7 @@ classes/Callbacks.lua
 classes/ChatProxy.lua
 classes/Delete.lua
 classes/Events.lua
+classes/GamepadKeybinds.lua
 classes/GroupedAccountSummary.lua
 classes/InboxTreeIterator.lua
 classes/Keybind.lua
@@ -40,9 +41,12 @@ classes/UniqueBagItemsList.lua
 classes/Utility.lua
 
 ; Keybinds
-keybinds/basegame/Reply.lua
-keybinds/basegame/ReturnToSender.lua
-keybinds/Negative.lua
-keybinds/Quaternary.lua
-keybinds/TakeAll.lua
-keybinds/TakeAndDelete.lua
+keybinds/gamepad/NegativeGamepad.lua
+keybinds/gamepad/TakeAllGamepad.lua
+keybinds/gamepad/TakeAndDeleteGamepad.lua
+keybinds/keyboard/basegame/Reply.lua
+keybinds/keyboard/basegame/ReturnToSender.lua
+keybinds/keyboard/Negative.lua
+keybinds/keyboard/Quaternary.lua
+keybinds/keyboard/TakeAll.lua
+keybinds/keyboard/TakeAndDelete.lua

@@ -44,7 +44,7 @@ function AutoReturn:QueueAndReturn()
     
     if not addon.settings.bounce
        or self.locked -- Will unlock only once the inbox is updated
-       or not SCENE_MANAGER:IsShowing("mailInbox")
+       or not addon.Utility.IsInboxShown()
        or addon:IsBusy()
     then
         return
@@ -79,17 +79,16 @@ function AutoReturn:ReturnNext(doNotRefresh)
         self.locked = true
         self.running = false
         addon.Utility.Debug("AutoReturn is no longer running.", debug)
+        
         if doNotRefresh then
             return
         end
+        
         addon.Utility.Debug("Refreshing mail list.", debug)
-        if IsInGamepadPreferredMode() then
-            MAIL_MANAGER_GAMEPAD.inbox:RefreshMailList()
-        else
-            MAIL_INBOX:RefreshData()
-        end
+        addon.Utility.RefreshMailList()
+        
         addon.Utility.Debug("Refreshing keybinds.", debug)
-        KEYBIND_STRIP:UpdateKeybindButtonGroup(MAIL_INBOX.selectionKeybindStripDescriptor)
+        addon.Utility.UpdateKeybindButtonGroup()
     end
 end
 

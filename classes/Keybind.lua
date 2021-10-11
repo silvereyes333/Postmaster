@@ -20,10 +20,12 @@ end
 
 function classes.Keybind:Initialize()
     self.descriptor = {
-        name = closure(self, "GetName"),
+        name = closure(self, self.GetName),
         keybind = self.keybind,
-        callback = closure(self, "Callback"),
-        visible = closure(self, "Visible"),
+        callback = closure(self, self.Callback),
+        order = closure(self, self.GetOrder),
+        sound = closure(self, self.GetSound),
+        visible = closure(self, self.Visible),
     }
     addon.Utility.Debug("Initialized keybind " .. tostring(self.name), debug)
 end
@@ -40,12 +42,20 @@ function classes.Keybind:GetName()
     -- override
 end
 
+function classes.Keybind:GetOrder()
+    -- override
+end
+
+function classes.Keybind:GetSound()
+    -- override
+end
+
 function classes.Keybind:Visible()
     -- override
 end
 
-function closure(self, functionName)
+function closure(self, callback)
     return function(...)
-        return self[functionName](self, ...)
+        return callback(self, ...)
     end
 end
