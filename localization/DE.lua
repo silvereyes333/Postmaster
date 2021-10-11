@@ -103,8 +103,8 @@ local strings = {
     ["SI_PM_SENDMAIL_MESSAGE_SUBJECTS_TT"]       = "Sichere die Betreffs deiner manuell erstellten Mails. Du kannst die Liste der Gesicherten mit einem Rechtsklick auf das Betreff Eingabefeld öffnen.",
     ["SI_PM_SENDMAIL_MESSAGE_TEXT"]              = "Nachrichten-Text speichern", -- Save message body
     ["SI_PM_SENDMAIL_MESSAGE_TEXT_TT"]           = "Sichere den Mail Text deiner manuell erstellten Mails. Du kannst die Liste der Gesicherten mit einem Rechtsklick auf das Mail Text Eingabefeld öffnen.",
-    ["SI_PM_SENDMAIL_MESSAGE_RECENT_SUBJECTS"]   = "Neueste Betreffs",
-    ["SI_PM_SENDMAIL_MESSAGE_RECENT_TEXTS"]      = "Neueste Nachrichten",
+    ["SI_PM_SENDMAIL_MESSAGE_RECENT_SUBJECTS"]   = "Zuletzt verwendete Betreffs",
+    ["SI_PM_SENDMAIL_MESSAGE_RECENT_TEXTS"]      = "Zuletzt verwendete Nachrichten",
     ["SI_PM_SENDMAIL_AMOUNT"]                    = "Anzahl gespeicherter Einträge",
     ["SI_PM_SENDMAIL_PREVIEW_CHARS"]             = "Anzahl Zeichen in Kontext Menü (Vorschau)",
 }
