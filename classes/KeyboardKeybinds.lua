@@ -18,6 +18,31 @@ end
      custom ones. ]]
 function KeyboardKeybinds:Initialize()
     self.original = MAIL_INBOX.selectionKeybindStripDescriptor
+            
+    -- Set up return to sender keybind that hides during take all
+    local originalTakeAttachmentsDescriptor =
+        addon.Utility.KeybindGetDescriptor(self.original, "UI_SHORTCUT_PRIMARY")
+    self.takeAttachments =
+        addon.classes.OriginalKeybind
+            :New(originalTakeAttachmentsDescriptor)
+            :GetDescriptor()
+            
+    -- Set up return to sender keybind that hides during take all
+    local originalReturnToSenderDescriptor =
+        addon.Utility.KeybindGetDescriptor(self.original, "UI_SHORTCUT_SECONDARY")
+    self.returnToSender =
+        addon.classes.OriginalKeybind
+            :New(originalReturnToSenderDescriptor)
+            :GetDescriptor()
+    
+    -- Set up reply keybind that hides during take all
+    local originalReplyDescriptor =
+        addon.Utility.KeybindGetDescriptor(self.original, "UI_SHORTCUT_TERTIARY")
+    self.reply =
+        addon.classes.OriginalKeybind
+            :New(originalReplyDescriptor)
+            :GetDescriptor()
+    
     self:Update()
 end
 
@@ -47,8 +72,8 @@ function KeyboardKeybinds:Update()
     -- Base game keybinds, when Take / Take All are disabled
     else
         keybinds = { 
-            addon.keybinds.keyboard.basegame.ReturnToSender,
-            addon.keybinds.keyboard.basegame.Reply
+            self.returnToSender,
+            self.reply
         }
     end
     
@@ -58,6 +83,13 @@ function KeyboardKeybinds:Update()
     -- Appear as Delete when Take / Take All are disabled and Return to Sender when
     -- Take / Take All are enabled.
     table.insert(keybinds, addon.keybinds.keyboard.Negative)
+    
+    
+    if not addon.settings.keybinds.enable then
+        table.insert(keybinds, self.takeAttachments)
+    end
+    
+    
     
     -- Add the Take All by Subject / Take All by Sender keybind, if enabled.
     if addon.settings.keybinds.quaternary and addon.settings.keybinds.quaternary ~= "" then

@@ -1,5 +1,5 @@
 ## Title: Postmaster
-## Author: silvereyes, Garkin & Zierk
+## Author: silvereyes, Baertram, Garkin & Zierk
 ## Description: Mail addon to simplify inbox management
 ## Version: 4.0.0
 ## APIVersion: 101031 101032
@@ -44,8 +44,6 @@ classes/Utility.lua
 keybinds/gamepad/NegativeGamepad.lua
 keybinds/gamepad/TakeAllGamepad.lua
 keybinds/gamepad/TakeAndDeleteGamepad.lua
-keybinds/keyboard/basegame/Reply.lua
-keybinds/keyboard/basegame/ReturnToSender.lua
 keybinds/keyboard/Negative.lua
 keybinds/keyboard/Quaternary.lua
 keybinds/keyboard/TakeAll.lua

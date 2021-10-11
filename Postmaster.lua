@@ -34,7 +34,10 @@ Postmaster = {
     -- for mail currently being taken.  Used to display summaries to chat.
     attachmentData = {},
     
-    keybinds = { basegame = {} },
+    keybinds = {
+        gamepad = {},
+        keyboard = {},
+    },
     
     -- Remembers mail ids that fail to delete during a Take All operation
     -- for whatever reason, and therefore should not be taken again during the same
