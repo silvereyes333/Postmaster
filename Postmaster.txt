@@ -30,6 +30,7 @@ classes/ChatProxy.lua
 classes/Delete.lua
 classes/Events.lua
 classes/GamepadKeybinds.lua
+classes/GamepadOption.lua
 classes/GroupedAccountSummary.lua
 classes/InboxTreeIterator.lua
 classes/Keybind.lua
@@ -42,6 +43,7 @@ classes/Utility.lua
 
 ; Keybinds
 keybinds/gamepad/NegativeGamepad.lua
+keybinds/gamepad/OptionsGamepad.lua
 keybinds/gamepad/TakeAllGamepad.lua
 keybinds/gamepad/TakeAndDeleteGamepad.lua
 keybinds/keyboard/Negative.lua

@@ -191,6 +191,7 @@ function Postmaster:Reset()
     self.takingAll = false
     self.mailIdsFailedDeletion = {}
     self.filterFieldValue = nil
+    self.filterFieldKeybind = nil
     self.Utility.UpdateKeybindButtonGroup()
     
     -- Print attachment summary

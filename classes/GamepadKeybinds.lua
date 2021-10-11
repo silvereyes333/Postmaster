@@ -6,6 +6,7 @@
   
 local addon = Postmaster
 local debug = false
+local alwaysVisible = function() return true end
 
 -- Singleton class
 local GamepadKeybinds = ZO_Object:Subclass()
@@ -32,25 +33,27 @@ function GamepadKeybinds:OnInitializeKeybindDescriptors(inbox)
     
     addon.keybinds.gamepad.Negative = addon.classes.NegativeGamepad:New()
     addon.keybinds.gamepad.TakeAll = addon.classes.TakeAllGamepad:New()
+    addon.keybinds.gamepad.TakeAndDelete = addon.classes.TakeAndDeleteGamepad:New()
     
     -- Override keybind descriptors with our own
     self:Update()
 end
 
 function GamepadKeybinds:OnInitializeOptionsList(inbox)
-    -- TODO: Add Take by Subject and Take by Sender to self.optionsList.
+    -- Add Take by Subject and Take by Sender to self.optionsList.
     -- By default, it supports reply, return to sender, and potentially report player in the future.
+    
+    local takeBySubjectEntryData = addon.keybinds.gamepad.TakeBySubject:CreateEntryData()
+    inbox.optionsList:AddEntry("ZO_GamepadMenuEntryTemplate", takeBySubjectEntryData)
+
+    local takeBySenderEntryData = addon.keybinds.gamepad.TakeBySender:CreateEntryData()
+    inbox.optionsList:AddEntry("ZO_GamepadMenuEntryTemplate", takeBySenderEntryData)
+
+    inbox.optionsList:Commit()
 end
 
 --[[ Updates the keyboard keybind strip with our custom keybinds ]]
 function GamepadKeybinds:Update()
-    
-    -- If Take and Take All are disabled, use the original keybinds, not Postmaster ones.
-    if not addon.settings.keybinds.enable 
-    then
-        MAIL_MANAGER_GAMEPAD.inbox.mainKeybindDescriptor = self.original
-        return
-    end
     
     -- Keybind instances to    
     local keybinds = {
@@ -59,8 +62,7 @@ function GamepadKeybinds:Update()
     
     -- Take / Take All are enabled
     if addon.settings.keybinds.enable then
-        -- TODO: Implement TakeAndDelete
-        --table.insert(keybinds, addon.keybinds.gamepad.TakeAndDelete)
+        table.insert(keybinds, addon.keybinds.gamepad.TakeAndDelete)
         table.insert(keybinds, addon.keybinds.gamepad.TakeAll)
     end
     
@@ -83,6 +85,10 @@ function GamepadKeybinds:Update()
             local keybind = addon.classes.OriginalKeybind:New(originalDescriptor)
             table.insert(keybinds, keybind)
             local descriptor = keybind:GetDescriptor()
+            -- Special workaround for Options hiding for system mail
+            if descriptor.keybind == "UI_SHORTCUT_TERTIARY" then
+                descriptor.visible = alwaysVisible
+            end
             table.insert(keybindGroup, descriptor)
         end
     end

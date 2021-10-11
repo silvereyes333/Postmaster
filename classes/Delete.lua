@@ -56,7 +56,6 @@ function Delete:ByMailId(mailId)
     local attachmentData = addon.attachmentData[mailIdString]
     addon.attachmentData[mailIdString] = nil
     
-    -- TODO: Figure out why Take All on gamepad is failing to remove attachments here.
     if (mailData.attachedMoney and mailData.attachedMoney > 0) or (mailData.numAttachments and mailData.numAttachments > 0) then
         addon.Utility.Debug("Cannot delete mail id " .. tostring(mailId) .. " because it is not empty. attachedMoney: " .. tostring(mailData.attachedMoney) .. ", numAttachments: ".. tostring(mailData.numAttachments))
         addon.mailIdsFailedDeletion[mailIdString] = true
@@ -65,7 +64,7 @@ function Delete:ByMailId(mailId)
     end
     
     -- Check that the current type of mail should be deleted
-    if addon.takingAll and (not addon.settings.keybinds.quaternary or addon.settings.keybinds.quaternary == "" or not addon.filterFieldValue) then
+    if addon.takingAll and not addon.filterFieldValue then
         if not addon.keybinds.keyboard.TakeAll:CanDelete(mailData, attachmentData) then
             addon.Utility.Debug("Not deleting mail id "..mailIdString.." because of configured options")
             -- Skip actual mail removal and go directly to the postprocessing logic

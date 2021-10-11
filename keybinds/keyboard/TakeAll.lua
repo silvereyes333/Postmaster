@@ -55,9 +55,9 @@ function TakeAll:CanDelete(mailData, attachmentData)
         return false
     end
   
-    -- Quaternary custom take all filter
-    if addon.settings.keybinds.quaternary and addon.settings.keybinds.quaternary ~= "" and addon.filterFieldValue then
-        local mailDataFieldValue = addon.keybinds.keyboard.Quaternary:GetFilterFieldValue(mailData)
+    -- Take by Subject / Sender
+    if addon.filterFieldValue and addon.filterFieldKeybind then
+        local mailDataFieldValue = addon.filterFieldKeybind:GetFilterFieldValue(mailData)
         return mailDataFieldValue and mailDataFieldValue == addon.filterFieldValue
     end
     
@@ -173,9 +173,9 @@ end
      to current options panel criteria. ]]
 function TakeAll:CanTake(mailData)
   
-    -- Quaternary custom take all filter
-    if addon.settings.keybinds.quaternary and addon.settings.keybinds.quaternary ~= "" and addon.filterFieldValue then
-        local mailDataFieldValue = addon.keybinds.keyboard.Quaternary:GetFilterFieldValue(mailData)
+    -- Take by Subject / Sender
+    if addon.filterFieldValue and addon.filterFieldKeybind then
+        local mailDataFieldValue = addon.filterFieldKeybind:GetFilterFieldValue(mailData)
         return mailDataFieldValue and mailDataFieldValue == addon.filterFieldValue
     end
   

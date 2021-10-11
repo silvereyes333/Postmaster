@@ -346,6 +346,18 @@ function addon.Utility.StringMatchFirstPrefix(s, prefixes)
     end
 end
 
+function addon.Utility.StringRemovePrefixes(s, prefixes)
+    for i=1, #prefixes do
+        local prefix = zo_strlower(prefixes[i])
+        if s == prefix then
+            return ""
+        else
+            s = string.gsub(s, "^" .. zo_strlower(prefix) .. " ", "")
+        end
+    end
+    return s
+end
+
 function addon.Utility.UpdateKeybindButtonGroup()
     if IsInGamepadPreferredMode() then
         KEYBIND_STRIP:UpdateKeybindButtonGroup(MAIL_MANAGER_GAMEPAD.inbox.mainKeybindDescriptor)

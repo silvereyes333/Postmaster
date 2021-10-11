@@ -32,8 +32,9 @@ function Quaternary:Callback()
     end
     
     addon.filterFieldValue = filterFieldValue
+    addon.filterFieldKeybind = self
     
-    addon.keybinds.keyboard.TakeAll:Callback(true)
+    addon.keybinds.keyboard.TakeAll:Callback()
 end
 
 function Quaternary:GetFilterFieldValue(mailData)
@@ -50,15 +51,7 @@ function Quaternary:GetFilterFieldValue(mailData)
     
     -- For subject filters, remove any RTS prefixes
     if addon.settings.keybinds.quaternary == "subject" then
-        for _, bounceMailPrefix in ipairs(PM_BOUNCE_MAIL_PREFIXES) do
-            bounceMailPrefix = zo_strlower(bounceMailPrefix)
-            if filterFieldValue == bounceMailPrefix then
-                filterFieldValue = ""
-                break
-            else
-                filterFieldValue = string.gsub(filterFieldValue, "^" .. zo_strlower(bounceMailPrefix) .. " ", "")
-            end
-        end
+        filterFieldValue = addon.Utility.StringRemovePrefixes(filterFieldValue, PM_BOUNCE_MAIL_PREFIXES)
     end
     
     return filterFieldValue
