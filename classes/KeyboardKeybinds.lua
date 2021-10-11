@@ -23,25 +23,19 @@ function KeyboardKeybinds:Initialize()
     local originalTakeAttachmentsDescriptor =
         addon.Utility.KeybindGetDescriptor(self.original, "UI_SHORTCUT_PRIMARY")
     self.takeAttachments =
-        addon.classes.OriginalKeybind
-            :New(originalTakeAttachmentsDescriptor)
-            :GetDescriptor()
+        addon.classes.OriginalKeybind:New(originalTakeAttachmentsDescriptor)
             
     -- Set up return to sender keybind that hides during take all
     local originalReturnToSenderDescriptor =
         addon.Utility.KeybindGetDescriptor(self.original, "UI_SHORTCUT_SECONDARY")
     self.returnToSender =
-        addon.classes.OriginalKeybind
-            :New(originalReturnToSenderDescriptor)
-            :GetDescriptor()
+        addon.classes.OriginalKeybind:New(originalReturnToSenderDescriptor)
     
     -- Set up reply keybind that hides during take all
     local originalReplyDescriptor =
         addon.Utility.KeybindGetDescriptor(self.original, "UI_SHORTCUT_TERTIARY")
     self.reply =
-        addon.classes.OriginalKeybind
-            :New(originalReplyDescriptor)
-            :GetDescriptor()
+        addon.classes.OriginalKeybind:New(originalReplyDescriptor)
     
     self:Update()
 end
@@ -84,12 +78,9 @@ function KeyboardKeybinds:Update()
     -- Take / Take All are enabled.
     table.insert(keybinds, addon.keybinds.keyboard.Negative)
     
-    
     if not addon.settings.keybinds.enable then
         table.insert(keybinds, self.takeAttachments)
     end
-    
-    
     
     -- Add the Take All by Subject / Take All by Sender keybind, if enabled.
     if addon.settings.keybinds.quaternary and addon.settings.keybinds.quaternary ~= "" then

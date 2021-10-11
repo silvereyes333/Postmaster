@@ -135,7 +135,7 @@ function addon.Utility.Debug(input, force)
 end
 
 function addon.Utility.GamepadGetSelectedMailData()
-    return MAIL_MANAGER_GAMEPAD.inbox.mailList:GetSelectedData()
+    return MAIL_MANAGER_GAMEPAD.inbox:GetActiveMailData()
 end
 
 function addon.Utility.GamepadIsInboxShown()
@@ -348,7 +348,7 @@ end
 
 function addon.Utility.UpdateKeybindButtonGroup()
     if IsInGamepadPreferredMode() then
-        KEYBIND_STRIP:UpdateKeybindButtonGroup(self.mainKeybindDescriptor)
+        KEYBIND_STRIP:UpdateKeybindButtonGroup(MAIL_MANAGER_GAMEPAD.inbox.mainKeybindDescriptor)
     else
         KEYBIND_STRIP:UpdateKeybindButtonGroup(MAIL_INBOX.selectionKeybindStripDescriptor)
     end

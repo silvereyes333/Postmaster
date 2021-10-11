@@ -31,7 +31,7 @@ function GamepadKeybinds:OnInitializeKeybindDescriptors(inbox)
     self.original = inbox.mainKeybindDescriptor
     
     addon.keybinds.gamepad.Negative = addon.classes.NegativeGamepad:New()
-    addon.keybinds.gamepad.Negative = addon.classes.TakeAllGamepad:New()
+    addon.keybinds.gamepad.TakeAll = addon.classes.TakeAllGamepad:New()
     
     -- Override keybind descriptors with our own
     self:Update()

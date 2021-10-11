@@ -5,25 +5,26 @@
   ]]
 
 local addon = Postmaster
+local class = addon.classes
 local debug = false
-local filter
 
-local TakeAllGamepad = addon.classes.Keybind:Subclass()
+class.TakeAllGamepad = addon.classes.Keybind:Subclass()
 
-function TakeAllGamepad:New(...)
+function class.TakeAllGamepad:New(...)
     return addon.classes.Keybind.New(self, ...)
 end
 
-function TakeAllGamepad:Initialize()
+function class.TakeAllGamepad:Initialize()
     self.name = addon.name .. "KeybindTakeAllGamepad"
     self.keybind = "UI_SHORTCUT_SECONDARY"
-    self.take =  addon.Utility.KeybindGetDescriptor(MAIL_MANAGER_GAMEPAD.inbox.mainKeybindDescriptor, "UI_SHORTCUT_NEGATIVE")
+    self.take =  addon.Utility.KeybindGetDescriptor(MAIL_MANAGER_GAMEPAD.inbox.mainKeybindDescriptor, "UI_SHORTCUT_PRIMARY")
     self.keyboardKeybind = addon.keybinds.keyboard.TakeAll
     addon.classes.Keybind.Initialize(self)
 end
 
-function TakeAllGamepad:Callback()
+function class.TakeAllGamepad:Callback()
     -- TODO: move to shared function with the keyboard TakeAll.lua
+    addon.Utility.Debug("class.TakeAllGamepad:Callback()", debug)
     if addon:IsBusy() then return end
     if self:CanTakeSelectedMail() then
         addon.Utility.Debug("Selected mail can be taken by Take All. Taking.", debug)
@@ -42,7 +43,7 @@ end
 
 --[[ True if the currently-selected mail can be taken by Take All operations 
      according to current options panel criteria. ]]
-function TakeAllGamepad:CanTakeSelectedMail()
+function class.TakeAllGamepad:CanTakeSelectedMail()
     -- TODO: move to shared function with the keyboard TakeAll.lua
     local selectedMailData = addon.Utility.GamepadGetSelectedMailData()
     if selectedMailData
@@ -52,16 +53,16 @@ function TakeAllGamepad:CanTakeSelectedMail()
     end
 end
 
-function TakeAllGamepad:GetName()
+function class.TakeAllGamepad:GetName()
     return GetString(SI_LOOT_TAKE_ALL)
 end
 
 --[[ Gets the next highest-priority mail data instance that Take All can take ]]
-function TakeAllGamepad:GetNext()
+function class.TakeAllGamepad:GetNext()
     local data, index = addon.Utility.GetMailData()
     for listIndex, item in ipairs(data) do
         item = item[index]
-        if self:CanTake(item) then
+        if self.keyboardKeybind:CanTake(item) then
             addon.Utility.Debug("TakeAllGamepad:GetNext() returning mail id " .. tostring(item.mailId), debug)
             return item, listIndex
         end
@@ -69,10 +70,11 @@ function TakeAllGamepad:GetNext()
     addon.Utility.Debug("TakeAllGamepad:GetNext() returning nil", debug)
 end
 
-function TakeAllGamepad:GamepadGetMailReadCallback(retries)
+function class.TakeAllGamepad:GamepadGetMailReadCallback(retries)
     -- TODO: move to shared function with the keyboard TakeAll.lua
     return function()
         addon.Events:UnregisterForUpdate(EVENT_MAIL_READABLE)
+        addon.Utility.Debug("class.TakeAllGamepad:GamepadGetMailReadCallback(" .. tostring(retries) .. ")", debug)
         retries = retries - 1
         if retries < 0 then
             ZO_Alert(UI_ALERT_CATEGORY_ALERT, nil, SI_PM_READ_FAILED)
@@ -83,7 +85,8 @@ function TakeAllGamepad:GamepadGetMailReadCallback(retries)
     end
 end
 
-function TakeAllGamepad:GamepadMailRead(retries)
+function class.TakeAllGamepad:GamepadMailRead(retries)
+        addon.Utility.Debug("class.TakeAllGamepad:GamepadMailRead(" .. tostring(retries) .. ")", debug)
     
     if not retries then
         retries = PM_MAIL_READ_MAX_RETRIES
@@ -91,16 +94,19 @@ function TakeAllGamepad:GamepadMailRead(retries)
     
     -- If there exists another message in the inbox that has attachments, select it. otherwise, clear the selection.
     local nextMailData, nextMailIndex = self:GetNext()
+    
+    -- TODO: Figure out why this doesn't work right
+    
     if nextMailData then
         addon.Events:RegisterForUpdate(EVENT_MAIL_READABLE, PM_MAIL_READ_TIMEOUT_MS, self:GamepadGetMailReadCallback(retries) )
-        MAIL_MANAGER_GAMEPAD.inbox.mailList:SetDefaultSelectedIndex(nextMailIndex)
-        MAIL_MANAGER_GAMEPAD.inbox.mailList:Commit(true)
+        addon.Utility.Debug("MAIL_MANAGER_GAMEPAD.inbox.mailList:SetSelectedIndex(" .. tostring(nextMailIndex) .. ")", debug)
+        MAIL_MANAGER_GAMEPAD.inbox.mailList:SetSelectedIndex(nextMailIndex)
     end
     return nextMailData
 end
 
 --[[ Selects the next highest-priority mail data instance that Take All can take ]]
-function TakeAllGamepad:SelectNext()
+function class.TakeAllGamepad:SelectNext()
     -- Don't need to get anything. The current selection already has attachments.
     if self:CanTakeSelectedMail() then return true end
     
@@ -112,14 +118,20 @@ end
 
 --[[ Takes attachments from the selected (readable) mail if they exist, or 
      deletes the mail if it has no attachments. ]]
-function TakeAllGamepad:TakeOrDeleteSelected()
+function class.TakeAllGamepad:TakeOrDeleteSelected()
+    addon.Utility.Debug("class.TakeAllGamepad:TakeOrDeleteSelected()", debug)
     if self:TryCodMail() then return end
+    
     local mailData = addon.Utility.GamepadGetSelectedMailData()
+    
+    -- Get the latest data, in case it has changed
+    ZO_MailInboxShared_PopulateMailData(mailData, mailData.mailId)
     
     -- TODO: move to shared function with the keyboard TakeAll.lua
     local hasAttachments = (mailData.attachedMoney and mailData.attachedMoney > 0)
       or (mailData.numAttachments and mailData.numAttachments > 0)
     if hasAttachments then
+        addon.Utility.Debug("Taking attachments for active mail id " .. tostring(mailData.mailId) .. ", isReadInfoReady = " .. tostring(mailData.isReadInfoReady), debug)
         addon.taking = true
         self.take.callback()
     else
@@ -133,7 +145,7 @@ end
 
 --[[ Bypasses the original "Take attachments" logic for C.O.D. mail during a
      Take All operation. ]]
-function TakeAllGamepad:TryCodMail()
+function class.TakeAllGamepad:TryCodMail()
     if not addon.settings.takeAllCodTake then return end
     local mailData = addon.Utility.GamepadGetSelectedMailData()
     -- TODO: move to shared function with the keyboard TakeAll.lua
@@ -146,7 +158,7 @@ function TakeAllGamepad:TryCodMail()
     end
 end
 
-function TakeAllGamepad:Visible()
+function class.TakeAllGamepad:Visible()
     -- TODO: move to shared function with the keyboard TakeAll.lua
     if addon:IsBusy() or not self:GetNext() then
         return false

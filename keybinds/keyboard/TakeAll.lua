@@ -7,7 +7,6 @@
 local addon = Postmaster
 local debug = false
 local take = addon.Utility.KeybindGetDescriptor(MAIL_INBOX.selectionKeybindStripDescriptor, "UI_SHORTCUT_PRIMARY")
-local filter
 
 local TakeAll = addon.classes.Keybind:Subclass()
 

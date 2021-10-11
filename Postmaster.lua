@@ -222,13 +222,13 @@ local function OnAddonLoaded(eventCode, addOnName)
     
     -- Replace keybinds in the mouse/keyboard inbox UI
     self.KeyboardKeybinds:Initialize()
+    
+    -- Replace keybinds in the gamepad inbox UI
+    self.GamepadKeybinds:Initialize()
 
     --Baertram - Send Mail save
     -- Add LibCustomMenu context menus to the mail recipient, subject, body fields
     self:SendMailSetup()
-
-    
-    -- TODO: add gamepad inbox UI keybind support
 end
 
 -- Register events

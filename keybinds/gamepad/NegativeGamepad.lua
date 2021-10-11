@@ -26,7 +26,7 @@ function class.NegativeGamepad:Callback()
         if addon.takingAll then
             addon:Reset()
         end
-    elseif self.back.visible() then
+    else
         self.back.callback()
     end
 end
@@ -35,17 +35,14 @@ function class.NegativeGamepad:GetName()
     if addon.takingAll then
         return GetString(SI_CANCEL)
     end
-    if self.back.visible() then
-        return self.back.name
-    end
-    return GetString(SI_CANCEL)
+    return self.back.name
 end
 
 function class.NegativeGamepad:Visible()
     if addon.takingAll then return true end
     if addon:IsBusy() then return false end
-    addon.Utility.Debug("NegativeGamepad:Visible() is using base game back visibility of " .. tostring(self.back.visible()), debug)
-    return self.back.visible()
+    addon.Utility.Debug("NegativeGamepad:Visible() is using base game back visibility of " .. tostring(true), debug)
+    return true
 end
 
 -- Class is instantiated inside GamepadKeybinds.lua::OnInitializeKeybindDescriptors(inbox)

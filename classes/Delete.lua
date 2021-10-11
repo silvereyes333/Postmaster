@@ -44,6 +44,10 @@ function Delete:ByMailId(mailId)
     -- Don't wait until the mail removed event, because it may or may not go 
     -- through if the user closes the inbox.
     local mailData = addon.Utility.GetMailDataById(mailId)
+    
+    -- Get the latest data, in case it has changed
+    ZO_MailInboxShared_PopulateMailData(mailData, mailId)
+    
     addon.Utility.CollectAttachments(mailData.fromSystem and "@SYSTEM" or mailData.senderDisplayName, addon.attachmentData[mailIdString])
     
     -- Clean up tracking arrays
@@ -52,8 +56,9 @@ function Delete:ByMailId(mailId)
     local attachmentData = addon.attachmentData[mailIdString]
     addon.attachmentData[mailIdString] = nil
     
+    -- TODO: Figure out why Take All on gamepad is failing to remove attachments here.
     if (mailData.attachedMoney and mailData.attachedMoney > 0) or (mailData.numAttachments and mailData.numAttachments > 0) then
-        addon.Utility.Debug("Cannot delete mail id "..mailIdString.." because it is not empty")
+        addon.Utility.Debug("Cannot delete mail id " .. tostring(mailId) .. " because it is not empty. attachedMoney: " .. tostring(mailData.attachedMoney) .. ", numAttachments: ".. tostring(mailData.numAttachments))
         addon.mailIdsFailedDeletion[mailIdString] = true
         addon.Events:MailRemoved(nil, mailId)
         return
