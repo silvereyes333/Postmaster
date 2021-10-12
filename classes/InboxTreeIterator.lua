@@ -45,7 +45,7 @@ end
 
 --[[ Create the main iteration function, with reference to self ]]--
 function class.InboxTreeIterator:CreateNextFunction()
-    return function(mailNode)
+    return function(mailNode, excludeMailId)
         
         -- Figure out where to start iterating
         if not mailNode then
@@ -115,13 +115,15 @@ function class.InboxTreeIterator:CreateNextFunction()
         self.iteratedNodes[mailNode] = true
         
         -- If the mail message matches the filter, then return it.
-        if self.filter(mailNode.data) then
+        if self.filter(mailNode.data)
+           and (not excludeMailId or not AreId64sEqual(mailNode.data.mailId, excludeMailId))
+        then
             return mailNode.data
         end
         
         -- If the mail message doesn't match the filter, recursively try the next one in the list.
         -- If there is no next one, mailNode:GetNextSiblingNode() will be nil, causing the active
         -- list to start at the beginning.
-        return self.next(mailNode:GetNextSiblingNode())
+        return self.next(mailNode:GetNextSiblingNode(), excludeMailId)
     end
 end

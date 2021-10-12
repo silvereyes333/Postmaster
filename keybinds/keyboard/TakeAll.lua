@@ -58,7 +58,10 @@ function TakeAll:CanDelete(mailData, attachmentData)
     -- Take by Subject / Sender
     if addon.filterFieldValue and addon.filterFieldKeybind then
         local mailDataFieldValue = addon.filterFieldKeybind:GetFilterFieldValue(mailData)
-        return mailDataFieldValue and mailDataFieldValue == addon.filterFieldValue
+        local canDelete = mailDataFieldValue and mailDataFieldValue == addon.filterFieldValue
+        addon.Utility.Debug("mailDataFieldValue = " .. tostring(mailDataFieldValue) .. ", filterFieldValue = " .. tostring(addon.filterFieldValue), debug) 
+        addon.Utility.Debug("TakeAll:CanDelete() mail id " .. tostring(mailData and mailData.mailId) .. "? " .. tostring(canDelete), debug)
+        return canDelete
     end
     
     
@@ -173,38 +176,42 @@ end
      to current options panel criteria. ]]
 function TakeAll:CanTake(mailData)
   
+    local canTake
+    
     -- Take by Subject / Sender
     if addon.filterFieldValue and addon.filterFieldKeybind then
         local mailDataFieldValue = addon.filterFieldKeybind:GetFilterFieldValue(mailData)
-        return mailDataFieldValue and mailDataFieldValue == addon.filterFieldValue
+        canTake = mailDataFieldValue and mailDataFieldValue == addon.filterFieldValue
+        addon.Utility.Debug("mailDataFieldValue = " .. tostring(mailDataFieldValue) .. ", filterFieldValue = " .. tostring(addon.filterFieldValue), debug) 
+    else
+        -- Filter based on normal primary Take All keybind settings
+        canTake = addon.Utility.CanTake(mailData, {
+            ["codTake"]           = addon.settings.takeAllCodTake,
+            ["codGoldLimit"]      = addon.settings.takeAllCodGoldLimit,
+            ["reservedSlots"]     = addon.settings.reservedSlots,
+            ["systemAttached"]    = addon.settings.takeAllSystemAttached,
+            ["systemHireling"]    = addon.settings.takeAllSystemHireling,
+            ["systemGuildStoreSales"]  = addon.settings.takeAllSystemGuildStoreSales,
+            ["systemGuildStoreItems"]  = addon.settings.takeAllSystemGuildStoreItems,
+            ["systemPvp"]         = addon.settings.takeAllSystemPvp,
+            ["systemUndaunted"]   = addon.settings.takeAllSystemUndaunted,
+            ["systemOther"]       = addon.settings.takeAllSystemOther,
+            ["playerReturned"]    = addon.settings.takeAllPlayerReturned,
+            ["playerAttached"]    = addon.settings.takeAllPlayerAttached,
+            ["systemDeleteEmpty"] = addon.settings.takeAllSystemDeleteEmpty,
+            ["playerDeleteEmpty"] = addon.settings.takeAllPlayerDeleteEmpty,
+        })
     end
-  
-    -- Filter based on normal primary Take All keybind settings
-    local canTake = addon.Utility.CanTake(mailData, {
-        ["codTake"]           = addon.settings.takeAllCodTake,
-        ["codGoldLimit"]      = addon.settings.takeAllCodGoldLimit,
-        ["reservedSlots"]     = addon.settings.reservedSlots,
-        ["systemAttached"]    = addon.settings.takeAllSystemAttached,
-        ["systemHireling"]    = addon.settings.takeAllSystemHireling,
-        ["systemGuildStoreSales"]  = addon.settings.takeAllSystemGuildStoreSales,
-        ["systemGuildStoreItems"]  = addon.settings.takeAllSystemGuildStoreItems,
-        ["systemPvp"]         = addon.settings.takeAllSystemPvp,
-        ["systemUndaunted"]   = addon.settings.takeAllSystemUndaunted,
-        ["systemOther"]       = addon.settings.takeAllSystemOther,
-        ["playerReturned"]    = addon.settings.takeAllPlayerReturned,
-        ["playerAttached"]    = addon.settings.takeAllPlayerAttached,
-        ["systemDeleteEmpty"] = addon.settings.takeAllSystemDeleteEmpty,
-        ["playerDeleteEmpty"] = addon.settings.takeAllPlayerDeleteEmpty,
-    })
     addon.Utility.Debug("TakeAll:CanTake() mail id " .. tostring(mailData and mailData.mailId) .. "? " .. tostring(canTake), debug)
     return canTake
 end
 
 --[[ True if the currently-selected mail can be taken by Take All operations 
      according to current options panel criteria. ]]
-function TakeAll:CanTakeSelectedMail()
+function TakeAll:CanTakeSelectedMail(excludeMailId)
     local selectedMailData = addon.Utility.KeyboardGetSelectedMailData()
     if selectedMailData
+       and (not excludeMailId or not AreId64sEqual(selectedMailData.mailId, excludeMailId))
        and self:CanTake(selectedMailData) 
     then 
         return true 
@@ -216,9 +223,9 @@ function TakeAll:GetName()
 end
 
 --[[ Gets the next highest-priority mail data instance that Take All can take ]]
-function TakeAll:GetNext()
+function TakeAll:GetNext(excludeMailId)
     local iterator = addon.classes.InboxTreeIterator:New(self.iterationFilter)
-    local nextMailData = iterator.next(MAIL_INBOX.navigationTree:GetSelectedNode())
+    local nextMailData = iterator.next(MAIL_INBOX.navigationTree:GetSelectedNode(), excludeMailId)
     if nextMailData then
         addon.Utility.Debug("TakeAll:KeyboardGetNext() returning mail id " .. tostring(nextMailData.mailId), debug)
         return nextMailData
@@ -226,7 +233,7 @@ function TakeAll:GetNext()
     addon.Utility.Debug("TakeAll:KeyboardGetNext() returning nil", debug)
 end
 
-function TakeAll:KeyboardGetMailReadCallback(retries)
+function TakeAll:KeyboardGetMailReadCallback(retries, excludeMailId)
     return function()
         addon.Events:UnregisterForUpdate(EVENT_MAIL_READABLE)
         retries = retries - 1
@@ -234,32 +241,32 @@ function TakeAll:KeyboardGetMailReadCallback(retries)
             ZO_Alert(UI_ALERT_CATEGORY_ALERT, nil, SI_PM_READ_FAILED)
             addon:Reset()
         else
-            self:KeyboardMailRead(retries)
+            self:KeyboardMailRead(retries, excludeMailId)
         end
     end
 end
 
-function TakeAll:KeyboardMailRead(retries)
+function TakeAll:KeyboardMailRead(retries, excludeMailId)
     
     if not retries then
         retries = PM_MAIL_READ_MAX_RETRIES
     end
     
     -- If there exists another message in the inbox that has attachments, select it. otherwise, clear the selection.
-    local nextMailData = self:GetNext()
+    local nextMailData = self:GetNext(excludeMailId)
     if nextMailData then
-        addon.Events:RegisterForUpdate(EVENT_MAIL_READABLE, PM_MAIL_READ_TIMEOUT_MS, self:KeyboardGetMailReadCallback(retries) )
+        addon.Events:RegisterForUpdate(EVENT_MAIL_READABLE, PM_MAIL_READ_TIMEOUT_MS, self:KeyboardGetMailReadCallback(retries, excludeMailId) )
         MAIL_INBOX.navigationTree:Commit(nextMailData and nextMailData.node, false)
     end
     return nextMailData
 end
 
 --[[ Selects the next highest-priority mail data instance that Take All can take ]]
-function TakeAll:SelectNext()
+function TakeAll:SelectNext(excludeMailId)
     -- Don't need to get anything. The current selection already has attachments.
-    if self:CanTakeSelectedMail() then return true end
+    if self:CanTakeSelectedMail(excludeMailId) then return true end
     
-    local nextMailData = self:KeyboardMailRead()
+    local nextMailData = self:KeyboardMailRead(PM_MAIL_READ_MAX_RETRIES, excludeMailId)
     if nextMailData then
         return true
     end

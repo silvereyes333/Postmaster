@@ -43,12 +43,14 @@ end
 
 --[[ True if the currently-selected mail can be taken by Take All operations 
      according to current options panel criteria. ]]
-function class.TakeAllGamepad:CanTakeSelectedMail()
+function class.TakeAllGamepad:CanTakeSelectedMail(excludeMailId)
     -- TODO: move to shared function with the keyboard TakeAll.lua
     local selectedMailData = addon.Utility.GamepadGetSelectedMailData()
     if selectedMailData
+       and (not excludeMailId or not AreId64sEqual(selectedMailData.mailId, excludeMailId))
        and self.keyboardKeybind:CanTake(selectedMailData) 
     then 
+        addon.Utility.Debug("TakeAllGamepad:CanTakeSelectedMail() for mail id " .. tostring(selectedMailData.mailId) .. " = true", debug)
         return true 
     end
 end
@@ -58,11 +60,13 @@ function class.TakeAllGamepad:GetName()
 end
 
 --[[ Gets the next highest-priority mail data instance that Take All can take ]]
-function class.TakeAllGamepad:GetNext()
+function class.TakeAllGamepad:GetNext(excludeMailId)
     local data, index = addon.Utility.GetMailData()
     for listIndex, item in ipairs(data) do
         item = item[index]
-        if self.keyboardKeybind:CanTake(item) then
+        if (not excludeMailId or not AreId64sEqual(item.mailId, excludeMailId)) 
+           and self.keyboardKeybind:CanTake(item)
+        then
             addon.Utility.Debug("TakeAllGamepad:GetNext() returning mail id " .. tostring(item.mailId), debug)
             return item, listIndex
         end
@@ -70,7 +74,7 @@ function class.TakeAllGamepad:GetNext()
     addon.Utility.Debug("TakeAllGamepad:GetNext() returning nil", debug)
 end
 
-function class.TakeAllGamepad:GamepadGetMailReadCallback(retries)
+function class.TakeAllGamepad:GamepadGetMailReadCallback(retries, excludeMailId)
     -- TODO: move to shared function with the keyboard TakeAll.lua
     return function()
         addon.Events:UnregisterForUpdate(EVENT_MAIL_READABLE)
@@ -80,12 +84,12 @@ function class.TakeAllGamepad:GamepadGetMailReadCallback(retries)
             ZO_Alert(UI_ALERT_CATEGORY_ALERT, nil, SI_PM_READ_FAILED)
             addon:Reset()
         else
-            self:GamepadMailRead(retries)
+            self:GamepadMailRead(retries, excludeMailId)
         end
     end
 end
 
-function class.TakeAllGamepad:GamepadMailRead(retries)
+function class.TakeAllGamepad:GamepadMailRead(retries, excludeMailId)
         addon.Utility.Debug("class.TakeAllGamepad:GamepadMailRead(" .. tostring(retries) .. ")", debug)
     
     if not retries then
@@ -93,24 +97,22 @@ function class.TakeAllGamepad:GamepadMailRead(retries)
     end
     
     -- If there exists another message in the inbox that has attachments, select it. otherwise, clear the selection.
-    local nextMailData, nextMailIndex = self:GetNext()
-    
-    -- TODO: Figure out why this doesn't work right
+    local nextMailData, nextMailIndex = self:GetNext(excludeMailId)
     
     if nextMailData then
-        addon.Events:RegisterForUpdate(EVENT_MAIL_READABLE, PM_MAIL_READ_TIMEOUT_MS, self:GamepadGetMailReadCallback(retries) )
-        addon.Utility.Debug("MAIL_MANAGER_GAMEPAD.inbox.mailList:SetSelectedIndex(" .. tostring(nextMailIndex) .. ")", debug)
-        MAIL_MANAGER_GAMEPAD.inbox.mailList:SetSelectedIndex(nextMailIndex)
+        addon.Events:RegisterForUpdate(EVENT_MAIL_READABLE, PM_MAIL_READ_TIMEOUT_MS, self:GamepadGetMailReadCallback(retries, excludeMailId) )
+        addon.Utility.Debug("MAIL_MANAGER_GAMEPAD.inbox.mailList:SetSelectedIndexWithoutAnimation(" .. tostring(nextMailIndex) .. ")", debug)
+        MAIL_MANAGER_GAMEPAD.inbox.mailList:SetSelectedIndexWithoutAnimation(nextMailIndex)
     end
     return nextMailData
 end
 
 --[[ Selects the next highest-priority mail data instance that Take All can take ]]
-function class.TakeAllGamepad:SelectNext()
+function class.TakeAllGamepad:SelectNext(excludeMailId)
     -- Don't need to get anything. The current selection already has attachments.
-    if self:CanTakeSelectedMail() then return true end
+    if self:CanTakeSelectedMail(excludeMailId) then return true end
     
-    local nextMailData = self:GamepadMailRead()
+    local nextMailData = self:GamepadMailRead(PM_MAIL_READ_MAX_RETRIES, excludeMailId)
     if nextMailData then
         return true
     end

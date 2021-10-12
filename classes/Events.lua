@@ -173,7 +173,7 @@ function Events:MailRemoved(eventCode, mailId)
     -- EVENT_MAIL_READABLE event comes back from the server.
     if isInboxOpen and addon.takingAll then
         addon.Utility.Debug("Selecting next mail with attachments", debug)
-        if addon.Utility.GetActiveKeybinds().TakeAll:SelectNext() then
+        if addon.Utility.GetActiveKeybinds().TakeAll:SelectNext(mailId) then
               return
         end
     end
