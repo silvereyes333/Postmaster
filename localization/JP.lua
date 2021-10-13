@@ -95,6 +95,7 @@ local strings = {
     ["SI_PM_TAKE_ATTACHMENTS_FAILED"]            = "添付ファイルの収集に問題がありました。もう一度やり直してください。",
     ["SI_PM_READ_FAILED"]                        = "次の電子メールメッセージの読み取りに問題がありました。もう一度やり直してください。",
     ["SI_PM_MESSAGE"]                            = "メッセージ",
+    ["SI_PM_KEYBOARD"]                           = "(キーボード)"
     ["SI_PM_TAKE_ALL_BY_SUBJECT"]                = "件名で取る",
     ["SI_PM_TAKE_ALL_BY_SENDER"]                 = "差出人で取る",
     ["SI_PM_KEYBIND_ENABLE_TOOLTIP"]             = { "Postmasterショートカットをアクティブにします：<<1>>および<<2>>", SI_LOOT_TAKE, SI_LOOT_TAKE_ALL },

@@ -170,7 +170,7 @@ function Postmaster:SettingsSetup()
         -- Keyboard Quaternary Action
         {
             type = "dropdown",
-            name = GetString(SI_BINDING_NAME_UI_SHORTCUT_QUATERNARY), -- TODO: Prefix name with "Keyboard ".
+            name = GetString(SI_BINDING_NAME_UI_SHORTCUT_QUATERNARY) .. GetString(SI_PM_KEYBOARD),
             width = "full",
             choices = self.quaternaryChoices,
             choicesValues = self.quaternaryChoicesValues,
