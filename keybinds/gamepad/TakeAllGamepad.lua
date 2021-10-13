@@ -7,6 +7,7 @@
 local addon = Postmaster
 local class = addon.classes
 local debug = false
+local SKIP_SELECTED = true
 
 class.TakeAllGamepad = addon.classes.Keybind:Subclass()
 
@@ -19,23 +20,31 @@ function class.TakeAllGamepad:Initialize()
     self.keybind = "UI_SHORTCUT_SECONDARY"
     self.take =  addon.Utility.KeybindGetDescriptor(MAIL_MANAGER_GAMEPAD.inbox.mainKeybindDescriptor, "UI_SHORTCUT_PRIMARY")
     self.keyboardKeybind = addon.keybinds.keyboard.TakeAll
+    self.readQueue = {}
     addon.classes.Keybind.Initialize(self)
 end
 
 function class.TakeAllGamepad:Callback()
     -- TODO: move to shared function with the keyboard TakeAll.lua
     addon.Utility.Debug("class.TakeAllGamepad:Callback()", debug)
+    
     if addon:IsBusy() then return end
-    if self:CanTakeSelectedMail() then
-        addon.Utility.Debug("Selected mail can be taken by Take All. Taking.", debug)
+    
+    ZO_ClearTable(addon.readQueue)
+    
+    local canTake, mailData = self:CanTakeSelectedMail()
+    if canTake then
+        addon.Utility.Debug("Selected mail id " .. tostring(mailData.mailId) .. "can be taken by Take All. Taking.", debug)
         addon.taking    = true
         addon.takingAll = true
-        self:TakeOrDeleteSelected()
-    elseif self:SelectNext() then
+        self:DequeueReadRequest(mailData.mailId)
+        
+    elseif self:SelectNext(mailData and mailData.mailId, SKIP_SELECTED) then
         addon.Utility.Debug("Getting next mail with attachments", debug)
         addon.taking    = true
         addon.takingAll = true
         -- will call the take or delete callback when the message is read
+        
     else
         addon.Utility.Debug("Selected mail cannot be taken, nor can any others.", debug)
     end
@@ -51,7 +60,50 @@ function class.TakeAllGamepad:CanTakeSelectedMail(excludeMailId)
        and self.keyboardKeybind:CanTake(selectedMailData) 
     then 
         addon.Utility.Debug("TakeAllGamepad:CanTakeSelectedMail() for mail id " .. tostring(selectedMailData.mailId) .. " = true", debug)
-        return true 
+        return true, selectedMailData 
+    end
+    return nil, selectedMailData
+end
+
+--[[ If a given mail id has a queued read request, 
+     takes attachments from the the related mail message, if they exist.
+     Deletes the mail if it has no attachments.
+     Causes the mail id to be removed from the read queue. ]]
+function class.TakeAllGamepad:DequeueReadRequest(mailId, force)
+    
+    addon.Utility.Debug("class.TakeAllGamepad:DequeueReadRequest(" .. tostring(mailId) .. ")", debug)
+    
+    local mailIdStr = addon.Utility.GetMailIdString(mailId)
+    if not self.readQueue[mailIdStr] and not force then
+        return
+    end
+    
+    if self:TryCodMail() then
+        return
+    end
+    
+    local mailData = addon.Utility.GetMailDataById(mailId)
+    if not mailData then
+        addon.Utility.Debug("No mail with id " .. tostring(mailId) .. " exists. Cannot take or delete.", debug)
+        return
+    end
+    
+    -- Get the latest data, in case it has changed
+    ZO_MailInboxShared_PopulateMailData(mailData, mailId)
+    
+    -- TODO: move to shared function with the keyboard TakeAll.lua
+    local hasAttachments = (mailData.attachedMoney and mailData.attachedMoney > 0)
+      or (mailData.numAttachments and mailData.numAttachments > 0)
+    if hasAttachments then
+        addon.Utility.Debug("Taking attachments for active mail id " .. tostring(mailId) .. ", isReadInfoReady = " .. tostring(mailData.isReadInfoReady), debug)
+        addon.taking = true
+        self.take.callback()
+    else
+        -- If all attachments are gone, remove the message
+        addon.Utility.Debug("Deleting "..tostring(mailId), debug)
+        
+        -- Delete the mail
+        addon.Delete:ByMailId(mailId)
     end
 end
 
@@ -108,40 +160,16 @@ function class.TakeAllGamepad:GamepadMailRead(retries, excludeMailId)
 end
 
 --[[ Selects the next highest-priority mail data instance that Take All can take ]]
-function class.TakeAllGamepad:SelectNext(excludeMailId)
+function class.TakeAllGamepad:SelectNext(excludeMailId, skipSelected)
+  
     -- Don't need to get anything. The current selection already has attachments.
-    if self:CanTakeSelectedMail(excludeMailId) then return true end
+    if not skipSelected and self:CanTakeSelectedMail(excludeMailId) then
+        return true
+    end
     
     local nextMailData = self:GamepadMailRead(PM_MAIL_READ_MAX_RETRIES, excludeMailId)
     if nextMailData then
         return true
-    end
-end
-
---[[ Takes attachments from the selected (readable) mail if they exist, or 
-     deletes the mail if it has no attachments. ]]
-function class.TakeAllGamepad:TakeOrDeleteSelected()
-    addon.Utility.Debug("class.TakeAllGamepad:TakeOrDeleteSelected()", debug)
-    if self:TryCodMail() then return end
-    
-    local mailData = addon.Utility.GamepadGetSelectedMailData()
-    
-    -- Get the latest data, in case it has changed
-    ZO_MailInboxShared_PopulateMailData(mailData, mailData.mailId)
-    
-    -- TODO: move to shared function with the keyboard TakeAll.lua
-    local hasAttachments = (mailData.attachedMoney and mailData.attachedMoney > 0)
-      or (mailData.numAttachments and mailData.numAttachments > 0)
-    if hasAttachments then
-        addon.Utility.Debug("Taking attachments for active mail id " .. tostring(mailData.mailId) .. ", isReadInfoReady = " .. tostring(mailData.isReadInfoReady), debug)
-        addon.taking = true
-        self.take.callback()
-    else
-        -- If all attachments are gone, remove the message
-        addon.Utility.Debug("Deleting "..tostring(mailData.mailId), debug)
-        
-        -- Delete the mail
-        addon.Delete:ByMailId(mailData.mailId)
     end
 end
 

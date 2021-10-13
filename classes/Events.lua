@@ -117,7 +117,7 @@ function Events:MailReadable(eventCode, mailId)
     -- If taking all, then go ahead and start the next Take loop, since the
     -- mail and attachments are readable now.
     if addon.takingAll then
-        addon.Utility.GetActiveKeybinds().TakeAll:TakeOrDeleteSelected()
+        addon.Utility.GetActiveKeybinds().TakeAll:DequeueReadRequest(mailId)
     end
 end
 

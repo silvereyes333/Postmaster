@@ -6,6 +6,7 @@
 
 local addon = Postmaster
 local debug = false
+local SKIP_SELECTED = true
 local take = addon.Utility.KeybindGetDescriptor(MAIL_INBOX.selectionKeybindStripDescriptor, "UI_SHORTCUT_PRIMARY")
 
 local TakeAll = addon.classes.Keybind:Subclass()
@@ -20,25 +21,32 @@ function TakeAll:Initialize()
     self.iterationFilter = function(...)
         return self:CanTake(...)
     end
+    addon.readQueue = {}
     addon.classes.Keybind.Initialize(self)
 end
 
 function TakeAll:Callback()
     if addon:IsBusy() then return end
-    if self:CanTakeSelectedMail() then
-        addon.Utility.Debug("Selected mail can be taken by Take All. Taking.", debug)
+    
+    ZO_ClearTable(addon.readQueue)
+    
+    local canTake, mailData = self:CanTakeSelectedMail()
+    if canTake then
+        addon.Utility.Debug("Selected mail id " .. tostring(mailData.mailId) .. " can be taken by Take All. Taking.", debug)
         addon.taking    = true
         addon.takingAll = true
         MAIL_INBOX.selectMailIdOnRefresh = nil
-        self:TakeOrDeleteSelected()
-    elseif self:SelectNext() then
+        self:DequeueReadRequest(mailData.mailId, true)
+        
+    elseif self:SelectNext(mailData and mailData.mailId, SKIP_SELECTED) then
         addon.Utility.Debug("Getting next mail with attachments", debug)
         addon.taking    = true
         addon.takingAll = true
         MAIL_INBOX.selectMailIdOnRefresh = nil
         -- will call the take or delete callback when the message is read
+        
     else
-        addon.Utility.Debug("Selected mail cannot be taken, nor can any others.", debug)
+        addon.Utility.Debug("Selected mail id " .. tostring(mailData and mailData.mailId) .. " cannot be taken, nor can any others.", debug)
     end
 end
 
@@ -214,7 +222,45 @@ function TakeAll:CanTakeSelectedMail(excludeMailId)
        and (not excludeMailId or not AreId64sEqual(selectedMailData.mailId, excludeMailId))
        and self:CanTake(selectedMailData) 
     then 
-        return true 
+        return true, selectedMailData
+    end
+    return nil, selectedMailData
+end
+
+--[[ If a given mail id has a queued read request, 
+     takes attachments from the the related mail message, if they exist.
+     Deletes the mail if it has no attachments.
+     Causes the mail id to be removed from the read queue. ]]
+function TakeAll:DequeueReadRequest(mailId, force)
+  
+    local mailIdStr = addon.Utility.GetMailIdString(mailId)
+    if not self.readQueue[mailIdStr] and not force then
+        return
+    end
+    
+    self.readQueue[mailIdStr] = nil
+    
+    if self:TryCodMail() then
+        return
+    end
+    
+    local mailData = addon.Utility.GetMailDataById(mailId)
+    if not mailData then
+        addon.Utility.Debug("No mail with id " .. tostring(mailId) .. " exists. Cannot take or delete.", debug)
+        return
+    end
+    
+    local hasAttachments = (mailData.attachedMoney and mailData.attachedMoney > 0)
+      or (mailData.numAttachments and mailData.numAttachments > 0)
+    if hasAttachments then
+        addon.taking = true
+        take.callback()
+    else
+        -- If all attachments are gone, remove the message
+        addon.Utility.Debug("Deleting " .. tostring(mailId), debug)
+        
+        -- Delete the mail
+        addon.Delete:ByMailId(mailId)
     end
 end
 
@@ -255,6 +301,8 @@ function TakeAll:KeyboardMailRead(retries, excludeMailId)
     -- If there exists another message in the inbox that has attachments, select it. otherwise, clear the selection.
     local nextMailData = self:GetNext(excludeMailId)
     if nextMailData then
+        local mailIdStr = addon.Utility.GetMailIdString(mailId)
+        self.readQueue[mailIdStr] = true
         addon.Events:RegisterForUpdate(EVENT_MAIL_READABLE, PM_MAIL_READ_TIMEOUT_MS, self:KeyboardGetMailReadCallback(retries, excludeMailId) )
         MAIL_INBOX.navigationTree:Commit(nextMailData and nextMailData.node, false)
     end
@@ -262,32 +310,16 @@ function TakeAll:KeyboardMailRead(retries, excludeMailId)
 end
 
 --[[ Selects the next highest-priority mail data instance that Take All can take ]]
-function TakeAll:SelectNext(excludeMailId)
+function TakeAll:SelectNext(excludeMailId, skipSelected)
+  
     -- Don't need to get anything. The current selection already has attachments.
-    if self:CanTakeSelectedMail(excludeMailId) then return true end
+    if not skipSelected and self:CanTakeSelectedMail(excludeMailId) then
+        return true
+    end
     
     local nextMailData = self:KeyboardMailRead(PM_MAIL_READ_MAX_RETRIES, excludeMailId)
     if nextMailData then
         return true
-    end
-end
-
---[[ Takes attachments from the selected (readable) mail if they exist, or 
-     deletes the mail if it has no attachments. ]]
-function TakeAll:TakeOrDeleteSelected()
-    if self:TryCodMail() then return end
-    local mailData = addon.Utility.KeyboardGetSelectedMailData()
-    local hasAttachments = (mailData.attachedMoney and mailData.attachedMoney > 0)
-      or (mailData.numAttachments and mailData.numAttachments > 0)
-    if hasAttachments then
-        addon.taking = true
-        take.callback()
-    else
-        -- If all attachments are gone, remove the message
-        addon.Utility.Debug("Deleting "..tostring(mailData.mailId), debug)
-        
-        -- Delete the mail
-        addon.Delete:ByMailId(mailData.mailId)
     end
 end
 
