@@ -276,6 +276,12 @@ function addon.Utility.MailFieldMatch(mailData, field, substrings)
     end
 end
 
+function addon.Utility.MatchMailIdClosure(mailId)
+    return function(mailData)
+        return mailData and mailData.mailId and AreId64sEqual(mailData.mailId, mailId)
+    end
+end
+
 --[[ Opens the addon settings panel ]]
 function addon.Utility.OpenSettingsPanel()
     LibAddonMenu2:OpenToPanel(addon.settingsPanel)

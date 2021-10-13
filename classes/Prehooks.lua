@@ -17,29 +17,20 @@ end
 
 --[[ Wire up all prehook handlers ]]
 function Prehooks:Initialize()
-    ZO_PreHook("ZO_MailInboxShared_TakeAll", self:Create("MailInboxSharedTakeAll"))
-    ZO_PreHook("RequestReadMail", self:Create("RequestReadMail"))
-    ZO_PreHook("ZO_Dialogs_ShowDialog", self:Create("DialogsShowDialog"))
-    ZO_PreHook("ZO_Dialogs_ShowGamepadDialog", self:Create("DialogsShowGamepadDialog"))
-    ZO_PreHook(MAIL_INBOX, "OnMailRemoved", self:Create("InboxOnMailRemoved"))
+    ZO_PreHook("ZO_MailInboxShared_TakeAll", self:Closure(self.MailInboxSharedTakeAll))
+    ZO_PreHook("RequestReadMail", self:Closure(self.RequestReadMail))
+    ZO_PreHook("ZO_Dialogs_ShowDialog", self:Closure(self.DialogsShowDialog))
+    ZO_PreHook("ZO_Dialogs_ShowGamepadDialog", self:Closure(self.DialogsShowGamepadDialog))
+    ZO_PreHook(MAIL_INBOX, "OnMailRemoved", self:Closure(self.InboxOnMailRemoved))
+    ZO_PreHook(MAIL_MANAGER_GAMEPAD.inbox, "InitializeOptionsList", self:Closure(self.MailGamepadInboxInitializeOptionsList))
+    ZO_PreHook(MAIL_MANAGER_GAMEPAD.inbox, "OnMailTargetChanged", self:Closure(self.MailGamepadInboxOnMailTargetChanged))
+    ZO_PreHook(MAIL_MANAGER_GAMEPAD.inbox, "RefreshMailList", self:Closure(self.MailGamepadInboxRefreshMailList))
+    ZO_PreHook(MAIL_MANAGER_GAMEPAD.inbox, "ShowMailItem", self:Closure(self.MailGamepadInboxShowMailItem))
 end
 
-function Prehooks:Create(name)
+function Prehooks:Closure(fn)
     return function(...)
-        return self[name](self, ...)
-    end
-end
-
-function Prehooks:GetTakeAttachmentsTimeout(mailId, retries)
-    return function()
-        addon.Events:UnregisterForUpdate(EVENT_MAIL_TAKE_ATTACHED_ITEM_SUCCESS)
-        retries = retries - 1
-        if retries < 0 then
-            self:OnTakeAttachmentsFailed()
-        else
-            self:RegisterTakeAttachmentsTimeout(mailId, retries)
-            ZO_MailInboxShared_TakeAll(mailId)
-        end
+        return fn(self, ...)
     end
 end
 
@@ -70,6 +61,19 @@ function Prehooks:InboxOnMailRemoved(inbox, mailId)
     addon.Utility.Debug("MAIL_INBOX:OnMailRemoved(" .. tostring(inbox) .. ", " .. tostring(mailId) .. ")", debug)
     if addon.AutoReturn:IsMailIdQueued(mailId) then
         return true
+    end
+end
+
+function Prehooks:GetTakeAttachmentsTimeout(mailId, retries)
+    return function()
+        addon.Events:UnregisterForUpdate(EVENT_MAIL_TAKE_ATTACHED_ITEM_SUCCESS)
+        retries = retries - 1
+        if retries < 0 then
+            self:OnTakeAttachmentsFailed()
+        else
+            self:RegisterTakeAttachmentsTimeout(mailId, retries)
+            ZO_MailInboxShared_TakeAll(mailId)
+        end
     end
 end
 
@@ -122,7 +126,67 @@ function Prehooks:MailInboxSharedTakeAll(mailId)
     end
 end
 
+function Prehooks:MailGamepadInboxInitializeOptionsList(inbox)
+    ZO_PreHook(MAIL_MANAGER_GAMEPAD.inbox.mailList, "Clear", self:Closure(self.MailGamepadInboxListClear))
+    ZO_PreHook(MAIL_MANAGER_GAMEPAD.inbox.mailList, "Commit", self:Closure(self.MailGamepadInboxListCommit))
+    ZO_PreHook(MAIL_MANAGER_GAMEPAD.inbox.mailList, "SetSelectedIndex", self:Closure(self.MailGamepadInboxListSetSelectedIndex))
+    ZO_PreHook(MAIL_MANAGER_GAMEPAD.inbox.mailList, "UpdateAnchors", self:Closure(self.MailGamepadInboxListUpdateAnchors))
+end
+
+function Prehooks:MailGamepadInboxListClear(list)
+    addon.Utility.Debug("MailGamepadInboxListClear()", debug)
+end
+
+function Prehooks:MailGamepadInboxListCommit(list)
+    addon.Utility.Debug("MailGamepadInboxListCommit()", debug)
+    if self.deferredSelectMailId then
+        local selectedIndex = list:FindFirstIndexByEval(addon.Utility.MatchMailIdClosure(self.deferredSelectMailId))
+        list:EnableAnimation(false)
+        local ALLOW_EVEN_IF_DISABLED = true
+        local FORCE_ANIMATION = true
+        local DEFAULT_JUMP_TYPE = nil
+        local BLOCK_SELECTION_CHANGED_CALLBACK = true
+        addon.Utility.Debug("Prehooks.deferredSelectMailId " .. tostring(self.deferredSelectMailId) .. " detected.  Setting selected index to " .. tostring(selectedIndex), debug)
+        list:SetSelectedIndex(selectedIndex, ALLOW_EVEN_IF_DISABLED, FORCE_ANIMATION, DEFAULT_JUMP_TYPE, BLOCK_SELECTION_CHANGED_CALLBACK)
+        list:EnableAnimation(true)
+        self.deferredSelectMailId = nil
+    end
+end
+
+function Prehooks:MailGamepadInboxListSetSelectedIndex(list, selectedIndex, allowEvenIfDisabled, forceAnimation, jumpType, blockSelectionChangedCallback)
+    addon.Utility.Debug("MailGamepadInboxListSetSelectedIndex(selectedIndex: " .. tostring(selectedIndex) 
+        .. ", allowEvenIfDisabled: " .. tostring(allowEvenIfDisabled) .. ", forceAnimation: " .. tostring(forceAnimation)
+        .. ", jumpType: " .. tostring(jumpType) .. ", blockSelectionChangedCallback: " .. tostring(blockSelectionChangedCallback) .. ")", 
+        debug)
+end
+
+function Prehooks:MailGamepadInboxListUpdateAnchors(list, continousTargetOffset, initialUpdate, reselectingDuringRebuild, blockSelectionChangedCallback)
+    addon.Utility.Debug("MailGamepadInboxListUpdateAnchors(continuousTargetOffset: " .. tostring(continousTargetOffset) 
+        .. ", initialUpdate: " .. tostring(initialUpdate) .. ", reselectingDuringRebuild: " .. tostring(reselectingDuringRebuild) 
+        .. ", blockSelectionChangedCallback: " .. tostring(blockSelectionChangedCallback) .. ")", debug)
+end
+
+function Prehooks:MailGamepadInboxOnMailTargetChanged(inbox, list, targetData, oldTargetData, reachedTargetIndex, targetSelectedIndex)
+    addon.Utility.Debug("MailGamepadInboxOnMailTargetChanged(targetData: { dataSource: { mailId: " 
+        .. tostring(targetData and targetData.dataSource and targetData.dataSource.mailId) 
+        .. ", subject: " .. tostring(targetData and targetData.dataSource and targetData.dataSource.subject) .. " } }"
+        .. ", oldTargetData: { dataSource: { mailId: " 
+        .. tostring(oldTargetData and oldTargetData.dataSource and oldTargetData.dataSource.mailId) 
+        .. ", subject: " .. tostring(oldTargetData and oldTargetData.dataSource and oldTargetData.dataSource.subject) .. " } }"
+        .. ", reachedTargetIndex: " .. tostring(reachedTargetIndex) .. ", targetSelectedIndex: " .. tostring(targetSelectedIndex) .. ")", 
+        debug)
+end
+
+function Prehooks:MailGamepadInboxRefreshMailList(inbox) 
+    addon.Utility.Debug("MailGamepadInboxRefreshMailList()", debug)
+end
+
+function Prehooks:MailGamepadInboxShowMailItem(inbox, mailId)
+    addon.Utility.Debug("MailGamepadInboxShowMailItem(" .. tostring(mailId) .. ")", debug)
+end
+
 function Prehooks:OnTakeAttachmentsFailed()
+    addon.Utility.Debug("Prehooks:OnTakeAttachmentsFailed(). Resetting PM.", debug)
     ZO_Alert(UI_ALERT_CATEGORY_ALERT, nil, SI_PM_TAKE_ATTACHMENTS_FAILED)
     addon:Reset()
 end
@@ -143,6 +207,11 @@ function Prehooks:RequestReadMail(mailId)
         addon.Utility.Debug("Inbox isn't open. Request denied.", debug)
     end
     return deny
+end
+
+function Prehooks:SetDeferredSelectMailId(mailId)
+    addon.Utility.Debug("Prehooks:SetDeferredSelectMailId(" .. tostring(mailId) .. ")", debug)
+    self.deferredSelectMailId = mailId
 end
 
 addon.Prehooks = Prehooks:New()

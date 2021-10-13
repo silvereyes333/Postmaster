@@ -22,6 +22,10 @@ end
 
 function OptionsGamepad:GetFilterFieldValue(mailData)
     
+    addon.Utility.Debug("class.OptionsGamepad:GetFilterFieldValue(mailData: { mailId: " 
+        .. tostring(mailData and mailData.mailId) .. " }), self.filterFieldName = " 
+        .. tostring(self.filterFieldName), debug)
+    
     if not mailData then
         mailData = addon.Utility.GamepadGetSelectedMailData()
     end
@@ -45,6 +49,9 @@ function OptionsGamepad:GetName()
 end
 
 function OptionsGamepad:SelectedCallback()
+    
+    addon.Utility.Debug("class.OptionsGamepad:Callback(), self.filterFieldName = " .. tostring(self.filterFieldName), debug)
+    
     if addon:IsBusy() then
         return
     end

@@ -182,7 +182,11 @@ end
 
 --[[ True if the given mail can be taken by Take All operations according
      to current options panel criteria. ]]
-function TakeAll:CanTake(mailData)
+function TakeAll:CanTake(mailData, excludeMailId)
+  
+    if excludeMailId and AreId64sEqual(mailData.mailId, excludeMailId) then
+        return false
+    end
   
     local canTake
     
@@ -301,7 +305,7 @@ function TakeAll:KeyboardMailRead(retries, excludeMailId)
     -- If there exists another message in the inbox that has attachments, select it. otherwise, clear the selection.
     local nextMailData = self:GetNext(excludeMailId)
     if nextMailData then
-        local mailIdStr = addon.Utility.GetMailIdString(mailId)
+        local mailIdStr = addon.Utility.GetMailIdString(nextMailData.mailId)
         self.readQueue[mailIdStr] = true
         addon.Events:RegisterForUpdate(EVENT_MAIL_READABLE, PM_MAIL_READ_TIMEOUT_MS, self:KeyboardGetMailReadCallback(retries, excludeMailId) )
         MAIL_INBOX.navigationTree:Commit(nextMailData and nextMailData.node, false)

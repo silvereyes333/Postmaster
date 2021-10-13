@@ -40,7 +40,7 @@ function Events:Initialize()
     self.updateKeyPrefix = addon.name .. ".Events."
     
     for event, handlerName in pairs(self.handlerNames) do
-        EVENT_MANAGER:RegisterForEvent(addon.name, event, self:CreateHandler(event, handlerName))
+        EVENT_MANAGER:RegisterForEvent(addon.name, event, self:Closure(handlerName))
     end
     
     -- We are only interested in backpack inventory updates
@@ -52,9 +52,9 @@ function Events:Initialize()
     end
 end
 
-function Events:CreateHandler(eventCode, handlerName)
+function Events:Closure(functionName)
     return function(...)
-        self[handlerName](self, ...)
+        self[functionName](self, ...)
     end
 end
 
@@ -173,7 +173,7 @@ function Events:MailRemoved(eventCode, mailId)
     -- EVENT_MAIL_READABLE event comes back from the server.
     if isInboxOpen and addon.takingAll then
         addon.Utility.Debug("Selecting next mail with attachments", debug)
-        if addon.Utility.GetActiveKeybinds().TakeAll:SelectNext(mailId) then
+        if addon.Utility.GetActiveKeybinds().TakeAll:SelectNext(mailId, nil, eventCode) then
               return
         end
     end
