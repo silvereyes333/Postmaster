@@ -64,7 +64,7 @@ function Delete:ByMailId(mailId)
     end
     
     -- Check that the current type of mail should be deleted
-    if addon.takingAll and not addon.filterFieldValue then
+    if addon.takingAll then
         if not addon.keybinds.keyboard.TakeAll:CanDelete(mailData, attachmentData) then
             addon.Utility.Debug("Not deleting mail id "..mailIdString.." because of configured options")
             -- Skip actual mail removal and go directly to the postprocessing logic

@@ -65,6 +65,10 @@ function TakeAll:CanDelete(mailData, attachmentData)
   
     -- Take by Subject / Sender
     if addon.filterFieldValue and addon.filterFieldKeybind then
+        if not addon.filterFieldKeybind:IsDeleteEnabled() then
+            addon.Utility.Debug("Delete is not enabled for " .. addon.filterFieldKeybind.name .. ". TakeAll:CanDelete() mail id " .. tostring(mailData and mailData.mailId) .. "? false", debug)
+            return false
+        end
         local mailDataFieldValue = addon.filterFieldKeybind:GetFilterFieldValue(mailData)
         local canDelete = mailDataFieldValue and mailDataFieldValue == addon.filterFieldValue
         addon.Utility.Debug("mailDataFieldValue = " .. tostring(mailDataFieldValue) .. ", filterFieldValue = " .. tostring(addon.filterFieldValue), debug) 
