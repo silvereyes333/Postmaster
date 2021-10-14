@@ -130,7 +130,8 @@ function Events:MailRemoved(eventCode, mailId)
     
     -- If a mail id was queued for deletion, dequeue it
     local deleteQueuedRunning = addon.Delete:IsRunning()
-    if addon.Delete:DequeueMailId(mailId) and deleteQueuedRunning then
+    local deleteWasQueued = addon.Delete:DequeueMailId(mailId)
+    if deleteWasQueued and deleteQueuedRunning then
         -- If addon.Delete is running through a DeleteQueued() operation, then
         -- proceed to the next in the queue.
         addon.Delete:DeleteNext()
@@ -146,19 +147,21 @@ function Events:MailRemoved(eventCode, mailId)
         return
     end
     
-    -- Just a quick sanity check.  If a mail was removed while a queue was running,
-    -- possibly by another addon, but which wasn't in one of the two queues above,
-    -- stop processing.
-    if deleteQueuedRunning or autoReturnQueueRunning then
+    if deleteWasQueued then
+        
+        -- Call the mail removed handler that was deferred earlier in Prehooks.lua.
+        -- The following will end the active mail read, refresh the mail list and select 
+        -- the deferred mail id on the previous line.
+        MAIL_INBOX:OnMailRemoved(mailId)
+    end
+    
+    -- Just a quick sanity check.  If a mail was removed while an auto-return or auto-delete queue was running,
+    -- possibly by another addon, stop processing.
+    if autoReturnQueueRunning or deleteQueuedRunning then
         return
     end
     
-    -- Everything below this point relates to Take, Take All and Take All by Subject/Author operations
-    if not addon.taking then
-        return
-    end
-    
-    if eventCode then
+    if eventCode == EVENT_MAIL_REMOVED then
         
         -- Unwire timeout callback
         self:UnregisterForUpdate(EVENT_MAIL_REMOVED)
@@ -166,16 +169,33 @@ function Events:MailRemoved(eventCode, mailId)
         addon.Utility.Debug("deleted mail id "..tostring(mailId))
     end
     
+    -- Everything below this point relates to Take, Take All and Take All by Subject/Author operations
+    if not addon.taking then
+        return
+    end
+    
     local isInboxOpen = addon.Utility.IsInboxShown()
+    
+    local isNotDone = false
     
     -- For non-canceled take all requests, select the next mail for taking.
     -- It will be taken automatically by Event_MailReadable() once the 
     -- EVENT_MAIL_READABLE event comes back from the server.
-    if isInboxOpen and addon.takingAll then
+    if isInboxOpen and addon.takingAll and not deleteQueuedRunning then
         addon.Utility.Debug("Selecting next mail with attachments", debug)
-        if addon.Utility.GetActiveKeybinds().TakeAll:SelectNext(mailId, nil, eventCode) then
-              return
-        end
+        isNotDone = addon.Utility.GetActiveKeybinds().TakeAll:SelectNext(mailId, nil, eventCode)
+    end
+    
+    if isInboxOpen and deleteWasQueued and eventCode == EVENT_MAIL_REMOVED then
+        
+        -- Call the mail removed handler that was deferred earlier in Prehooks.lua.
+        -- The following will end the active mail read, refresh the mail list and select 
+        -- any mail ids that were deferred above.
+        MAIL_INBOX:OnMailRemoved(mailId)
+    end
+    
+    if isNotDone then
+        return
     end
     
     -- This was either a normal take, or there are no more valid mails

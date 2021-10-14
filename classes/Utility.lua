@@ -23,6 +23,8 @@ function addon.Utility.CanTake(mailData, settings)
         return false
     end
     
+    local hasAttachments = addon.Utility.HasAttachments(mailData)
+    
     -- Handle C.O.D. mail
     if mailData.codAmount and mailData.codAmount > 0 then
     
@@ -39,7 +41,6 @@ function addon.Utility.CanTake(mailData, settings)
     end
     
     local fromSystem = (mailData.fromCS or mailData.fromSystem)
-    local hasAttachments = (mailData.attachedMoney and mailData.attachedMoney > 0) or (mailData.numAttachments and mailData.numAttachments > 0)
     if hasAttachments then
         
         -- Special handling for hireling mail, since we know even without opening it that
@@ -134,6 +135,18 @@ function addon.Utility.Debug(input, force)
     d("[PM-DEBUG] " .. input)
 end
 
+function addon.Utility.FindNavigationTreeNodeByMailId(tree, mailId)
+    local listNodes = tree.rootNode:GetChildren()
+    for _, listNode in ipairs(listNodes) do
+        local mailNodes = listNode:GetChildren()
+        for _, mailNode in ipairs(mailNodes) do
+            if mailNode.data and AreId64sEqual(mailNode.data.mailId, mailId) then
+                return mailNode
+            end
+        end
+    end
+end
+
 function addon.Utility.GamepadGetSelectedMailData()
     return MAIL_MANAGER_GAMEPAD.inbox:GetActiveMailData()
 end
@@ -206,6 +219,13 @@ function addon.Utility.GetMailIdString(mailId)
     else return 
         tostring(mailId) 
     end
+end
+
+function addon.Utility.HasAttachments(mailData)
+    if not mailData then
+        return false
+    end
+    return (mailData.attachedMoney and mailData.attachedMoney > 0) or (mailData.numAttachments and mailData.numAttachments > 0)
 end
 
 function addon.Utility.IsInboxShown()

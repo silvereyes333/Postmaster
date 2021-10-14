@@ -44,7 +44,7 @@ function Quaternary:GetFilterFieldValue(mailData)
     end
     
     if not mailData or not mailData[addon.settings.keybinds.quaternary] then
-        return
+        return nil, mailData
     end
     
     local filterFieldValue = zo_strlower(mailData[addon.settings.keybinds.quaternary])
@@ -54,7 +54,7 @@ function Quaternary:GetFilterFieldValue(mailData)
         filterFieldValue = addon.Utility.StringRemovePrefixes(filterFieldValue, PM_BOUNCE_MAIL_PREFIXES)
     end
     
-    return filterFieldValue
+    return filterFieldValue, mailData
 end
 
 function Quaternary:GetName()
@@ -66,6 +66,11 @@ function Quaternary:GetName()
     end
 end
 
+function Quaternary:IsDeleteEnabled()
+    local filterFieldName = addon.settings.keybinds.quaternary
+    return addon.settings[ZO_CachedStrFormat("takeAll<<C:1>>Delete", filterFieldName)]
+end
+
 function Quaternary:Visible()
     if not addon.settings.keybinds.quaternary
        or addon.settings.keybinds.quaternary == ""
@@ -73,13 +78,16 @@ function Quaternary:Visible()
     then
         return false
     end
-    local filterFieldValue = self:GetFilterFieldValue()
+    local filterFieldValue, mailData = self:GetFilterFieldValue()
     if not filterFieldValue then
+        addon.Utility.Debug(tostring(self.name) .. " current mail id " .. tostring(mailData and mailData.mailId) .. " has no '" .. tostring(addon.settings.keybinds.quaternary) .. "' field value. visible = false.", debug)
         return false
     end
     addon.filterFieldValue = filterFieldValue
+    addon.filterFieldKeybind = self
     local visible = addon.keybinds.keyboard.TakeAll:GetNext() ~= nil
     addon.filterFieldValue = nil
+    addon.filterFieldKeybind = nil
     return visible
 end
 

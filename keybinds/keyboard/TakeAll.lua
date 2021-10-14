@@ -196,6 +196,10 @@ function TakeAll:CanTake(mailData, excludeMailId)
     
     -- Take by Subject / Sender
     if addon.filterFieldValue and addon.filterFieldKeybind then
+        local hasAttachments = addon.Utility.HasAttachments(mailData)
+        if not hasAttachments and not addon.filterFieldKeybind:IsDeleteEnabled() then
+            return false
+        end
         local mailDataFieldValue = addon.filterFieldKeybind:GetFilterFieldValue(mailData)
         canTake = mailDataFieldValue and mailDataFieldValue == addon.filterFieldValue
         addon.Utility.Debug("mailDataFieldValue = " .. tostring(mailDataFieldValue) .. ", filterFieldValue = " .. tostring(addon.filterFieldValue), debug) 
@@ -287,7 +291,7 @@ function TakeAll:GetNext(excludeMailId)
     addon.Utility.Debug("TakeAll:KeyboardGetNext() returning nil", debug)
 end
 
-function TakeAll:KeyboardGetMailReadCallback(retries, excludeMailId)
+function TakeAll:KeyboardGetMailReadCallback(retries, excludeMailId, calledFromEvent)
     return function()
         addon.Events:UnregisterForUpdate(EVENT_MAIL_READABLE)
         retries = retries - 1
@@ -295,12 +299,12 @@ function TakeAll:KeyboardGetMailReadCallback(retries, excludeMailId)
             ZO_Alert(UI_ALERT_CATEGORY_ALERT, nil, SI_PM_READ_FAILED)
             addon:Reset()
         else
-            self:KeyboardMailRead(retries, excludeMailId)
+            self:KeyboardMailRead(retries, excludeMailId, calledFromEvent)
         end
     end
 end
 
-function TakeAll:KeyboardMailRead(retries, excludeMailId)
+function TakeAll:KeyboardMailRead(retries, excludeMailId, calledFromEvent)
     
     if not retries then
         retries = PM_MAIL_READ_MAX_RETRIES
@@ -308,24 +312,41 @@ function TakeAll:KeyboardMailRead(retries, excludeMailId)
     
     -- If there exists another message in the inbox that has attachments, select it. otherwise, clear the selection.
     local nextMailData = self:GetNext(excludeMailId)
-    if nextMailData then
-        local mailIdStr = addon.Utility.GetMailIdString(nextMailData.mailId)
-        self.readQueue[mailIdStr] = true
-        addon.Events:RegisterForUpdate(EVENT_MAIL_READABLE, PM_MAIL_READ_TIMEOUT_MS, self:KeyboardGetMailReadCallback(retries, excludeMailId) )
+    if not nextMailData then
+        return
+    end
+    
+    local mailIdStr = addon.Utility.GetMailIdString(nextMailData.mailId)
+    self.readQueue[mailIdStr] = true
+    
+    -- On there's an event handler in MAIL_INBOX for mail removed events that automatically reloads the entire mail list.
+    if calledFromEvent == EVENT_MAIL_REMOVED then
+      
+        addon.Utility.Debug("Called from legit EVENT_MAIL_REMOVED. Deferring keyboard mail id " .. tostring(nextMailData.mailId) .. " selection.", debug)
+      
+        -- Right before the mail list reload is committed, set the selected index to that matching the next mail id
+        addon.Prehooks:SetDeferredSelectMailId(nextMailData.mailId)
+            
+    -- If this wasn't called from an actual mail remove event, then it was probably called from Delete:ByMailId() 
+    -- when CanDelete() was false, in which case we need to select the new mail ourselves.  The mail list won't be refreshed.
+    else
+        addon.Utility.Debug("MAIL_INBOX.navigationTree:Commit(node with data mail id " .. tostring(nextMailData.mailId) .. ")", debug)
+        addon.Events:RegisterForUpdate(EVENT_MAIL_READABLE, PM_MAIL_READ_TIMEOUT_MS, self:KeyboardGetMailReadCallback(retries, excludeMailId, calledFromEvent) )
         MAIL_INBOX.navigationTree:Commit(nextMailData and nextMailData.node, false)
     end
+    
     return nextMailData
 end
 
 --[[ Selects the next highest-priority mail data instance that Take All can take ]]
-function TakeAll:SelectNext(excludeMailId, skipSelected)
+function TakeAll:SelectNext(excludeMailId, skipSelected, calledFromEvent)
   
     -- Don't need to get anything. The current selection already has attachments.
     if not skipSelected and self:CanTakeSelectedMail(excludeMailId) then
         return true
     end
     
-    local nextMailData = self:KeyboardMailRead(PM_MAIL_READ_MAX_RETRIES, excludeMailId)
+    local nextMailData = self:KeyboardMailRead(PM_MAIL_READ_MAX_RETRIES, excludeMailId, calledFromEvent)
     if nextMailData then
         return true
     end

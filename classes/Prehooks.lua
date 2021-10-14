@@ -22,6 +22,7 @@ function Prehooks:Initialize()
     ZO_PreHook("ZO_Dialogs_ShowDialog", self:Closure(self.DialogsShowDialog))
     ZO_PreHook("ZO_Dialogs_ShowGamepadDialog", self:Closure(self.DialogsShowGamepadDialog))
     ZO_PreHook(MAIL_INBOX, "OnMailRemoved", self:Closure(self.InboxOnMailRemoved))
+    ZO_PreHook(MAIL_INBOX.navigationTree, "Commit", self:Closure(self.InboxNavigationTreeCommit))
     ZO_PreHook(MAIL_MANAGER_GAMEPAD.inbox, "InitializeOptionsList", self:Closure(self.MailGamepadInboxInitializeOptionsList))
     ZO_PreHook(MAIL_MANAGER_GAMEPAD.inbox, "OnMailTargetChanged", self:Closure(self.MailGamepadInboxOnMailTargetChanged))
     ZO_PreHook(MAIL_MANAGER_GAMEPAD.inbox, "RefreshMailList", self:Closure(self.MailGamepadInboxRefreshMailList))
@@ -56,11 +57,29 @@ function Prehooks:DialogsShowGamepadDialog(name, data, textParams)
     end
 end
 
--- [[ Prevents auto returned mails from progressing the selected mail index. ]]
-function Prehooks:InboxOnMailRemoved(inbox, mailId)
-    addon.Utility.Debug("MAIL_INBOX:OnMailRemoved(" .. tostring(inbox) .. ", " .. tostring(mailId) .. ")", debug)
-    if addon.AutoReturn:IsMailIdQueued(mailId) then
+-- [[ Prevents auto returned mails or deleted mails during take all from progressing the selected mail index. ]]
+function Prehooks:InboxNavigationTreeCommit(tree, autoSelectNode, bringParentIntoView)
+    addon.Utility.Debug("MAIL_INBOX:OnMailRemoved(autoSelectNode: " .. tostring(autoSelectNode) 
+        .. ", bringParentIntoView: " .. tostring(bringParentIntoView) .. ")", debug)
+    if self.deferredSelectMailId then
+        autoSelectNode = addon.Utility.FindNavigationTreeNodeByMailId(tree, self.deferredSelectMailId)
+        self.deferredSelectMailId = nil
+        tree:Commit(autoSelectNode, bringParentIntoView)
         return true
+    end
+end
+
+-- [[ Prevents auto returned mails or deleted mails during take all from progressing the selected mail index. ]]
+function Prehooks:InboxOnMailRemoved(inbox, mailId)
+    local message = "MAIL_INBOX:OnMailRemoved(" .. tostring(inbox) .. ", " .. tostring(mailId) .. ")"
+    if addon.Delete:IsMailIdQueued(mailId) then
+        addon.Utility.Debug(message .. ": Deferred until after our mail removed event runs...", debug)
+        return true
+    elseif addon.AutoReturn:IsMailIdQueued(mailId) then
+        addon.Utility.Debug(message .. ": Prevented. In the middle of an auto-return.", debug)
+        return true
+    else
+        addon.Utility.Debug(message, debug)
     end
 end
 
