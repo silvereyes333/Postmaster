@@ -21,14 +21,14 @@ function TakeAll:Initialize()
     self.iterationFilter = function(...)
         return self:CanTake(...)
     end
-    addon.readQueue = {}
+    self.readQueue = {}
     addon.classes.Keybind.Initialize(self)
 end
 
 function TakeAll:Callback()
     if addon:IsBusy() then return end
     
-    ZO_ClearTable(addon.readQueue)
+    ZO_ClearTable(self.readQueue)
     
     local canTake, mailData = self:CanTakeSelectedMail()
     if canTake then

@@ -65,7 +65,7 @@ function Postmaster:SettingsSetup()
         quickTakeSystemPvp = true,
         quickTakeSystemUndaunted = true,
         takeAllSubjectDelete = true,
-        takeAllSenderDisplayNameDelete = true
+        takeAllSenderDisplayNameDelete = true,
 
         --Baertram - Remember settings variables
         sendmailSaveRecipients = false,
@@ -331,36 +331,6 @@ function Postmaster:SettingsSetup()
             default = self.defaults.quickTakeCodGoldLimit,
         },
         }}}},
-		
-		
-		--[[ TAKE BY SUBJECT ]]--
-		
-        { type = "submenu", name = GetString(SI_PM_TAKE_ALL_BY_SUBJECT), controls = {
-            
-        -- Delete while taking by subject
-        {
-            type = "checkbox",
-            name = GetString(SI_PM_MAIL_DELETE),
-            getFunc = function() return self.settings.takeAllSubjectDelete end,
-            setFunc = function(value) self.settings.takeAllSubjectDelete = value end,
-            width = "full",
-            default = self.defaults.takeAllSubjectDelete,
-        }},
-		
-		
-		--[[ TAKE BY SENDER ]]--
-		
-        { type = "submenu", name = GetString(SI_PM_TAKE_ALL_BY_SENDER), controls = {
-            
-        -- Delete while taking by sender
-        {
-            type = "checkbox",
-            name = GetString(SI_PM_MAIL_DELETE),
-            getFunc = function() return self.settings.takeAllSenderDisplayNameDelete end,
-            setFunc = function(value) self.settings.takeAllSenderDisplayNameDelete = value end,
-            width = "full",
-            default = self.defaults.takeAllSenderDisplayNameDelete,
-        }},
 		
 		
 		--[[ TAKE ALL ]]--
@@ -801,6 +771,36 @@ function Postmaster:SettingsSetup()
                 self.templateSummary:GenerateLam2LootOptions(self.title, self.chatContentsSummaryProxy, self.defaults.chatContentsSummary),
             },
         },
+		
+		
+		--[[ TAKE BY SUBJECT ]]--
+		
+        { type = "submenu", name = GetString(SI_PM_TAKE_ALL_BY_SUBJECT), controls = {
+            
+        -- Delete while taking by subject
+        {
+            type = "checkbox",
+            name = GetString(SI_PM_MAIL_DELETE),
+            getFunc = function() return self.settings.takeAllSubjectDelete end,
+            setFunc = function(value) self.settings.takeAllSubjectDelete = value end,
+            width = "full",
+            default = self.defaults.takeAllSubjectDelete,
+        }}},
+		
+		
+		--[[ TAKE BY SENDER ]]--
+		
+        { type = "submenu", name = GetString(SI_PM_TAKE_ALL_BY_SENDER), controls = {
+            
+        -- Delete while taking by sender
+        {
+            type = "checkbox",
+            name = GetString(SI_PM_MAIL_DELETE),
+            getFunc = function() return self.settings.takeAllSenderDisplayNameDelete end,
+            setFunc = function(value) self.settings.takeAllSenderDisplayNameDelete = value end,
+            width = "full",
+            default = self.defaults.takeAllSenderDisplayNameDelete,
+        }}},
 
         --[[ Baertram - Send Mail save settings
             only enabled if LibCustomMenu 7.11 or newer is given
