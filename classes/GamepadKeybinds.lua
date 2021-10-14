@@ -55,6 +55,11 @@ end
 --[[ Updates the keyboard keybind strip with our custom keybinds ]]
 function GamepadKeybinds:Update()
     
+    -- Do nothing if gamepad keybinds haven't yet been initialized.
+    if not self.original then
+        return
+    end
+    
     -- Keybind instances to    
     local keybinds = {
         addon.keybinds.gamepad.Negative
