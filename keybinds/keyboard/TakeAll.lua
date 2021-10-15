@@ -189,6 +189,7 @@ end
 function TakeAll:CanTake(mailData, excludeMailId)
   
     if excludeMailId and AreId64sEqual(mailData.mailId, excludeMailId) then
+        addon.Utility.Debug("CanTake() false for excluded mail id " .. tostring(excludeMailId), debug) 
         return false
     end
   
@@ -198,6 +199,10 @@ function TakeAll:CanTake(mailData, excludeMailId)
     if addon.filterFieldValue and addon.filterFieldKeybind then
         local hasAttachments = addon.Utility.HasAttachments(mailData)
         if not hasAttachments and not addon.filterFieldKeybind:IsDeleteEnabled() then
+            addon.Utility.Debug("CanTake() false for mail id " .. tostring(mailData.mailId) 
+                .. " because it has no attachments, and " 
+                .. tostring(addon.filterFieldKeybind:GetDeleteSettingName()) .. " is false"
+                , debug) 
             return false
         end
         local mailDataFieldValue = addon.filterFieldKeybind:GetFilterFieldValue(mailData)

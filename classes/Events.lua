@@ -147,14 +147,6 @@ function Events:MailRemoved(eventCode, mailId)
         return
     end
     
-    if deleteWasQueued then
-        
-        -- Call the mail removed handler that was deferred earlier in Prehooks.lua.
-        -- The following will end the active mail read, refresh the mail list and select 
-        -- the deferred mail id on the previous line.
-        MAIL_INBOX:OnMailRemoved(mailId)
-    end
-    
     -- Just a quick sanity check.  If a mail was removed while an auto-return or auto-delete queue was running,
     -- possibly by another addon, stop processing.
     if autoReturnQueueRunning or deleteQueuedRunning then

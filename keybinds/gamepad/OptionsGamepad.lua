@@ -49,7 +49,11 @@ function OptionsGamepad:GetName()
 end
 
 function OptionsGamepad:IsDeleteEnabled()
-    return addon.settings[ZO_CachedStrFormat("takeAll<<C:1>Delete", self.filterFieldName)]
+    return addon.settings[self:GetDeleteSettingName()]
+end
+
+function OptionsGamepad:GetDeleteSettingName()
+    return ZO_CachedStrFormat("takeAll<<C:1>Delete", self.filterFieldName)
 end
 
 function OptionsGamepad:SelectedCallback()

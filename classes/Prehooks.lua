@@ -59,7 +59,7 @@ end
 
 -- [[ Prevents auto returned mails or deleted mails during take all from progressing the selected mail index. ]]
 function Prehooks:InboxNavigationTreeCommit(tree, autoSelectNode, bringParentIntoView)
-    addon.Utility.Debug("MAIL_INBOX:OnMailRemoved(autoSelectNode: " .. tostring(autoSelectNode) 
+    addon.Utility.Debug("MAIL_INBOX.navigationTree:Commit(autoSelectNode: " .. tostring(autoSelectNode) 
         .. ", bringParentIntoView: " .. tostring(bringParentIntoView) .. ")", debug)
     if self.deferredSelectMailId then
         autoSelectNode = addon.Utility.FindNavigationTreeNodeByMailId(tree, self.deferredSelectMailId)

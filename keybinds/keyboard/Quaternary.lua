@@ -67,8 +67,12 @@ function Quaternary:GetName()
 end
 
 function Quaternary:IsDeleteEnabled()
+    return addon.settings[self:GetDeleteSettingName()]
+end
+
+function Quaternary:GetDeleteSettingName()
     local filterFieldName = addon.settings.keybinds.quaternary
-    return addon.settings[ZO_CachedStrFormat("takeAll<<C:1>>Delete", filterFieldName)]
+    return ZO_CachedStrFormat("takeAll<<C:1>>Delete", filterFieldName)
 end
 
 function Quaternary:Visible()

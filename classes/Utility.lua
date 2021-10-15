@@ -14,12 +14,16 @@ addon.Utility = ZO_Object:Subclass()
 --[[ True if the given mail can be taken according to the given settings ]]
 function addon.Utility.CanTake(mailData, settings)
     
-    if not mailData or not mailData.mailId or type(mailData.mailId) ~= "number" then 
+    if not mailData or not mailData.mailId or type(mailData.mailId) ~= "number" then
+        addon.Utility.Debug("Utility.CanTake(" .. tostring(mailData and mailData.mailId) 
+            .. ") returning false due to a bad mailId", debug)
         return false 
     end
     
     local mailIdString = addon.Utility.GetMailIdString(mailData.mailId)
     if addon.mailIdsFailedDeletion[mailIdString] == true then
+        addon.Utility.Debug("Utility.CanTake(" .. tostring(mailData and mailData.mailId) 
+            .. ") returning false because it previously failed deletion.", debug)
         return false
     end
     
@@ -58,6 +62,8 @@ function addon.Utility.CanTake(mailData, settings)
            and (freeSlots - mailData.numAttachments) < (settings.reservedSlots or 0)
            and not attachmentsToCraftBag
         then 
+            addon.Utility.Debug("Utility.CanTake(" .. tostring(mailData and mailData.mailId) 
+                .. ") returning false there are not enough slots in the backpack.", debug)
             return false 
         end
         
