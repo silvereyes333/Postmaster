@@ -178,9 +178,9 @@ function Events:MailRemoved(eventCode, mailId)
         isNotDone = addon.Utility.GetActiveKeybinds().TakeAll:SelectNext(mailId, nil, eventCode)
     end
     
-    if isInboxOpen and deleteWasQueued and eventCode == EVENT_MAIL_REMOVED then
+    if isInboxOpen and deleteWasQueued and eventCode == EVENT_MAIL_REMOVED and not IsInGamepadPreferredMode() then
         
-        -- Call the mail removed handler that was deferred earlier in Prehooks.lua.
+        -- Call the keyboard/mouse mail removed handler that was deferred earlier in Prehooks.lua.
         -- The following will end the active mail read, refresh the mail list and select 
         -- any mail ids that were deferred above.
         MAIL_INBOX:OnMailRemoved(mailId)

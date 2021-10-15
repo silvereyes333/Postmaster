@@ -57,16 +57,27 @@ function Prehooks:DialogsShowGamepadDialog(name, data, textParams)
     end
 end
 
--- [[ Prevents auto returned mails or deleted mails during take all from progressing the selected mail index. ]]
+-- [[ Sets the auto-select node for a keyboard inbox nav tree commit to be for a deferred select mail id. ]]
 function Prehooks:InboxNavigationTreeCommit(tree, autoSelectNode, bringParentIntoView)
     addon.Utility.Debug("MAIL_INBOX.navigationTree:Commit(autoSelectNode: " .. tostring(autoSelectNode) 
         .. ", bringParentIntoView: " .. tostring(bringParentIntoView) .. ")", debug)
-    if self.deferredSelectMailId then
-        autoSelectNode = addon.Utility.FindNavigationTreeNodeByMailId(tree, self.deferredSelectMailId)
-        self.deferredSelectMailId = nil
-        tree:Commit(autoSelectNode, bringParentIntoView)
-        return true
+    
+    -- If there's no deferred mail id to select, proceed with the normal commit logic
+    if not self.deferredSelectMailId then
+        return
     end
+    
+    -- Replace the auto-select node with the one that was deferred selection
+    autoSelectNode = tree:GetTreeNodeByData({ mailId=self.deferredSelectMailId })
+    self.deferredSelectMailId = nil
+    
+    -- Run Commit with the new auto-select node
+    tree:Commit(autoSelectNode, bringParentIntoView)
+    
+    -- Fix for bug that caused some controls to be left highlighted
+    tree:RefreshVisible()
+    
+    return true
 end
 
 -- [[ Prevents auto returned mails or deleted mails during take all from progressing the selected mail index. ]]

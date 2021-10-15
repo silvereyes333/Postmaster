@@ -141,18 +141,6 @@ function addon.Utility.Debug(input, force)
     d("[PM-DEBUG] " .. input)
 end
 
-function addon.Utility.FindNavigationTreeNodeByMailId(tree, mailId)
-    local listNodes = tree.rootNode:GetChildren()
-    for _, listNode in ipairs(listNodes) do
-        local mailNodes = listNode:GetChildren()
-        for _, mailNode in ipairs(mailNodes) do
-            if mailNode.data and AreId64sEqual(mailNode.data.mailId, mailId) then
-                return mailNode
-            end
-        end
-    end
-end
-
 function addon.Utility.GamepadGetSelectedMailData()
     return MAIL_MANAGER_GAMEPAD.inbox:GetActiveMailData()
 end
