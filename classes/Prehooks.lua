@@ -21,7 +21,10 @@ function Prehooks:Initialize()
     ZO_PreHook("RequestReadMail", self:Closure(self.RequestReadMail))
     ZO_PreHook("ZO_Dialogs_ShowDialog", self:Closure(self.DialogsShowDialog))
     ZO_PreHook("ZO_Dialogs_ShowGamepadDialog", self:Closure(self.DialogsShowGamepadDialog))
+    ZO_PreHook(MAIL_INBOX, "EndRead", self:Closure(self.InboxEndRead))
     ZO_PreHook(MAIL_INBOX, "OnMailRemoved", self:Closure(self.InboxOnMailRemoved))
+    ZO_PreHook(MAIL_INBOX, "RefreshData", self:Closure(self.InboxRefreshData))
+    ZO_PreHook(MAIL_INBOX, "EndRead", self:Closure(self.InboxEndRead))
     ZO_PreHook(MAIL_INBOX.navigationTree, "Commit", self:Closure(self.InboxNavigationTreeCommit))
     ZO_PreHook(MAIL_MANAGER_GAMEPAD.inbox, "InitializeOptionsList", self:Closure(self.MailGamepadInboxInitializeOptionsList))
     ZO_PreHook(MAIL_MANAGER_GAMEPAD.inbox, "OnMailTargetChanged", self:Closure(self.MailGamepadInboxOnMailTargetChanged))
@@ -57,18 +60,28 @@ function Prehooks:DialogsShowGamepadDialog(name, data, textParams)
     end
 end
 
+function Prehooks:InboxEndRead(inbox)
+    addon.Utility.Debug("MAIL_INBOX:EndRead()", debug)
+end
+
 -- [[ Sets the auto-select node for a keyboard inbox nav tree commit to be for a deferred select mail id. ]]
 function Prehooks:InboxNavigationTreeCommit(tree, autoSelectNode, bringParentIntoView)
-    addon.Utility.Debug("MAIL_INBOX.navigationTree:Commit(autoSelectNode: " .. tostring(autoSelectNode) 
+    addon.Utility.Debug("MAIL_INBOX.navigationTree:Commit(autoSelectNode: { data: { mailId: " 
+        .. tostring(autoSelectNode and autoSelectNode.data and autoSelectNode.data.mailId) .. " }} "
         .. ", bringParentIntoView: " .. tostring(bringParentIntoView) .. ")", debug)
     
     -- If there's no deferred mail id to select, proceed with the normal commit logic
     if not self.deferredSelectMailId then
+        addon.Utility.Debug("No deferred selection mail id. Committing with base code", debug) 
         return
     end
     
     -- Replace the auto-select node with the one that was deferred selection
-    autoSelectNode = tree:GetTreeNodeByData({ mailId=self.deferredSelectMailId })
+    local autoSelectData = { mailId=self.deferredSelectMailId }
+    autoSelectNode = tree:GetTreeNodeByData(autoSelectData)
+    addon.Utility.Debug("Setting autoSelectNode to { data: { mailId: " 
+        .. tostring(autoSelectNode and autoSelectNode.data and autoSelectNode.data.mailId)
+        .. " due to deferredSelectMailId: " .. tostring(self.deferredSelectMailId), debug)
     self.deferredSelectMailId = nil
     
     -- Run Commit with the new auto-select node
@@ -87,8 +100,12 @@ function Prehooks:InboxOnMailRemoved(inbox, mailId)
         addon.Utility.Debug(message .. ": Prevented. In the middle of an auto-return.", debug)
         return true
     else
-        addon.Utility.Debug(message, debug)
+        addon.Utility.Debug(message .. ": Proceeding with base code", debug)
     end
+end
+
+function Prehooks:InboxRefreshData(inbox)
+    addon.Utility.Debug("MAIL_INBOX:RefreshData()", debug)
 end
 
 function Prehooks:GetTakeAttachmentsTimeout(mailId, retries)

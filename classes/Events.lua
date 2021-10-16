@@ -199,7 +199,29 @@ function Events:MailRemoved(eventCode, mailId)
     -- The selection was potentially cleared to avoid progressing to the second mail after the final
     -- MAIL_INBOX:RefreshData()
     if not IsInGamepadPreferredMode() then
-        MAIL_INBOX.navigationTree:SelectAnything()
+        
+        local inboxMailId = MAIL_INBOX:GetOpenMailId()
+        local selectNode
+        
+        -- Prefer the node already displaying
+        if inboxMailId then
+            selectNode = MAIL_INBOX.navigationTree:GetTreeNodeByData({ mailId = inboxMailId })
+            if selectNode then
+                MAIL_INBOX.navigationTree:Commit(selectNode, true)
+            end
+        end
+        
+        -- Otherwise, select the first node in the tree
+        if not selectNode then
+            MAIL_INBOX.navigationTree:SelectAnything()
+        end
+        
+        -- Not sure how this could happen, but if the inbox has no mail nodes, but it
+        -- is still tracking an open mail id, then close out the tracking data.
+        local selectedNode = MAIL_INBOX.navigationTree:GetSelectedNode()
+        if inboxMailId and not selectedNode or not selectedNode.data or not selectedNode.data.mailId then
+            MAIL_INBOX:EndRead()
+        end
     end
     
     -- This was either a normal take, or there are no more valid mails
