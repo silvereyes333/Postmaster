@@ -257,6 +257,21 @@ function addon.Utility.KeyboardGetSelectedMailData()
     return selectedMailData
 end
 
+function addon.Utility.KeyboardInboxTreeEvalAllNodes(eval, node)
+  
+    if not node then
+        node = MAIL_INBOX.navigationTree.rootNode
+    end
+    
+    if node.children then
+        for _, child in ipairs(node.children) do
+            addon.Utility.KeyboardInboxTreeEvalAllNodes(eval, child)
+        end
+    elseif node.templateInfo.template == "ZO_MailInboxRow" then
+        eval(node)
+    end
+end
+
 function addon.Utility.KeyboardIsInboxShown()
     return SCENE_MANAGER:IsShowing("mailInbox")
 end

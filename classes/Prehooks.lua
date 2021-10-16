@@ -74,9 +74,6 @@ function Prehooks:InboxNavigationTreeCommit(tree, autoSelectNode, bringParentInt
     -- Run Commit with the new auto-select node
     tree:Commit(autoSelectNode, bringParentIntoView)
     
-    -- Fix for bug that caused some controls to be left highlighted
-    tree:RefreshVisible()
-    
     return true
 end
 

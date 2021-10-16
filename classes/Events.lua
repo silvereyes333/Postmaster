@@ -6,6 +6,7 @@
   
 local addon = Postmaster
 local debug = false
+local exitMailNodeControl
 
 -- Singleton class
 local Events = ZO_Object:Subclass()
@@ -184,6 +185,9 @@ function Events:MailRemoved(eventCode, mailId)
         -- The following will end the active mail read, refresh the mail list and select 
         -- any mail ids that were deferred above.
         MAIL_INBOX:OnMailRemoved(mailId)
+        
+        -- Clear out any stuck mouseovers
+        addon.Utility.KeyboardInboxTreeEvalAllNodes(exitMailNodeControl)
     end
     
     -- Everything below this point is for when the take all operation is done.
@@ -328,6 +332,10 @@ end
 function Events:UnregisterForUpdate(eventCode)
     local updateKey = self.updateKeys[eventCode] or self.handlerNames[eventCode]
     EVENT_MANAGER:UnregisterForUpdate(self.updateKeyPrefix .. updateKey)
+end
+
+function exitMailNodeControl(node)
+    ZO_MailInboxRow_OnMouseExit(node:GetControl())
 end
 
 addon.Events = Events:New()
