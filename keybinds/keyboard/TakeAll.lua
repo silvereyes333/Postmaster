@@ -355,6 +355,9 @@ function TakeAll:SelectNext(excludeMailId, skipSelected, calledFromEvent)
     if nextMailData then
         return true
     end
+    
+    -- No more takeable mail. Clear selection.
+    MAIL_INBOX.navigationTree:ClearSelectedNode()
 end
 
 --[[ Bypasses the original "Take attachments" logic for C.O.D. mail during a

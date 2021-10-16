@@ -186,8 +186,16 @@ function Events:MailRemoved(eventCode, mailId)
         MAIL_INBOX:OnMailRemoved(mailId)
     end
     
+    -- Everything below this point is for when the take all operation is done.
     if isNotDone then
         return
+    end
+    
+    -- Ensure that a keyboard mail is selected after a take all operation.
+    -- The selection was potentially cleared to avoid progressing to the second mail after the final
+    -- MAIL_INBOX:RefreshData()
+    if not IsInGamepadPreferredMode() then
+        MAIL_INBOX.navigationTree:SelectAnything()
     end
     
     -- This was either a normal take, or there are no more valid mails
