@@ -53,7 +53,7 @@ function OptionsGamepad:IsDeleteEnabled()
 end
 
 function OptionsGamepad:GetDeleteSettingName()
-    return ZO_CachedStrFormat("takeAll<<C:1>Delete", self.filterFieldName)
+    return ZO_CachedStrFormat("takeAll<<C:1>>Delete", self.filterFieldName)
 end
 
 function OptionsGamepad:SelectedCallback()
