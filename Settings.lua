@@ -147,7 +147,7 @@ function Postmaster:SettingsSetup()
         },
         
 		
-    --[[ KEYBINDINGS ]]--
+        --[[ KEYBINDINGS ]]--
         { type = "submenu", name = GetString(SI_KEYBINDINGS_BINDINGS), controls = {
         
         
@@ -181,12 +181,10 @@ function Postmaster:SettingsSetup()
                     self.KeyboardKeybinds:Update()
                 end,
             default = self.defaults.keybinds.quaternary,
-        }
-        
-      }},
+        }}},
 		
 		
-		--[[ TAKE (QUICK) ]]--
+        --[[ TAKE (QUICK) ]]--
         
         { type = "submenu", name = GetString(SI_LOOT_TAKE), controls = {
         
@@ -275,8 +273,6 @@ function Postmaster:SettingsSetup()
             default = self.defaults.quickTakeSystemOther,
         }}},
         
-        -- divider
-        --{ type = "divider", width = "full" },
         -- Player mail with attachments
         
         --[ PLAYER ]--
@@ -333,7 +329,7 @@ function Postmaster:SettingsSetup()
         }}}},
 		
 		
-		--[[ TAKE ALL ]]--
+        --[[ TAKE ALL ]]--
 		
         { type = "submenu", name = GetString(SI_LOOT_TAKE_ALL), controls = {
 		
@@ -694,10 +690,59 @@ function Postmaster:SettingsSetup()
             clampInput = false,
             disabled = function() return not self.settings.takeAllCodTake end,
             default = self.defaults.takeAllCodGoldLimit,
-        },
-        }}}},
+        }}}}},
         
-        --[ OPTIONS ]--        
+        --[[ TAKE BY SUBJECT ]]--
+        { type = "submenu", name = GetString(SI_PM_TAKE_ALL_BY_SUBJECT), controls = {
+        
+        {
+            type = "description",
+            text = GetString(SI_PM_TAKE_ALL_BY_SUBJECT_HELP_01),
+            width = "full"
+        },
+        
+        {
+            type = "description",
+            text = GetString(SI_PM_TAKE_ALL_BY_FIELD_HELP_02),
+            width = "full"
+        },
+            
+        -- Delete while taking by subject
+        {
+            type = "checkbox",
+            name = GetString(SI_PM_MAIL_DELETE),
+            getFunc = function() return self.settings.takeAllSubjectDelete end,
+            setFunc = function(value) self.settings.takeAllSubjectDelete = value end,
+            width = "full",
+            default = self.defaults.takeAllSubjectDelete,
+        }}},
+		
+        --[[ TAKE BY SENDER ]]--
+        { type = "submenu", name = GetString(SI_PM_TAKE_ALL_BY_SENDER), controls = {
+        
+        {
+            type = "description",
+            text = GetString(SI_PM_TAKE_ALL_BY_SENDER_HELP_01),
+            width = "full"
+        },
+        
+        {
+            type = "description",
+            text = GetString(SI_PM_TAKE_ALL_BY_FIELD_HELP_02),
+            width = "full"
+        },
+            
+        -- Delete while taking by sender
+        {
+            type = "checkbox",
+            name = GetString(SI_PM_MAIL_DELETE),
+            getFunc = function() return self.settings.takeAllSenderDisplayNameDelete end,
+            setFunc = function(value) self.settings.takeAllSenderDisplayNameDelete = value end,
+            width = "full",
+            default = self.defaults.takeAllSenderDisplayNameDelete,
+        }}},
+        
+        --[ CHAT MESSAGES ]--        
         
         {
             type     = "submenu",
@@ -773,35 +818,6 @@ function Postmaster:SettingsSetup()
         },
 		
 		
-		--[[ TAKE BY SUBJECT ]]--
-		
-        { type = "submenu", name = GetString(SI_PM_TAKE_ALL_BY_SUBJECT), controls = {
-            
-        -- Delete while taking by subject
-        {
-            type = "checkbox",
-            name = GetString(SI_PM_MAIL_DELETE),
-            getFunc = function() return self.settings.takeAllSubjectDelete end,
-            setFunc = function(value) self.settings.takeAllSubjectDelete = value end,
-            width = "full",
-            default = self.defaults.takeAllSubjectDelete,
-        }}},
-		
-		
-		--[[ TAKE BY SENDER ]]--
-		
-        { type = "submenu", name = GetString(SI_PM_TAKE_ALL_BY_SENDER), controls = {
-            
-        -- Delete while taking by sender
-        {
-            type = "checkbox",
-            name = GetString(SI_PM_MAIL_DELETE),
-            getFunc = function() return self.settings.takeAllSenderDisplayNameDelete end,
-            setFunc = function(value) self.settings.takeAllSenderDisplayNameDelete = value end,
-            width = "full",
-            default = self.defaults.takeAllSenderDisplayNameDelete,
-        }}},
-
         --[[ Baertram - Send Mail save settings
             only enabled if LibCustomMenu 7.11 or newer is given
         ]]

@@ -107,9 +107,13 @@ POSTMASTER_STRINGS = {
     ["SI_PM_READ_FAILED"]                        = "There was a problem reading the next mail message. Please try again.",
     ["SI_PM_MESSAGE"]                            = "message",
     ["SI_PM_KEYBOARD"]                           = " (Keyboard)",
-    ["SI_PM_TAKE_ALL_BY_SUBJECT"]                = "Take by Subject",
-    ["SI_PM_TAKE_ALL_BY_SENDER"]                 = "Take by Sender",
     ["SI_PM_KEYBIND_ENABLE_TOOLTIP"]             = { "Enables the custom Postmaster keybindings: <<1>> and <<2>>", SI_LOOT_TAKE, SI_LOOT_TAKE_ALL },
+    ["SI_PM_TAKE_ALL_BY_SUBJECT"]                = "Take by Subject",
+    ["SI_PM_TAKE_ALL_BY_SUBJECT_HELP_01"]        = "|cFF00FFTake by Subject|r takes attachments and optionally deletes |cEFEBBEall|r mail that has the same subject as the selected mail.",
+    ["SI_PM_TAKE_ALL_BY_SENDER"]                 = "Take by Sender",
+    ["SI_PM_TAKE_ALL_BY_SENDER_HELP_01"]         = "|cFF00FFTake by Sender|r takes attachments and optionally deletes |cEFEBBEall|r mail that has the same sender account as the selected mail.",
+    ["SI_PM_TAKE_ALL_BY_FIELD_HELP_02"]          = { "Available as an optional <<1>> on keyboard (see the <<2>> section above), and in the <<3>> menu on gamepad.", 
+                                                     SI_BINDING_NAME_UI_SHORTCUT_QUATERNARY, SI_KEYBINDINGS_BINDINGS, SI_GAMEPAD_MAIL_INBOX_OPTIONS },
 
     --Baertram - Mail Send save message settings
     ["SI_PM_SENDMAIL_MESSAGE_RECIPIENTS"]        = "Save Recipient",

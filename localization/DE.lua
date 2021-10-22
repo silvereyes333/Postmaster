@@ -93,9 +93,13 @@ local strings = {
     ["SI_PM_READ_FAILED"]                        = "Beim Öffnen der nächsten Nachricht trat ein Fehler auf. Bitte versuche es erneut.",
     ["SI_PM_MESSAGE"]                            = "Nachricht^f",
     ["SI_PM_KEYBOARD"]                           = " (Tastaturmodus)",
-    ["SI_PM_TAKE_ALL_BY_SUBJECT"]                = "Nach Betreff nehmen",
-    ["SI_PM_TAKE_ALL_BY_SENDER"]                 = "Nach Absender nehmen",
     ["SI_PM_KEYBIND_ENABLE_TOOLTIP"]             = { "Aktiviert die Postmaster-Tastenbelegung: <<1>> und <<2>>", SI_LOOT_TAKE, SI_LOOT_TAKE_ALL },
+    ["SI_PM_TAKE_ALL_BY_SUBJECT"]                = "Nach Betreff nehmen",
+    ["SI_PM_TAKE_ALL_BY_SUBJECT_HELP_01"]        = "Mit der Taste |cFF00FFNach Betreff nehmen|r werden die Anhänge aller Nachrichten mit dem gleichen Betreff wie die ausgewählte Nachricht entfernt und die Nachrichten anschließend auf Wunsch gelöscht.",
+    ["SI_PM_TAKE_ALL_BY_SENDER"]                 = "Nach Absender nehmen",
+    ["SI_PM_TAKE_ALL_BY_SENDER_HELP_01"]         = "Mit der Taste |cFF00FFNach Absender nehmen|r werden die Anhänge aller Nachrichten mit dem gleichen Absenderkontonamen wie die ausgewählte Nachricht entfernt und die Nachrichten anschließend auf Wunsch gelöscht.",
+    ["SI_PM_TAKE_ALL_BY_FIELD_HELP_02"]          = { "Verfügbar als optionales <<1>> auf der Tastatur (siehe Abschnitt <<2>> oben) und im Menü <<3>> auf dem Gamepad.", 
+                                                     SI_BINDING_NAME_UI_SHORTCUT_QUATERNARY, SI_KEYBINDINGS_BINDINGS, SI_GAMEPAD_MAIL_INBOX_OPTIONS },
 
     --Baertram - Mail Send save message settings
     ["SI_PM_SENDMAIL_MESSAGE_RECIPIENTS"]        = "Empfänger speichern",   -- Save recipient

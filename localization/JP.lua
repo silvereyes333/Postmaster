@@ -96,9 +96,13 @@ local strings = {
     ["SI_PM_READ_FAILED"]                        = "次の電子メールメッセージの読み取りに問題がありました。もう一度やり直してください。",
     ["SI_PM_MESSAGE"]                            = "メッセージ",
     ["SI_PM_KEYBOARD"]                           = "(キーボード)",
-    ["SI_PM_TAKE_ALL_BY_SUBJECT"]                = "件名で取る",
-    ["SI_PM_TAKE_ALL_BY_SENDER"]                 = "差出人で取る",
     ["SI_PM_KEYBIND_ENABLE_TOOLTIP"]             = { "Postmasterショートカットをアクティブにします：<<1>>および<<2>>", SI_LOOT_TAKE, SI_LOOT_TAKE_ALL },
+    ["SI_PM_TAKE_ALL_BY_SUBJECT"]                = "件名で取る",
+    ["SI_PM_TAKE_ALL_BY_SUBJECT_HELP_01"]        = "|cFF00FF件名で取る|rボタンは、現在の電子メールの件名に一致する受信ボックス内の|cEFEBBE全て|rの電子メールを取得し、オプションでそれらを削除します。",
+    ["SI_PM_TAKE_ALL_BY_SENDER"]                 = "差出人で取る",
+    ["SI_PM_TAKE_ALL_BY_SENDER_HELP_01"]         = "|cFF00FF差出人で取る|rボタンは、現在の電子メールの送信者アカウント名と一致する受信ボックス内の|cEFEBBE全て|rの電子メールを取得し、オプションでそれらを削除します。",
+    ["SI_PM_TAKE_ALL_BY_FIELD_HELP_02"]          = { "キーボードのオプションの<<1>>（上記の<<2>>セクションを参照）、およびゲームパッドの<<3>>メニューで使用できます。", 
+                                                     SI_BINDING_NAME_UI_SHORTCUT_QUATERNARY, SI_KEYBINDINGS_BINDINGS, SI_GAMEPAD_MAIL_INBOX_OPTIONS },
 
     --Baertram - Mail Send save message settings
     ["SI_PM_SENDMAIL_MESSAGE_RECIPIENTS"]        = "受信者を保存",

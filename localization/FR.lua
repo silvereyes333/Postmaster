@@ -95,9 +95,13 @@ local strings = {
     ["SI_PM_READ_FAILED"]                        = "There was a problem reading the next mail message. Please try again.",
     ["SI_PM_MESSAGE"]                            = "courrier",
     ["SI_PM_KEYBOARD"]                           = " (Clavier)",
-    ["SI_PM_TAKE_ALL_BY_SUBJECT"]                = "Prendre par sujet",
-    ["SI_PM_TAKE_ALL_BY_SENDER"]                 = "Prendre par expéditeur",
     ["SI_PM_KEYBIND_ENABLE_TOOLTIP"]             = { "Active les raccourcis Postmaster: <<1>> et <<2>>", SI_LOOT_TAKE, SI_LOOT_TAKE_ALL },
+    ["SI_PM_TAKE_ALL_BY_SUBJECT"]                = "Prendre par sujet",
+    ["SI_PM_TAKE_ALL_BY_SUBJECT_HELP_01"]        = "|cFF00FFPrendre par sujet|r supprimera les pièces jointes de tous les messages ayant le même nom de compte d'expéditeur que le message sélectionné, puis les supprimera si vous le souhaitez.",
+    ["SI_PM_TAKE_ALL_BY_SENDER"]                 = "Prendre par expéditeur",
+    ["SI_PM_TAKE_ALL_BY_SENDER_HELP_01"]         = "|cFF00FFPrendre par expéditeur|r supprimera les pièces jointes de tous les messages ayant le même sujet que le message sélectionné, puis les supprimera si vous le souhaitez.",
+    ["SI_PM_TAKE_ALL_BY_FIELD_HELP_02"]          = { "Disponible en option <<1>> sur le clavier (voir la section <<2>> ci-dessus) et dans le menu <<3>> sur la manette de jeu.", 
+                                                     SI_BINDING_NAME_UI_SHORTCUT_QUATERNARY, SI_KEYBINDINGS_BINDINGS, SI_GAMEPAD_MAIL_INBOX_OPTIONS },
 
     --Baertram - Mail Send save message settings
     ["SI_PM_SENDMAIL_MESSAGE_RECIPIENTS"]        = "Sauvegarder le destinataire",

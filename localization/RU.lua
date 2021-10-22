@@ -99,9 +99,13 @@ local strings = {
     ["SI_PM_READ_FAILED"]                        = "При чтении следующего почтового сообщения возникла проблема. Пожалуйста, попробуйте еще раз.",
     ["SI_PM_MESSAGE"]                            = "сообщение",
     ["SI_PM_KEYBOARD"]                           = " (клавиатура)",
-    ["SI_PM_TAKE_ALL_BY_SUBJECT"]                = "Взять по теме",
-    ["SI_PM_TAKE_ALL_BY_SENDER"]                 = "Взять по отправитель",
     ["SI_PM_KEYBIND_ENABLE_TOOLTIP"]             = { "Активирует настройки Postmaster: <<1>> и <<2>>", SI_LOOT_TAKE, SI_LOOT_TAKE_ALL },
+    ["SI_PM_TAKE_ALL_BY_SUBJECT"]                = "Взять по теме",
+    ["SI_PM_TAKE_ALL_BY_SUBJECT_HELP_01"]        = "|cFF00FFВзять по теме|r принимает вложения |cEFEBBEвсех|r писем, которые соответствуют теме текущего письма. Действие также удалит электронные письма, если они настроены.",
+    ["SI_PM_TAKE_ALL_BY_SENDER"]                 = "Взять по отправитель",
+    ["SI_PM_TAKE_ALL_BY_SENDER_HELP_01"]         = "|cFF00FFВзять по отправитель|r принимает вложения |cEFEBBEвсех|r писем, которые соответствуют текущему имени учетной записи отправителя электронной почты. Действие также удалит электронные письма, если они настроены.",
+    ["SI_PM_TAKE_ALL_BY_FIELD_HELP_02"]          = { "Доступен как дополнительный <<1>> на клавиатуре (см. Раздел <<2>> выше) и в меню <<3>> на геймпаде.", 
+                                                     SI_BINDING_NAME_UI_SHORTCUT_QUATERNARY, SI_KEYBINDINGS_BINDINGS, SI_GAMEPAD_MAIL_INBOX_OPTIONS },
 
     --Baertram - Mail Send save message settings
     ["SI_PM_SENDMAIL_MESSAGE_RECIPIENTS"]        = "Сохранить получателя",
