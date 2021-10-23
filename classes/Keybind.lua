@@ -5,20 +5,20 @@
   ]]
 
 local addon = Postmaster
-local classes = addon.classes
+local class = addon.classes
 local debug = false
 local closure
 
-classes.Keybind = ZO_Object:Subclass()
+class.Keybind = ZO_Object:Subclass()
 
-function classes.Keybind:New(...)
+function class.Keybind:New(...)
     local instance = ZO_Object.New(self)
     instance.name = addon.name .. "Keybind"
     instance:Initialize(...)
     return instance
 end
 
-function classes.Keybind:Initialize()
+function class.Keybind:Initialize()
     self.descriptor = {
         name = closure(self, self.GetName),
         keybind = self.keybind,
@@ -30,27 +30,27 @@ function classes.Keybind:Initialize()
     addon.Utility.Debug("Initialized keybind " .. tostring(self.name), debug)
 end
 
-function classes.Keybind:Callback()
+function class.Keybind:Callback()
     -- override
 end
 
-function classes.Keybind:GetDescriptor()
+function class.Keybind:GetDescriptor()
     return self.descriptor
 end
 
-function classes.Keybind:GetName()
+function class.Keybind:GetName()
     -- override
 end
 
-function classes.Keybind:GetOrder()
+function class.Keybind:GetOrder()
     -- override
 end
 
-function classes.Keybind:GetSound()
+function class.Keybind:GetSound()
     -- override
 end
 
-function classes.Keybind:Visible()
+function class.Keybind:Visible()
     -- override
 end
 

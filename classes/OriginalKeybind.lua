@@ -8,24 +8,24 @@
   ]]
 
 local addon = Postmaster
-local classes = addon.classes
+local class = addon.classes
 local debug = false
 
-classes.OriginalKeybind = classes.Keybind:Subclass()
+class.OriginalKeybind = class.Keybind:Subclass()
 
-function classes.OriginalKeybind:New(originalDescriptor)
-    return classes.Keybind.New(self, originalDescriptor)
+function class.OriginalKeybind:New(originalDescriptor)
+    return class.Keybind.New(self, originalDescriptor)
 end
 
-function classes.OriginalKeybind:Initialize(originalDescriptor)
+function class.OriginalKeybind:Initialize(originalDescriptor)
     if originalDescriptor then
         self.originalDescriptor = originalDescriptor
         self.keybind = self.originalDescriptor.keybind
-        addon.classes.Keybind.Initialize(self)
+        class.Keybind.Initialize(self)
     end
 end
 
-function classes.OriginalKeybind:Callback()
+function class.OriginalKeybind:Callback()
     if addon:IsBusy() then return end
     if not self.originalDescriptor then
         return
@@ -37,28 +37,28 @@ function classes.OriginalKeybind:Callback()
     self.originalDescriptor.callback()
 end
 
-function classes.OriginalKeybind:GetName()
+function class.OriginalKeybind:GetName()
     if not self.originalDescriptor then
         return
     end
     return self.originalDescriptor.name
 end
 
-function classes.OriginalKeybind:GetOrder()
+function class.OriginalKeybind:GetOrder()
     if not self.originalDescriptor then
         return
     end
     return self.originalDescriptor.order
 end
 
-function classes.OriginalKeybind:GetSound()
+function class.OriginalKeybind:GetSound()
     if not self.originalDescriptor then
         return
     end
     return self.originalDescriptor.sound
 end
 
-function classes.OriginalKeybind:Visible() 
+function class.OriginalKeybind:Visible() 
     if addon:IsBusy() then return end
     if not self.originalDescriptor then
         return false
