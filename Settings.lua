@@ -832,12 +832,24 @@ function Postmaster:SettingsSetup()
                     name    = GetString(SI_PM_SENDMAIL_MESSAGE_RECIPIENTS),
                     tooltip = GetString(SI_PM_SENDMAIL_MESSAGE_RECIPIENTS_TT),
                     getFunc = function() return self.settings.sendmailSaveRecipients end,
-                    setFunc = function(value)
-                        self.settings.sendmailSaveRecipients = value
-                        self:SendMailCheckAddContextMenu(PM_SENDMAIL_RECIPIENT)
-                    end,
+                    setFunc = function(value) self.settings.sendmailSaveRecipients = value end,
                     default = self.defaults.sendmailSaveRecipients,
                     disabled = function() return LibCustomMenu == nil end
+                },
+                -- Clear recipients button
+                {
+                    type = "button",
+                    name = GetString(SI_PM_SENDMAIL_CLEAR_RECIPIENTS),
+                    func = function()
+                        local field = self.SendMail:GetField("sendmailRecipients")
+                        field:Clear()
+                        self.Utility.ShowMessageDialog(
+                          GetString(SI_PM_SENDMAIL_CLEAR_RECIPIENTS), 
+                          GetString(SI_PM_SENDMAIL_CLEAR_RECIPIENTS_SUCCESS))
+                    end,
+                    width = "half",
+                    disabled = function() return LibCustomMenu == nil end,
+                    isDangerous = true,
                 },
                 -- Remember message subjects
                 {
@@ -845,12 +857,24 @@ function Postmaster:SettingsSetup()
                     name    = GetString(SI_PM_SENDMAIL_MESSAGE_SUBJECTS),
                     tooltip = GetString(SI_PM_SENDMAIL_MESSAGE_SUBJECTS_TT),
                     getFunc = function() return self.settings.sendmailSaveSubjects end,
-                    setFunc = function(value)
-                        self.settings.sendmailSaveSubjects = value
-                        self:SendMailCheckAddContextMenu(PM_SENDMAIL_SUBJECT)
-                    end,
+                    setFunc = function(value) self.settings.sendmailSaveSubjects = value end,
                     default = self.defaults.sendmailSaveSubjects,
                     disabled = function() return LibCustomMenu == nil end
+                },
+                -- Clear subjects button
+                {
+                    type = "button",
+                    name = GetString(SI_PM_SENDMAIL_CLEAR_SUBJECTS),
+                    func = function()
+                        local field = self.SendMail:GetField("sendmailSubjects")
+                        field:Clear()
+                        self.Utility.ShowMessageDialog(
+                          GetString(SI_PM_SENDMAIL_CLEAR_SUBJECTS), 
+                          GetString(SI_PM_SENDMAIL_CLEAR_SUBJECTS_SUCCESS))
+                    end,
+                    width = "half",
+                    disabled = function() return LibCustomMenu == nil end,
+                    isDangerous = true,
                 },
                 -- Remember message bodies
                 {
@@ -858,12 +882,24 @@ function Postmaster:SettingsSetup()
                     name    = GetString(SI_PM_SENDMAIL_MESSAGE_TEXT),
                     tooltip = GetString(SI_PM_SENDMAIL_MESSAGE_TEXT_TT),
                     getFunc = function() return self.settings.sendmailSaveMessages end,
-                    setFunc = function(value)
-                        self.settings.sendmailSaveMessages = value
-                        self:SendMailCheckAddContextMenu(PM_SENDMAIL_MESSAGE)
-                    end,
+                    setFunc = function(value) self.settings.sendmailSaveMessages = value end,
                     default = self.defaults.sendmailSaveMessages,
                     disabled = function() return LibCustomMenu == nil end
+                },
+                -- Clear message bodies button
+                {
+                    type = "button",
+                    name = GetString(SI_PM_SENDMAIL_CLEAR_MESSAGES),
+                    func = function()
+                        local field = self.SendMail:GetField("sendmailMessages")
+                        field:Clear()
+                        self.Utility.ShowMessageDialog(
+                          GetString(SI_PM_SENDMAIL_CLEAR_MESSAGES), 
+                          GetString(SI_PM_SENDMAIL_CLEAR_MESSAGES_SUCCESS))
+                    end,
+                    width = "half",
+                    disabled = function() return LibCustomMenu == nil end,
+                    isDangerous = true,
                 },
                 {
                     type = "slider",

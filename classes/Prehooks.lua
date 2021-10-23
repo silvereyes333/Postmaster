@@ -30,6 +30,9 @@ function Prehooks:Initialize()
     ZO_PreHook(MAIL_MANAGER_GAMEPAD.inbox, "OnMailTargetChanged", self:Closure(self.MailGamepadInboxOnMailTargetChanged))
     ZO_PreHook(MAIL_MANAGER_GAMEPAD.inbox, "RefreshMailList", self:Closure(self.MailGamepadInboxRefreshMailList))
     ZO_PreHook(MAIL_MANAGER_GAMEPAD.inbox, "ShowMailItem", self:Closure(self.MailGamepadInboxShowMailItem))
+    if LibCustomMenu then
+        ZO_PreHook(MAIL_SEND, "Send", self:Closure(self.SendMailOnSend))
+    end
 end
 
 function Prehooks:Closure(fn)
@@ -251,6 +254,11 @@ function Prehooks:RequestReadMail(mailId)
         addon.Utility.Debug("Inbox isn't open. Request denied.", debug)
     end
     return deny
+end
+
+function Prehooks:SendMailOnSend()
+    addon.Utility.Debug("Prehooks:SendMailOnSend(). Saving send mail fields.", debug)
+    addon.SendMail:SaveData()
 end
 
 function Prehooks:SetDeferredSelectMailId(mailId)

@@ -38,6 +38,8 @@ classes/KeyboardKeybinds.lua
 classes/OriginalKeybind.lua
 classes/Prehooks.lua
 classes/SecurePostHooks.lua
+classes/SendMail.lua
+classes/SendMailField.lua
 classes/UniqueBagItemsList.lua
 classes/Utility.lua
 

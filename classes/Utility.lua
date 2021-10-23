@@ -6,6 +6,7 @@
   
 local addon = Postmaster
 local debug = false
+local PM_DIALOG = "Postmaster.Dialog"
 
 -- STATIC CLASS
 addon.Utility = ZO_Object:Subclass()
@@ -215,6 +216,19 @@ function addon.Utility.GetMailIdString(mailId)
     end
 end
 
+
+function addon.Utility.GetMessageDialog()
+    if(not ESO_Dialogs[PM_DIALOG]) then
+        ESO_Dialogs[PM_DIALOG] = {
+            canQueue = true,
+            title = { text = "" },
+            mainText = { text = "" },
+            buttons = {{ text = SI_OK }}
+        }
+    end
+    return ESO_Dialogs[PM_DIALOG]
+end
+
 function addon.Utility.HasAttachments(mailData)
     if not mailData then
         return false
@@ -329,6 +343,13 @@ function addon.Utility.RefreshMailList()
     else
         MAIL_INBOX:RefreshData()
     end
+end
+
+function addon.Utility.ShowMessageDialog(title, message)
+    local dialog = addon.Utility.GetMessageDialog()
+    dialog.title.text = title
+    dialog.mainText.text = message
+    ZO_Dialogs_ShowDialog(PM_DIALOG)
 end
 
 --[[ Checks the given string for a given list of
