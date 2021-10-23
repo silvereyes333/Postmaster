@@ -104,12 +104,18 @@ local strings = {
     --Baertram - Mail Send save message settings
     ["SI_PM_SENDMAIL_MESSAGE_RECIPIENTS"]        = "Empfänger speichern",   -- Save recipient
     ["SI_PM_SENDMAIL_MESSAGE_RECIPIENTS_TT"]     = "Sichere die Empfänger deiner manuell erstellten Mails. Du kannst die Liste der Gesicherten mit einem Rechtsklick auf das Empfänger Eingabefeld öffnen.",
+    ["SI_PM_SENDMAIL_CLEAR_RECIPIENTS"]          = "Gespeicherte Empfänger löschen",
+    ["SI_PM_SENDMAIL_CLEAR_RECIPIENTS_SUCCESS"]  = "Gespeicherte Empfänger erfolgreich gelöscht.",
     ["SI_PM_SENDMAIL_MESSAGE_SUBJECTS"]          = "Betreff speichern",     -- Save subject
     ["SI_PM_SENDMAIL_MESSAGE_SUBJECTS_TT"]       = "Sichere die Betreffs deiner manuell erstellten Mails. Du kannst die Liste der Gesicherten mit einem Rechtsklick auf das Betreff Eingabefeld öffnen.",
+    ["SI_PM_SENDMAIL_CLEAR_SUBJECTS"]            = "Gespeicherte Betreffs löschen",
+    ["SI_PM_SENDMAIL_CLEAR_SUBJECTS_SUCCESS"]    = "Gespeicherte Betreffs erfolgreich gelöscht.",
     ["SI_PM_SENDMAIL_MESSAGE_TEXT"]              = "Nachrichten-Text speichern", -- Save message body
     ["SI_PM_SENDMAIL_MESSAGE_TEXT_TT"]           = "Sichere den Mail Text deiner manuell erstellten Mails. Du kannst die Liste der Gesicherten mit einem Rechtsklick auf das Mail Text Eingabefeld öffnen.",
+    ["SI_PM_SENDMAIL_CLEAR_MESSAGES"]            = "Gespeicherte Nachrichten-Text löschen",
+    ["SI_PM_SENDMAIL_CLEAR_MESSAGES_SUCCESS"]    = "Gespeicherte Nachrichten-Texte erfolgreich gelöscht.",
     ["SI_PM_SENDMAIL_MESSAGE_RECENT_SUBJECTS"]   = "Zuletzt verwendete Betreffs",
-    ["SI_PM_SENDMAIL_MESSAGE_RECENT_TEXTS"]      = "Zuletzt verwendete Nachrichten",
+    ["SI_PM_SENDMAIL_MESSAGE_RECENT_TEXT"]       = "Zuletzt verwendete Nachrichten",
     ["SI_PM_SENDMAIL_AMOUNT"]                    = "Anzahl gespeicherter Einträge",
     ["SI_PM_SENDMAIL_PREVIEW_CHARS"]             = "Anzahl Zeichen in Kontext Menü (Vorschau)",
 }
