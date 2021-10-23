@@ -849,7 +849,6 @@ function Postmaster:SettingsSetup()
                     end,
                     width = "half",
                     disabled = function() return LibCustomMenu == nil end,
-                    isDangerous = true,
                 },
                 -- Remember message subjects
                 {
@@ -874,7 +873,6 @@ function Postmaster:SettingsSetup()
                     end,
                     width = "half",
                     disabled = function() return LibCustomMenu == nil end,
-                    isDangerous = true,
                 },
                 -- Remember message bodies
                 {
@@ -899,7 +897,6 @@ function Postmaster:SettingsSetup()
                     end,
                     width = "half",
                     disabled = function() return LibCustomMenu == nil end,
-                    isDangerous = true,
                 },
                 {
                     type = "slider",
