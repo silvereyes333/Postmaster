@@ -28,9 +28,11 @@ function class.SendMailField:Initialize(control, settingsKeyEnabled, settingsKey
     self.contextMenuLabel = contextMenuLabel
     self.previewChars = previewChars
     
-    local handlerName = self.name .. "_" .. self.control:GetName() .. "_OnMouseUp"
-    self.control:SetHandler("OnMouseUp",
-        closure(self, self.OnControlMouseUp), handlerName, CONTROL_HANDLER_ORDER_NONE, nil)
+    if LibCustomMenu then
+        local handlerName = self.name .. "_" .. self.control:GetName() .. "_OnMouseUp"
+        self.control:SetHandler("OnMouseUp",
+            closure(self, self.OnControlMouseUp), handlerName, CONTROL_HANDLER_ORDER_NONE, nil)
+    end
     
     self:TrimSavedValues()
     
