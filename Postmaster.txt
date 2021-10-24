@@ -1,11 +1,11 @@
 ## Title: Postmaster
-## Author: silvereyes, Garkin & Zierk
+## Author: silvereyes, Baertram, Garkin & Zierk
 ## Description: Mail addon to simplify inbox management
-## Version: 3.14.4
-## APIVersion: 100035 101031
-## AddOnVersion: 31404
-## DependsOn: LibSavedVars>=50000 LibAddonMenu-2.0>=28 LibLootSummary>=30100 LibChatMessage
-## OptionalDependsOn: MailR wykkydsMailBox
+## Version: 4.0.0
+## APIVersion: 101031 101032
+## AddOnVersion: 40000
+## DependsOn: LibSavedVars>=50000 LibAddonMenu-2.0>=32 LibLootSummary>=30100 LibChatMessage
+## OptionalDependsOn: MailR wykkydsMailBox DolgubonsLazyWritCreator LibCustomMenu>=711
 ## SavedVariables: Postmaster_Account
 ## SavedVariables: Postmaster_Character
 
@@ -20,9 +20,35 @@ localization\CreateStrings.lua
 
 ; Addon
 Postmaster.lua
+Settings.lua
 
 ; Classes
-classes/ChatProxy.lua
-classes/GroupedAccountSummary.lua
 classes/AccountSummary.lua
-Settings.lua
+classes/AutoReturn.lua
+classes/Callbacks.lua
+classes/ChatProxy.lua
+classes/Delete.lua
+classes/Events.lua
+classes/GamepadKeybinds.lua
+classes/GamepadOption.lua
+classes/GroupedAccountSummary.lua
+classes/InboxTreeIterator.lua
+classes/Keybind.lua
+classes/KeyboardKeybinds.lua
+classes/OriginalKeybind.lua
+classes/Prehooks.lua
+classes/SecurePostHooks.lua
+classes/SendMail.lua
+classes/SendMailField.lua
+classes/UniqueBagItemsList.lua
+classes/Utility.lua
+
+; Keybinds
+keybinds/gamepad/NegativeGamepad.lua
+keybinds/gamepad/OptionsGamepad.lua
+keybinds/gamepad/TakeAllGamepad.lua
+keybinds/gamepad/TakeAndDeleteGamepad.lua
+keybinds/keyboard/Negative.lua
+keybinds/keyboard/Quaternary.lua
+keybinds/keyboard/TakeAll.lua
+keybinds/keyboard/TakeAndDelete.lua

@@ -3,7 +3,7 @@
                 SETTINGS
     ===================================
   ]]
-local createChatProxy, refreshPrefix, version6, version7
+local createChatProxy, refreshPrefix, setReasonableLazyWritCrafterDefaults, version6, version7
 
 function Postmaster:SettingsSetup()
 
@@ -64,6 +64,23 @@ function Postmaster:SettingsSetup()
         quickTakeSystemOther = true,
         quickTakeSystemPvp = true,
         quickTakeSystemUndaunted = true,
+        takeAllSubjectDelete = true,
+        takeAllSenderDisplayNameDelete = true,
+
+        --Baertram - Remember settings variables
+        sendmailSaveRecipients = false,
+        sendmailRecipients = {},
+        sendmailSaveSubjects = false,
+        sendmailSubjects = {},
+        sendmailSaveMessages = false,
+        sendmailMessages = {},
+        sendmailMessagesPreviewChars = 75,
+        sendmailSavedEntryCount = 10,
+	
+        keybinds = {
+            enable = true,
+            quaternary = "",
+        },
     }
     
     -- Initialize saved variables
@@ -84,6 +101,12 @@ function Postmaster:SettingsSetup()
     
     self.chatColor = ZO_ColorDef:New(unpack(self.settings.chatColor))
     refreshPrefix()
+
+    --Baertram - Remember local speed up variables
+    local sendmail = self.SendMail
+    local PM_SENDMAIL_RECIPIENT = sendmail.PM_SENDMAIL_RECIPIENT
+    local PM_SENDMAIL_SUBJECT = sendmail.PM_SENDMAIL_SUBJECT
+    local PM_SENDMAIL_MESSAGE = sendmail.PM_SENDMAIL_MESSAGE
     
     local panelData = {
         type = "panel",
@@ -124,9 +147,44 @@ function Postmaster:SettingsSetup()
         },
         
 		
+        --[[ KEYBINDINGS ]]--
+        { type = "submenu", name = GetString(SI_KEYBINDINGS_BINDINGS), controls = {
+        
+        
+        -- Enable Keyind Overrides
+        {
+            type = "checkbox",
+            name = GetString(SI_ADDON_MANAGER_ENABLED),
+            tooltip = GetString(SI_PM_KEYBIND_ENABLE_TOOLTIP),
+            getFunc = function() return self.settings.keybinds.enable end,
+            setFunc =
+                function(value)
+                    self.settings.keybinds.enable = value
+                    self.GamepadKeybinds:Update()
+                    self.KeyboardKeybinds:Update()
+                end,
+            width = "full",
+            default = self.defaults.keybinds.enable,
+        },
+        
+        -- Keyboard Quaternary Action
+        {
+            type = "dropdown",
+            name = GetString(SI_BINDING_NAME_UI_SHORTCUT_QUATERNARY) .. GetString(SI_PM_KEYBOARD),
+            width = "full",
+            choices = self.quaternaryChoices,
+            choicesValues = self.quaternaryChoicesValues,
+            getFunc = function() return self.settings.keybinds.quaternary end,
+            setFunc =
+                function(value)
+                    self.settings.keybinds.quaternary = value
+                    self.KeyboardKeybinds:Update()
+                end,
+            default = self.defaults.keybinds.quaternary,
+        }}},
 		
 		
-		--[[ TAKE (QUICK) ]]--
+        --[[ TAKE (QUICK) ]]--
         
         { type = "submenu", name = GetString(SI_LOOT_TAKE), controls = {
         
@@ -215,8 +273,6 @@ function Postmaster:SettingsSetup()
             default = self.defaults.quickTakeSystemOther,
         }}},
         
-        -- divider
-        --{ type = "divider", width = "full" },
         -- Player mail with attachments
         
         --[ PLAYER ]--
@@ -273,7 +329,7 @@ function Postmaster:SettingsSetup()
         }}}},
 		
 		
-		--[[ TAKE ALL ]]--
+        --[[ TAKE ALL ]]--
 		
         { type = "submenu", name = GetString(SI_LOOT_TAKE_ALL), controls = {
 		
@@ -357,7 +413,10 @@ function Postmaster:SettingsSetup()
             type = "checkbox",
             name = GetString(SI_PM_SYSTEM_TAKE_CRAFTING),
             getFunc = function() return self.settings.takeAllSystemHireling end,
-            setFunc = function(value) self.settings.takeAllSystemHireling = value end,
+            setFunc = function(value)
+                    self.settings.takeAllSystemHireling = value
+                    setReasonableLazyWritCrafterDefaults()
+                end,
             width = "full",
             disabled = function() return not self.settings.takeAllSystemAttached end,
             default = self.defaults.takeAllSystemHireling,
@@ -631,10 +690,59 @@ function Postmaster:SettingsSetup()
             clampInput = false,
             disabled = function() return not self.settings.takeAllCodTake end,
             default = self.defaults.takeAllCodGoldLimit,
-        },
-        }}}},
+        }}}}},
         
-        --[ OPTIONS ]--        
+        --[[ TAKE BY SUBJECT ]]--
+        { type = "submenu", name = GetString(SI_PM_TAKE_ALL_BY_SUBJECT), controls = {
+        
+        {
+            type = "description",
+            text = GetString(SI_PM_TAKE_ALL_BY_SUBJECT_HELP_01),
+            width = "full"
+        },
+        
+        {
+            type = "description",
+            text = GetString(SI_PM_TAKE_ALL_BY_FIELD_HELP_02),
+            width = "full"
+        },
+            
+        -- Delete while taking by subject
+        {
+            type = "checkbox",
+            name = GetString(SI_PM_MAIL_DELETE),
+            getFunc = function() return self.settings.takeAllSubjectDelete end,
+            setFunc = function(value) self.settings.takeAllSubjectDelete = value end,
+            width = "full",
+            default = self.defaults.takeAllSubjectDelete,
+        }}},
+		
+        --[[ TAKE BY SENDER ]]--
+        { type = "submenu", name = GetString(SI_PM_TAKE_ALL_BY_SENDER), controls = {
+        
+        {
+            type = "description",
+            text = GetString(SI_PM_TAKE_ALL_BY_SENDER_HELP_01),
+            width = "full"
+        },
+        
+        {
+            type = "description",
+            text = GetString(SI_PM_TAKE_ALL_BY_FIELD_HELP_02),
+            width = "full"
+        },
+            
+        -- Delete while taking by sender
+        {
+            type = "checkbox",
+            name = GetString(SI_PM_MAIL_DELETE),
+            getFunc = function() return self.settings.takeAllSenderDisplayNameDelete end,
+            setFunc = function(value) self.settings.takeAllSenderDisplayNameDelete = value end,
+            width = "full",
+            default = self.defaults.takeAllSenderDisplayNameDelete,
+        }}},
+        
+        --[ CHAT MESSAGES ]--        
         
         {
             type     = "submenu",
@@ -708,6 +816,113 @@ function Postmaster:SettingsSetup()
                 self.templateSummary:GenerateLam2LootOptions(self.title, self.chatContentsSummaryProxy, self.defaults.chatContentsSummary),
             },
         },
+		
+		
+        --[[ Baertram - Send Mail save settings
+            only enabled if LibCustomMenu 7.11 or newer is given
+        ]]
+        -- Send Mail
+        {
+            type     = "submenu",
+            name     = GetString(SI_SOCIAL_MENU_SEND_MAIL),
+            controls = {
+                -- Remember message recipients
+                {
+                    type    = "checkbox",
+                    name    = GetString(SI_PM_SENDMAIL_MESSAGE_RECIPIENTS),
+                    tooltip = GetString(SI_PM_SENDMAIL_MESSAGE_RECIPIENTS_TT),
+                    getFunc = function() return self.settings.sendmailSaveRecipients end,
+                    setFunc = function(value) self.settings.sendmailSaveRecipients = value end,
+                    default = self.defaults.sendmailSaveRecipients,
+                    disabled = function() return LibCustomMenu == nil end
+                },
+                -- Clear recipients button
+                {
+                    type = "button",
+                    name = GetString(SI_PM_SENDMAIL_CLEAR_RECIPIENTS),
+                    func = function()
+                        local field = self.SendMail:GetField("sendmailRecipients")
+                        field:Clear()
+                        self.Utility.ShowMessageDialog(
+                          GetString(SI_PM_SENDMAIL_CLEAR_RECIPIENTS), 
+                          GetString(SI_PM_SENDMAIL_CLEAR_RECIPIENTS_SUCCESS))
+                    end,
+                    width = "half",
+                    disabled = function() return LibCustomMenu == nil end,
+                },
+                -- Remember message subjects
+                {
+                    type    = "checkbox",
+                    name    = GetString(SI_PM_SENDMAIL_MESSAGE_SUBJECTS),
+                    tooltip = GetString(SI_PM_SENDMAIL_MESSAGE_SUBJECTS_TT),
+                    getFunc = function() return self.settings.sendmailSaveSubjects end,
+                    setFunc = function(value) self.settings.sendmailSaveSubjects = value end,
+                    default = self.defaults.sendmailSaveSubjects,
+                    disabled = function() return LibCustomMenu == nil end
+                },
+                -- Clear subjects button
+                {
+                    type = "button",
+                    name = GetString(SI_PM_SENDMAIL_CLEAR_SUBJECTS),
+                    func = function()
+                        local field = self.SendMail:GetField("sendmailSubjects")
+                        field:Clear()
+                        self.Utility.ShowMessageDialog(
+                          GetString(SI_PM_SENDMAIL_CLEAR_SUBJECTS), 
+                          GetString(SI_PM_SENDMAIL_CLEAR_SUBJECTS_SUCCESS))
+                    end,
+                    width = "half",
+                    disabled = function() return LibCustomMenu == nil end,
+                },
+                -- Remember message bodies
+                {
+                    type    = "checkbox",
+                    name    = GetString(SI_PM_SENDMAIL_MESSAGE_TEXT),
+                    tooltip = GetString(SI_PM_SENDMAIL_MESSAGE_TEXT_TT),
+                    getFunc = function() return self.settings.sendmailSaveMessages end,
+                    setFunc = function(value) self.settings.sendmailSaveMessages = value end,
+                    default = self.defaults.sendmailSaveMessages,
+                    disabled = function() return LibCustomMenu == nil end
+                },
+                -- Clear message bodies button
+                {
+                    type = "button",
+                    name = GetString(SI_PM_SENDMAIL_CLEAR_MESSAGES),
+                    func = function()
+                        local field = self.SendMail:GetField("sendmailMessages")
+                        field:Clear()
+                        self.Utility.ShowMessageDialog(
+                          GetString(SI_PM_SENDMAIL_CLEAR_MESSAGES), 
+                          GetString(SI_PM_SENDMAIL_CLEAR_MESSAGES_SUCCESS))
+                    end,
+                    width = "half",
+                    disabled = function() return LibCustomMenu == nil end,
+                },
+                {
+                    type = "slider",
+                    name = GetString(SI_PM_SENDMAIL_PREVIEW_CHARS),
+                    getFunc = function() return self.settings.sendmailMessagesPreviewChars end,
+                    setFunc = function(value) self.settings.sendmailMessagesPreviewChars = value end,
+                    min = 10,
+                    max = 250,
+                    width = "full",
+                    disabled = function() return not self.settings.sendmailSaveMessages end,
+                    default = self.defaults.sendmailMessagesPreviewChars,
+                },
+                {
+                    type = "slider",
+                    name = GetString(SI_PM_SENDMAIL_AMOUNT),
+                    getFunc = function() return self.settings.sendmailSavedEntryCount end,
+                    setFunc = function(value) self.settings.sendmailSavedEntryCount = value end,
+                    min = 1,
+                    max = 20,
+                    width = "full",
+                    clampInput = false,
+                    disabled = function() return not self.settings.sendmailSaveRecipients and not self.settings.sendmailSaveSubjects and not self.settings.sendmailSaveMessages end,
+                    default = self.defaults.sendmailSavedEntryCount,
+                },
+            } -- controls
+        },--submenu
         
         -- header
         {
@@ -759,8 +974,10 @@ function Postmaster:SettingsSetup()
     
     self.summary = self.classes.GroupedAccountSummary:New(self.templateSummary)
     
-    SLASH_COMMANDS["/postmaster"] = self.OpenSettingsPanel
-    SLASH_COMMANDS["/pm"] = self.OpenSettingsPanel
+    SLASH_COMMANDS["/postmaster"] = self.Utility.OpenSettingsPanel
+    SLASH_COMMANDS["/pm"] = self.Utility.OpenSettingsPanel
+    
+    setReasonableLazyWritCrafterDefaults()
 end
 
 ----------------------------------------------------------------------------
@@ -787,6 +1004,21 @@ function refreshPrefix()
     self.suffix = self.settings.chatUseSystemColor and "" or "|r"
     self.templateSummary:SetPrefix(self.prefix)
     self.templateSummary:SetSuffix(self.suffix)
+end
+
+function setReasonableLazyWritCrafterDefaults()
+    local self = Postmaster
+    if not WritCreater or not self.settings.takeAllSystemHireling then
+        return
+    end
+    -- If Postmaster is configured to harvest hireling mails with Take All,
+    -- disable the auto-loot and delete settings for hireling mails in Lazy Writ Crafter
+    local lazyWritCrafterSettings = WritCreater:GetSettings()
+    if not lazyWritCrafterSettings.mail then
+        lazyWritCrafterSettings.mail = {}
+    end
+    lazyWritCrafterSettings.mail.loot = false
+    lazyWritCrafterSettings.mail.delete = false
 end
 
 function version6(sv)
