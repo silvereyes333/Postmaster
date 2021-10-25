@@ -59,8 +59,19 @@ end
 
 function class.TakeAndDeleteGamepad:Visible()
     if addon:IsBusy() then return false end
-    if self.take.visible() then return true end
-    return self.delete.visible()
+    
+    local mailId = MAIL_MANAGER_GAMEPAD.inbox:GetActiveMailId()
+    if not mailId then
+        return false
+    end
+    
+    -- Exclude any items that we've already read attachmnents for that we know
+    -- contain only unique items that are already in our backpack.
+    if addon.Utility.MailContainsOnlyUniqueConflictAttachments(mailId) then
+        return false
+    end
+    
+    return true
 end
 
 -- Class is instantiated inside GamepadKeybinds.lua::OnInitializeKeybindDescriptors(inbox)

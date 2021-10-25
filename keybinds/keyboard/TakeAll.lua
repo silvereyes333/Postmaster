@@ -195,6 +195,12 @@ function TakeAll:CanTake(mailData, excludeMailId)
   
     local canTake
     
+    -- Exclude any items that we've already read attachmnents for that we know
+    -- contain only unique items that are already in our backpack.
+    if addon.Utility.MailContainsOnlyUniqueConflictAttachments(mailData.mailId) then
+        return false
+    end
+    
     -- Take by Subject / Sender
     if addon.filterFieldValue and addon.filterFieldKeybind then
         local hasAttachments = addon.Utility.HasAttachments(mailData)

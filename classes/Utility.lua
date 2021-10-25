@@ -155,6 +155,28 @@ function addon.Utility.GetActiveKeybinds()
     return addon.keybinds[keybindScope]
 end
 
+function addon.Utility.GetAttachmentData(mailId)
+  
+    if not IsReadMailInfoReady(mailId) then
+        return
+    end
+  
+    local numAttachments, attachedMoney, codAmount = GetMailAttachmentInfo(mailId)
+    local attachmentData = { items = {}, money = attachedMoney, cod = codAmount, numAttachments = numAttachments, uniqueItemConflictCount = 0 }
+    for attachIndex = 1, numAttachments do
+        local itemLink = GetAttachedItemLink(mailId, attachIndex)
+        if addon.UniqueBackpackItemsList:ContainsItemLink(itemLink) then
+            attachmentData.uniqueItemConflictCount = attachmentData.uniqueItemConflictCount + 1
+        else
+            local _, stack = GetAttachedItemInfo(mailId, attachIndex)
+            local attachmentItem = { link = itemLink, count = stack or 1 }
+            table.insert(attachmentData.items, attachmentItem)
+        end
+    end
+    
+    return attachmentData
+end
+
 --[[ Searches addon.codMails for the first mail id and C.O.D. mail data taht
      match the given expected amount. ]]
 function addon.Utility.GetCodMailByGoldChangeAmount(goldChanged)
@@ -288,6 +310,20 @@ end
 
 function addon.Utility.KeyboardIsInboxShown()
     return SCENE_MANAGER:IsShowing("mailInbox")
+end
+
+--[[ Returns true if the given mail id has been opened and we know it 
+     contains attachments, no money, and all attachments conflict with 
+     unique items in the backpack ]]--
+function addon.Utility.MailContainsOnlyUniqueConflictAttachments(mailId)
+    local attachmentData = addon.Utility.GetAttachmentData(mailId)
+    if attachmentData
+       and (not attachmentData.money or attachmentData.money == 0)
+       and attachmentData.numAttachments > 0
+       and attachmentData.uniqueItemConflictCount == attachmentData.numAttachments
+    then
+        return true
+    end
 end
 
 --[[ Checks the given field of a mail message for a given list of

@@ -5,8 +5,8 @@
 Postmaster = {
     name = "Postmaster",
     title = GetString(SI_PM_NAME),
-    version = "4.0.0",
-    author = "silvereyes, Garkin & Zierk",
+    version = "4.1.0",
+    author = "silvereyes, Baertram, Garkin & Zierk",
     
     -- For development use only. Set to true to see a ridiculously verbose 
     -- activity log for this addon in the chat window.

@@ -16,9 +16,20 @@ end
   
 --[[ Wire up all callback handlers ]]
 function Callbacks:Initialize()
+    CALLBACK_MANAGER:RegisterCallback("BackpackFullUpdate", self:CreateCallback(self.BackpackFullUpdate))
     local stateChangeCallback = self:CreateCallback(self.MailInboxStateChange)
     MAIL_INBOX_SCENE:RegisterCallback("StateChange", stateChangeCallback)
     GAMEPAD_MAIL_INBOX_FRAGMENT:RegisterCallback("StateChange", stateChangeCallback)
+end
+
+--[[ Raised whenever the backpack inventory is populated. ]]
+function Callbacks:BackpackFullUpdate()
+    -- Initialize or refresh the unique items manager, which tracks all unique items in the backpack.
+    if addon.UniqueBackpackItemsList then
+        addon.UniqueBackpackItemsList:ScanBag()
+    else
+        addon.UniqueBackpackItemsList = addon.classes.UniqueBagItemsList:New(BAG_BACKPACK)
+    end
 end
 
 function Callbacks:CreateCallback(callback)
@@ -34,6 +45,8 @@ function Callbacks:MailInboxStateChange(oldState, newState)
     
     -- Inbox shown
     if newState == SCENE_SHOWN then
+        
+        addon.Prehooks:InboxRefreshAttachmentsHeaderShown(MAIL_INBOX)
       
         -- Delete any mail that was requested to be deleted, but failed because the inbox hid before.
         -- Note, if this is true, AutoReturn:QueueAndReturn() will be run after it finishes.

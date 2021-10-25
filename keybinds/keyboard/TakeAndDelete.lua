@@ -41,6 +41,13 @@ end
 --[[ True if the given mail can be taken by Take operations according
      to current options panel criteria. ]]
 function TakeAndDelete:CanTake(mailData)
+  
+    -- Exclude any items that we've already read attachmnents for that we know
+    -- contain only unique items that are already in our backpack.
+    if addon.Utility.MailContainsOnlyUniqueConflictAttachments(mailData.mailId) then
+        return false
+    end
+  
     return addon.Utility.CanTake(mailData, {
         ["codTake"]           = addon.settings.quickTakeCodTake,
         ["codGoldLimit"]      = addon.settings.quickTakeCodGoldLimit,
@@ -75,9 +82,19 @@ end
 
 function TakeAndDelete:Visible()
     if addon:IsBusy() then return false end
-    if take.visible() then return true end
-    if MailR and MailR.IsMailIdSentMail(MAIL_INBOX.mailId) then return true end
-    return delete.visible()
+    
+    local mailId = MAIL_INBOX:GetOpenMailId()
+    if not mailId then
+        return false
+    end
+    
+    -- Exclude any items that we've already read attachmnents for that we know
+    -- contain only unique items that are already in our backpack.
+    if addon.Utility.MailContainsOnlyUniqueConflictAttachments(mailId) then
+        return false
+    end
+    
+    return true
 end
 
 addon.keybinds.keyboard.TakeAndDelete = TakeAndDelete:New()

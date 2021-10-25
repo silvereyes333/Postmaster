@@ -7,6 +7,7 @@
   
 local addon = Postmaster
 local debug = false
+local COLOR_DISABLED = ZO_ColorDef:New(GetInterfaceColor(INTERFACE_COLOR_TYPE_TEXT_COLORS, INTERFACE_TEXT_COLOR_DISABLED))
 
 -- Singleton class
 local Prehooks = ZO_Object:Subclass()
@@ -24,7 +25,7 @@ function Prehooks:Initialize()
     ZO_PreHook(MAIL_INBOX, "EndRead", self:Closure(self.InboxEndRead))
     ZO_PreHook(MAIL_INBOX, "OnMailRemoved", self:Closure(self.InboxOnMailRemoved))
     ZO_PreHook(MAIL_INBOX, "RefreshData", self:Closure(self.InboxRefreshData))
-    ZO_PreHook(MAIL_INBOX, "EndRead", self:Closure(self.InboxEndRead))
+    ZO_PreHook(MAIL_INBOX, "RefreshAttachmentsHeaderShown", self:Closure(self.InboxRefreshAttachmentsHeaderShown))
     ZO_PreHook(MAIL_INBOX.navigationTree, "Commit", self:Closure(self.InboxNavigationTreeCommit))
     ZO_PreHook(MAIL_MANAGER_GAMEPAD.inbox, "InitializeOptionsList", self:Closure(self.MailGamepadInboxInitializeOptionsList))
     ZO_PreHook(MAIL_MANAGER_GAMEPAD.inbox, "OnMailTargetChanged", self:Closure(self.MailGamepadInboxOnMailTargetChanged))
@@ -111,6 +112,26 @@ function Prehooks:InboxRefreshData(inbox)
     addon.Utility.Debug("MAIL_INBOX:RefreshData()", debug)
 end
 
+function Prehooks:InboxRefreshAttachmentsHeaderShown(inbox)
+    addon.Utility.Debug("MAIL_INBOX:InboxRefreshAttachmentsHeaderShown()", debug)
+    if not inbox or not inbox.attachmentsHeaderControl then
+        return
+    end
+    if not self.defaultAttachmentsHeaderText then
+        self.defaultAttachmentsHeaderText = inbox.attachmentsHeaderControl:GetText()
+    end
+    local mailId = inbox:GetOpenMailId()
+    if not mailId then
+        return
+    end
+    local text = self.defaultAttachmentsHeaderText
+    if addon.Utility.MailContainsOnlyUniqueConflictAttachments(mailId) then
+        text = text .. " " .. GetString(SI_ITEM_FORMAT_STR_UNIQUE)
+        text = COLOR_DISABLED:Colorize(text)
+    end
+    inbox.attachmentsHeaderControl:SetText(text)
+end
+
 function Prehooks:GetTakeAttachmentsTimeout(mailId, retries)
     return function()
         addon.Events:UnregisterForUpdate(EVENT_MAIL_TAKE_ATTACHED_ITEM_SUCCESS)
@@ -131,45 +152,40 @@ function Prehooks:MailInboxSharedTakeAll(mailId)
     if not addon.taking then
         return
     end
-    local numAttachments, attachedMoney, codAmount = GetMailAttachmentInfo(mailId)
-    if codAmount > 0 then
+    
+    local attachmentData = addon.Utility.GetAttachmentData(mailId)
+    if not attachmentData then
+        return
+    end
+    
+    local mailIdString = addon.Utility.GetMailIdString(mailId)
+    
+    addon.awaitingAttachments[mailIdString] = {}
+    
+    if attachmentData.cod > 0 then
         if addon.takingAll then
             if not addon.settings.takeAllCodTake then return end
         elseif not addon.pendingAcceptCOD then return end
     end 
-    addon.awaitingAttachments[addon.Utility.GetMailIdString(mailId)] = {}
-    local attachmentData = { items = {}, money = attachedMoney, cod = codAmount }
-    local uniqueAttachmentConflictCount = 0
-    for attachIndex=1,numAttachments do
-        local _, stack = GetAttachedItemInfo(mailId, attachIndex)
-        local attachmentItem = { link = GetAttachedItemLink(mailId, attachIndex), count = stack or 1 }
-        if addon.UniqueBackpackItemsList:ContainsItemLink(attachmentItem.link) then
-            uniqueAttachmentConflictCount = uniqueAttachmentConflictCount + 1
-        else
-            table.insert(attachmentData.items, attachmentItem)
-        end
-    end
-    local mailIdString = addon.Utility.GetMailIdString(mailId)
     
-    if numAttachments > 0 then
+    if attachmentData.numAttachments > 0 then
     
         -- If all attachments were unique and already in the backpack
-        if uniqueAttachmentConflictCount == numAttachments then
+        if attachmentData.uniqueItemConflictCount == attachmentData.numAttachments then
             addon.Utility.Debug("Not taking attachments for "..mailIdString
                        .." because it contains only unique items that are already in the backpack", debug)
-            addon.mailIdsFailedDeletion[mailIdString] = true
             addon.Events:MailRemoved(nil, mailId)
             return true
         end
-        if attachedMoney > 0 or codAmount > 0 then
-            table.insert(addon.awaitingAttachments[addon.Utility.GetMailIdString(mailId)], true)
+        if attachmentData.money > 0 or attachmentData.cod > 0 then
+            table.insert(addon.awaitingAttachments[mailIdString], true)
             -- Wire up timeout callback
             self:RegisterTakeAttachmentsTimeout(mailId)
         end
     end
     addon.attachmentData[mailIdString] = attachmentData
-    if codAmount > 0 then
-        addon.codMails[mailIdString] = { mailId = mailId, amount = codAmount, complete = false }
+    if attachmentData.cod > 0 then
+        addon.codMails[mailIdString] = { mailId = mailId, amount = attachmentData.cod, complete = false }
     end
 end
 
