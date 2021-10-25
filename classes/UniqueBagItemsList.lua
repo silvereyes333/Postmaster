@@ -10,11 +10,11 @@ addon.classes.UniqueBagItemsList = ZO_InitializingObject:Subclass()
   
 --[[ Wire up all callback handlers ]]
 function class.UniqueBagItemsList:Initialize(bagId)
+    addon.Utility.Debug("UniqueBagItemsList:Initialize()", debug)
     self.bagId = bagId
     self.uniqueItemIds = {}
-    for slotIndex in ZO_IterateBagSlots(self.bagId) do
-        self:Update(slotIndex)
-    end
+    self.slotUniqueItemIds = {}
+    self:ScanBag()
 end
 
 --[[ Returns true if the given item link is for a unique item that is already in the bag. ]]--
@@ -28,12 +28,32 @@ function class.UniqueBagItemsList:ContainsItemLink(itemLink)
     end
 end
 
+function class.UniqueBagItemsList:ScanBag()
+    addon.Utility.Debug("UniqueBagItemsList:ScanBag()", debug)
+    ZO_ClearTable(self.uniqueItemIds)
+    for slotIndex in ZO_IterateBagSlots(self.bagId) do
+        self:Update(slotIndex)
+    end
+end
+
 --[[ Registers a potential backpack slot as unique ]]--
 function class.UniqueBagItemsList:Update(slotIndex)
     local itemLink = GetItemLink(self.bagId, slotIndex)
+    local itemId
     if not itemLink or itemLink == "" then
+        itemId = self.slotUniqueItemIds[slotIndex]
+        if itemId then
+            self.uniqueItemIds[itemId] = nil
+        end
+        self.slotUniqueItemIds[slotIndex] = nil
         return
     end
-    local itemId = GetItemLinkItemId(itemLink)
-    self.uniqueItemIds[itemId] = IsItemLinkUnique(itemLink) or nil
+    itemId = GetItemLinkItemId(itemLink)
+    if IsItemLinkUnique(itemLink) then
+        self.uniqueItemIds[itemId] = true
+        self.slotUniqueItemIds[slotIndex] = itemId
+    else
+        self.uniqueItemIds[itemId] = nil
+        self.slotUniqueItemIds[slotIndex] = nil
+    end
 end

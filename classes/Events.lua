@@ -27,7 +27,6 @@ function Events:Initialize()
         [EVENT_MAIL_TAKE_ATTACHED_ITEM_SUCCESS]  = "MailTakeAttachedItemSuccess",
         [EVENT_MAIL_TAKE_ATTACHED_MONEY_SUCCESS] = "MailTakeAttachedMoneySuccess",
         [EVENT_MONEY_UPDATE]                     = "MoneyUpdate",
-        [EVENT_PLAYER_ACTIVATED]                 = "PlayerActivated",
     }
     
     -- Special keys where RegisterForUpdate() and UnregisterForUpdate() should share the same 
@@ -327,12 +326,6 @@ function Events:MoneyUpdate(eventCode, newMoney, oldMoney, reason)
     else
         addon.Delete:ByMailId(codMail.mailId)
     end
-end
-
---[[ Raised after the player first logs in, or ReloadUI is called.
-     Initialize the unique items manager, which tracks all unique items in the backpack. ]]--
-function Events:PlayerActivated(eventCode, isInitial)
-    addon.UniqueBackpackItemsList = addon.classes.UniqueBagItemsList:New(BAG_BACKPACK)
 end
 
 function Events:RegisterForUpdate(eventCode, timeout, callback)
