@@ -1,7 +1,7 @@
 ## Title: Postmaster
 ## Author: silvereyes, Baertram, Garkin & Zierk
 ## Description: Mail addon to simplify inbox management
-## Version: 4.1.0
+## Version: 4.1.1
 ## APIVersion: 101031 101032
 ## AddOnVersion: 40101
 ## DependsOn: LibSavedVars>=50000 LibAddonMenu-2.0>=32 LibLootSummary>=30100 LibChatMessage

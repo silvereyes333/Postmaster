@@ -3,7 +3,7 @@
                 SETTINGS
     ===================================
   ]]
-local createChatProxy, refreshPrefix, setReasonableLazyWritCrafterDefaults, version6, version7
+local createChatProxy, refreshPrefix, version6, version7
 
 function Postmaster:SettingsSetup()
 
@@ -413,10 +413,7 @@ function Postmaster:SettingsSetup()
             type = "checkbox",
             name = GetString(SI_PM_SYSTEM_TAKE_CRAFTING),
             getFunc = function() return self.settings.takeAllSystemHireling end,
-            setFunc = function(value)
-                    self.settings.takeAllSystemHireling = value
-                    setReasonableLazyWritCrafterDefaults()
-                end,
+            setFunc = function(value) self.settings.takeAllSystemHireling = value end,
             width = "full",
             disabled = function() return not self.settings.takeAllSystemAttached end,
             default = self.defaults.takeAllSystemHireling,
@@ -976,8 +973,6 @@ function Postmaster:SettingsSetup()
     
     SLASH_COMMANDS["/postmaster"] = self.Utility.OpenSettingsPanel
     SLASH_COMMANDS["/pm"] = self.Utility.OpenSettingsPanel
-    
-    setReasonableLazyWritCrafterDefaults()
 end
 
 ----------------------------------------------------------------------------
@@ -1004,21 +999,6 @@ function refreshPrefix()
     self.suffix = self.settings.chatUseSystemColor and "" or "|r"
     self.templateSummary:SetPrefix(self.prefix)
     self.templateSummary:SetSuffix(self.suffix)
-end
-
-function setReasonableLazyWritCrafterDefaults()
-    local self = Postmaster
-    if not WritCreater or not self.settings.takeAllSystemHireling then
-        return
-    end
-    -- If Postmaster is configured to harvest hireling mails with Take All,
-    -- disable the auto-loot and delete settings for hireling mails in Lazy Writ Crafter
-    local lazyWritCrafterSettings = WritCreater:GetSettings()
-    if not lazyWritCrafterSettings.mail then
-        lazyWritCrafterSettings.mail = {}
-    end
-    lazyWritCrafterSettings.mail.loot = false
-    lazyWritCrafterSettings.mail.delete = false
 end
 
 function version6(sv)
