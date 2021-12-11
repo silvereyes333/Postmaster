@@ -32,6 +32,10 @@ function SendMail:Initialize()
         addon.classes.SendMailField:New(
             ZO_MailSendBodyField, "sendmailSaveMessages", "sendmailMessages", GetString(SI_PM_SENDMAIL_MESSAGE_RECENT_TEXT),
             addon.settings.sendmailMessagesPreviewChars),
+          
+        addon.classes.SendMailField:New(
+            ZO_MailSendSendCurrency, "sendmailSaveGold", "sendmailGold", GetString(SI_PM_SENDMAIL_MESSAGE_RECENT_GOLD),
+            addon.settings.sendmailMessagesPreviewChars),
     }
     
     self.fieldsByValueSettingsKeys = {}

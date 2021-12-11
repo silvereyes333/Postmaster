@@ -74,6 +74,8 @@ function Postmaster:SettingsSetup()
         sendmailSubjects = {},
         sendmailSaveMessages = false,
         sendmailMessages = {},
+        sendmailSaveGold = false,
+        sendmailGold = {},
         sendmailMessagesPreviewChars = 75,
         sendmailSavedEntryCount = 10,
 	
@@ -891,6 +893,30 @@ function Postmaster:SettingsSetup()
                         self.Utility.ShowMessageDialog(
                           GetString(SI_PM_SENDMAIL_CLEAR_MESSAGES), 
                           GetString(SI_PM_SENDMAIL_CLEAR_MESSAGES_SUCCESS))
+                    end,
+                    width = "half",
+                    disabled = function() return LibCustomMenu == nil end,
+                },
+                -- Remember message sent gold
+                {
+                    type    = "checkbox",
+                    name    = GetString(SI_PM_SENDMAIL_MESSAGE_GOLD),
+                    tooltip = GetString(SI_PM_SENDMAIL_MESSAGE_GOLD_TT),
+                    getFunc = function() return self.settings.sendmailSaveGold end,
+                    setFunc = function(value) self.settings.sendmailSaveGold = value end,
+                    default = self.defaults.sendmailSaveGold,
+                    disabled = function() return LibCustomMenu == nil end
+                },
+                -- Clear message gold button
+                {
+                    type = "button",
+                    name = GetString(SI_PM_SENDMAIL_CLEAR_GOLD),
+                    func = function()
+                        local field = self.SendMail:GetField("sendmailGold")
+                        field:Clear()
+                        self.Utility.ShowMessageDialog(
+                          GetString(SI_PM_SENDMAIL_CLEAR_GOLD), 
+                          GetString(SI_PM_SENDMAIL_CLEAR_GOLD_SUCCESS))
                     end,
                     width = "half",
                     disabled = function() return LibCustomMenu == nil end,

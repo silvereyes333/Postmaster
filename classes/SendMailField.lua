@@ -85,6 +85,10 @@ function class.SendMailField:OnControlMouseUp(control, mouseButton, upInside, al
             local formattedEntryText = entryText
             if self.previewChars and strlen(entryText) > self.previewChars then
                 formattedEntryText = (strsub(formattedEntryText, 1, self.previewChars) .. "...")
+            elseif control.currencyControl then
+                local USE_SHORT_FORMAT = false
+                local IS_GAMEPAD = false
+                formattedEntryText = ZO_CurrencyControl_FormatCurrencyAndAppendIcon(entryText, USE_SHORT_FORMAT, CURT_MONEY, IS_GAMEPAD)
             end
             AddCustomMenuItem(formattedEntryText,
                 self:CreateOnEntrySelectedClosure(entryText),
@@ -108,7 +112,10 @@ function class.SendMailField:OnControlMouseUp(control, mouseButton, upInside, al
 end
 
 function class.SendMailField:OnEntrySelected(entryText)
-    if self.control.SetText then
+    if self.control.currencyControl then
+        ZO_DefaultCurrencyInputField_SetCurrencyAmount(self.control, entryText)
+    
+    elseif self.control.SetText then
         self.control:SetText(entryText)
     end
 end
@@ -128,11 +135,21 @@ function class.SendMailField:RemoveEntry(entryText)
 end
 
 function class.SendMailField:SaveControlTextToValues()
-    if not self.control or self.control and not self.control.GetText then
+    if not self.control then
         return
     end
     
-    local textToAdd = self.control:GetText()
+    if not self.control.GetText and not self.control.currencyControl then
+        return
+    end
+    
+    local textToAdd
+    if self.control.currencyControl then
+        textToAdd = self.control.currentCurrencyAmount
+    else
+        textToAdd = self.control:GetText()
+    end
+    
     if textToAdd == nil or textToAdd == "" then
         return
     end

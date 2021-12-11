@@ -128,8 +128,13 @@ POSTMASTER_STRINGS = {
     ["SI_PM_SENDMAIL_MESSAGE_TEXT_TT"]           = "Automatically save a list of recently sent email messages after they are sent. You are able to show and select from a list via a right mouse click on the mail message body text box.",
     ["SI_PM_SENDMAIL_CLEAR_MESSAGES"]            = "Clear Saved Messages",
     ["SI_PM_SENDMAIL_CLEAR_MESSAGES_SUCCESS"]    = "Saved messages successfully cleared.",
+    ["SI_PM_SENDMAIL_MESSAGE_GOLD"]              = "Save Gold",
+    ["SI_PM_SENDMAIL_MESSAGE_GOLD_TT"]           = "Automatically save a list of recently sent email gold attachments and C.O.D amounts after they are sent. You are able to show and select from a list via a right mouse click on the mail send gold text box.",
+    ["SI_PM_SENDMAIL_CLEAR_GOLD"]                = "Clear Saved Gold",
+    ["SI_PM_SENDMAIL_CLEAR_GOLD_SUCCESS"]        = "Saved gold successfully cleared.",
     ["SI_PM_SENDMAIL_MESSAGE_RECENT_SUBJECTS"]   = "Recent Subjects",
     ["SI_PM_SENDMAIL_MESSAGE_RECENT_TEXT"]       = "Recent Messages",
+    ["SI_PM_SENDMAIL_MESSAGE_RECENT_GOLD"]       = "Recent Gold",
     ["SI_PM_SENDMAIL_AMOUNT"]                    = "Number of Recent Entries to Save",
     ["SI_PM_SENDMAIL_PREVIEW_CHARS"]             = "Recent Messages Menu Character Width",
 }
